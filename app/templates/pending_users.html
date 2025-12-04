@@ -942,5 +942,99 @@
             }
         }
     </script>
+=======
+    <title>Pending User Approvals</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'CSS/pending_users.css' %}">
+</head>
+<body>
+
+<div class="pending-users-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-user-clock"></i> Pending User Approvals</h1>
+        <div class="stats-badge">
+            <i class="fas fa-users"></i> {{ pending_count }} user{{ pending_count|pluralize }} waiting for approval
+        </div>
+    </div>
+
+    <!-- Pending Users Section -->
+    <div class="users-section">
+        <h2 class="section-title">
+            <i class="fas fa-clock"></i> Awaiting Approval
+        </h2>
+
+        {% if pending_users %}
+            {% for profile in pending_users %}
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-details">
+                        <div class="user-name">
+                            <i class="fas fa-user"></i> {{ profile.user.username }}
+                        </div>
+                        <div class="user-meta">
+                            <i class="fas fa-envelope"></i> {{ profile.user.email }}
+                        </div>
+                        <div class="user-meta">
+                            <i class="fas fa-calendar"></i> Registered: {{ profile.submitted_at|date:"F d, Y - g:i A" }}
+                        </div>
+                        <span class="role-badge role-{{ profile.role|slugify }}">
+                            <i class="fas fa-briefcase"></i> {{ profile.get_role_display }}
+                        </span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <a href="{% url 'approve_user' profile.user.id %}" 
+                           class="btn btn-approve"
+                           onclick="return confirm('Approve {{ profile.user.username }}?')">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="{% url 'reject_user' profile.user.id %}" 
+                           class="btn btn-reject"
+                           onclick="return confirm('Reject and delete {{ profile.user.username }}? This cannot be undone!')">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <h3>No Pending Approvals</h3>
+                <p>All user registrations have been processed.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Recently Approved Section -->
+    {% if approved_users %}
+    <div class="users-section">
+        <h2 class="section-title">
+            <i class="fas fa-check-circle"></i> Recently Approved
+        </h2>
+
+        {% for profile in approved_users %}
+        <div class="approved-user-card">
+            <div class="approved-info">
+                <div>
+                    <span class="approved-name">{{ profile.user.username }}</span>
+                    <span class="role-badge role-{{ profile.role|slugify }}">
+                        {{ profile.get_role_display }}
+                    </span>
+                </div>
+                <div class="approved-by">
+                    <i class="fas fa-check"></i> Approved by {{ profile.approved_by.username }} 
+                    on {{ profile.approved_at|date:"M d, Y" }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

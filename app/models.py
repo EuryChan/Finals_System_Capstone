@@ -238,8 +238,6 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    
-    # Link user to their barangay
     barangay = models.ForeignKey(
         'Barangay', 
         on_delete=models.SET_NULL, 
@@ -253,6 +251,12 @@ class UserProfile(models.Model):
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     login_count = models.PositiveIntegerField(default=0)
     is_profile_complete = models.BooleanField(default=False)
+    
+    # NEW: Approval fields
+    is_approved = models.BooleanField(default=False)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_profiles')
 
     # Approval fields
     is_approved = models.BooleanField(default=False)
@@ -382,6 +386,24 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
+    def get_redirect_url(self):
+        """Return the correct redirect path based on role"""
+        mapping = {
+            'barangay official': 'requirements_monitoring',
+            'municipal officer': 'requirements_monitoring',
+            'dilg staff': 'landing_menu',
+        }
+        return mapping.get(self.role.lower(), 'dashboard')
+    
+    # 🆕 ADD THIS - Permission checking method
+    def can_access_barangay(self, barangay):
+        """Check if user has permission to access this barangay's data"""
+        if self.role == 'dilg staff':
+            return True  # DILG staff sees all barangays
+        if self.role == 'municipal officer':
+            return True  # Municipal officers see all barangays
+        # Barangay officials only see their assigned barangay
+        return self.barangay == barangay if self.barangay else False
 
 class EligibilityRequest(models.Model):
     CERTIFIER_CHOICES = [
@@ -669,8 +691,7 @@ class Requirement(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     period = models.CharField(max_length=20, choices=PERIOD_CHOICES)
-    due_date = models.DateField(null=True, blank=True) # ← Make sure this exists
-
+    due_date = models.DateField(null=True, blank=True) 
     priority = models.CharField(
         max_length=20,
         choices=[
@@ -680,8 +701,7 @@ class Requirement(models.Model):
         ],
         default='normal'
     )
-    
-    # Applicable to which barangays (if None, applies to all)
+
     applicable_barangays = models.ManyToManyField(Barangay, blank=True)
     
     is_active = models.BooleanField(default=True)

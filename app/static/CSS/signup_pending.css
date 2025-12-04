@@ -1,0 +1,108 @@
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.pending-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 50px;
+    max-width: 500px;
+    text-align: center;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.icon-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.icon-container i {
+    color: white;
+    font-size: 50px;
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.alert-custom {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 30px 0;
+}
+
+.alert-custom i {
+    color: #ffc107;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.info-text {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.btn-back {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.status-badge {
+    display: inline-block;
+    background: #ffc107;
+    color: #333;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin: 20px 0;
+}

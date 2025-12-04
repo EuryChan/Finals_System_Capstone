@@ -100,6 +100,7 @@ class UserProfileInline(admin.StackedInline):
     verbose_name_plural = 'Profile'
     fields = ('role', 'barangay')
     fk_name = 'user'
+
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "barangay":

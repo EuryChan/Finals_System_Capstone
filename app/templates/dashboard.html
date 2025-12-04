@@ -719,6 +719,7 @@
         <li>
           <a href="{% url 'pending_users' %}" style="position: relative;">
              User Approvals
+            👥 User Approvals
             {% if pending_count > 0 %}
             <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
               {{ pending_count }}
@@ -729,7 +730,7 @@
         <li><a href="{% url 'employees_profile' %}"> Employees Profile</a></li>
         <li><a href="{% url 'folder' %}"> Folders</a></li>
         <li><a href="{% url 'settings' %}"> Settings</a></li>
-      </ul>
+    </ul>
     </div>
 
     <!-- Main Content -->

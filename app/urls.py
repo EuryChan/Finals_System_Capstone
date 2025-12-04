@@ -16,7 +16,6 @@ urlpatterns = [
     path('user-approvals/approve/<int:user_id>/', views.approve_user, name='approve_user'),
     path('user-approvals/reject/<int:user_id>/', views.reject_user, name='reject_user'),
 
-    
     # ============================================
     # BARANGAY OFFICIAL - SUBMISSION PAGES
     # ============================================
@@ -60,6 +59,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login_page'), name='logout'),
     path('api/user/session/', views.api_user_session, name='api_user_session'),
     path('api/requirements/list/', views.api_barangay_requirements, name='api_barangay_requirements'),
+    path('api/requirements/list/', views.api_requirements_list, name='api_requirements_list'),
     path('api/requirements/submission/<int:submission_id>/', views.api_submission_detail, name='api_submission_detail'),
     path('api/requirements/submission/<int:submission_id>/upload/', views.api_attachment_upload, name='api_attachment_upload'),
     path('api/requirements/submission/<int:submission_id>/submit/', views.api_submission_submit, name='api_submission_submit'),
