@@ -4,7 +4,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+__pycache__/
+*.pyc
+db.sqlite3
 # Django stuff
 *.log
 *.pot
