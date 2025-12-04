@@ -5,7 +5,7 @@ body {
     font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
     color: #0b1a50;
-    height: 100vh;
+    height: 100%;
   }
   
   .dashboard-container {

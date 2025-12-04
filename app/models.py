@@ -15,8 +15,6 @@ from django.dispatch import receiver
 import os
 
 
-
-
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -229,25 +227,50 @@ def get_client_ip(request):
     return ip
 
 
+# app/models.py
+
 class UserProfile(models.Model):
     ROLE_CHOICES = [
-        ('barangay official', 'Barangay Official'),
+        ('dilg staff', 'DILG Staff'),  # This is the admin role
         ('municipal officer', 'Municipal Officer'),
-        ('dilg staff', 'DILG Staff'),
+        ('barangay official', 'Barangay Official'),
     ]
-
-
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    
+    # Link user to their barangay
+    barangay = models.ForeignKey(
+        'Barangay', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='officials',
+        help_text='Assigned barangay (for Barangay Officials only)'
+    )
 
     # Extra profile fields
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     login_count = models.PositiveIntegerField(default=0)
     is_profile_complete = models.BooleanField(default=False)
 
+    # Approval fields
+    is_approved = models.BooleanField(default=False)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_profiles')
+
+    # Notification preferences
+    email_notifications = models.BooleanField(default=True)
+    deadline_reminders = models.BooleanField(default=True)
+    announcements = models.BooleanField(default=True)
+    
+    # Display preferences
+    compact_view = models.BooleanField(default=False)
+
     def __str__(self):
-        return f"{self.user.username} - {self.role.title()}"
+        barangay_name = f" - {self.barangay.name}" if self.barangay else ""
+        return f"{self.user.username} - {self.role.title()}{barangay_name}"
 
     def update_login_info(self, ip_address):
         """Update login info after each login"""
@@ -255,15 +278,110 @@ class UserProfile(models.Model):
         self.login_count += 1
         self.save()
 
-    def get_redirect_url(self):
-        """Return the correct redirect path based on role"""
-        mapping = {
-            'barangay official': 'civil_service_certification',
-            'municipal officer': 'requirements_monitoring',
-            'dilg staff': 'landing_menu',
+    def has_permission(self, permission):
+        """Check if user has specific permission based on role"""
+        permissions = {
+            'dilg staff': [
+                # DILG Staff has ALL permissions (they are the admin)
+                'view_dashboard',
+                'manage_users', 
+                'approve_requests', 
+                'reject_requests',
+                'view_all_requests',
+                'view_reports', 
+                'manage_settings',
+                'manage_requirements',
+                'view_all_barangays',
+                'manage_announcements',
+                'delete_requests',
+                'archive_requests',
+                'manage_roles',
+                'view_audit_logs',
+            ],
+            'municipal officer': [
+                # Municipal officers can view and monitor, but not manage system
+                'view_dashboard',
+                'view_all_requests',
+                'view_reports',
+                'view_all_barangays',
+                'view_requirements',
+            ],
+            'barangay official': [
+                # Barangay officials can only submit and view their own data
+                'submit_requirements',
+                'view_own_barangay',
+                'view_own_submissions',
+                'upload_attachments',
+            ],
         }
-        return mapping.get(self.role.lower(), 'dashboard')
+        
+        user_permissions = permissions.get(self.role, [])
+        return permission in user_permissions
 
+    def can_access_barangay(self, barangay):
+        """Check if user has permission to access this barangay's data"""
+        normalized_role = self.role.strip().lower()
+        
+        # DILG staff (admin) can see EVERYTHING
+        if normalized_role == 'dilg staff':
+            return True
+        
+        # Municipal officers can see all barangays (read-only monitoring)
+        if normalized_role == 'municipal officer':
+            return True
+        
+        # Barangay officials only see their assigned barangay
+        if normalized_role == 'barangay official':
+            return self.barangay == barangay if self.barangay else False
+        
+        return False
+
+    def can_approve_requests(self):
+        """Check if user can approve eligibility requests"""
+        return self.has_permission('approve_requests')
+
+    def can_manage_users(self):
+        """Check if user can manage other users"""
+        return self.has_permission('manage_users')
+
+    def can_view_all_barangays(self):
+        """Check if user can view all barangays"""
+        return self.has_permission('view_all_barangays')
+    
+    def is_admin(self):
+        """Check if user is admin (DILG Staff)"""
+        return self.role.strip().lower() == 'dilg staff'
+
+    def get_redirect_url(self):
+        """Determine where to redirect user after login based on role"""
+        normalized_role = self.role.strip().lower()
+        
+        # DILG staff (admin) goes to main landing menu with full access
+        if normalized_role == 'dilg staff':
+            redirect_url = 'landing_menu'
+        
+        # Municipal officer goes to requirements monitoring (read-only view)
+        elif normalized_role == 'municipal officer':
+            redirect_url = 'requirements_monitoring'
+        
+        # Barangay official
+        elif normalized_role == 'barangay official':
+            if self.barangay:
+                # Has assigned barangay → Go to requirements submission page
+                redirect_url = 'requirements_monitoring'
+            else:
+                # No assigned barangay → Go to public certification form
+                redirect_url = 'civil_service_certification'
+        
+        # Default fallback
+        else:
+            redirect_url = 'civil_service_certification'
+        
+        return redirect_url
+
+    class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
 
 class EligibilityRequest(models.Model):
     CERTIFIER_CHOICES = [
@@ -287,11 +405,18 @@ class EligibilityRequest(models.Model):
     email = models.EmailField(max_length=254, blank=True, null=True)
     barangay = models.CharField(max_length=100)  # ADD THIS LINE
     archived = models.BooleanField(default=False)
+    rejection_reason = models.TextField(blank=True, null=True, help_text="Reason for rejection")
     
     position_type = models.CharField(max_length=20, choices=[
         ('appointive', 'Appointive'),
         ('elective', 'Elective')
     ])
+
+    rejection_reason = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Reason for rejection (shown to applicant)"
+    )
 
     # ========================================
     # APPOINTIVE OFFICIAL FIELDS
@@ -353,95 +478,132 @@ class EligibilityRequest(models.Model):
 
 
 
-def send_certificate_notification_async(eligibility_request):
+def send_certificate_notification_async(eligibility_request,status, rejection_reason=None,):
     """Send email notification in background thread"""
     
     def send_email_task():
-        try:
-            # Debug: Print what we're working with
-            print(f"📧 Processing notification for request #{eligibility_request.id}")
-            print(f"   Status: {eligibility_request.status}")
-            print(f"   Applicant email: {eligibility_request.email}")
-            
-            # Determine recipient and message based on status
-            if eligibility_request.status == 'pending':
-                # NEW APPLICATION - Notify DILG staff
-                recipient_email = settings.EMAIL_HOST_USER
-                subject = '📋 New Certificate Application - Awaiting Approval'
-                applicant_message = f'{eligibility_request.full_name} submitted certification, waiting for approvals.'
-                print(f"   → Sending to DILG staff: {recipient_email}")
-                
-            else:
-                # STATUS UPDATE - Notify the APPLICANT
-                if not eligibility_request.email:
-                    print(f"   ⚠️ No email address for request #{eligibility_request.id}, skipping notification")
-                    return False
-                
-                recipient_email = eligibility_request.email  # Send to APPLICANT
-                print(f"   → Sending to applicant: {recipient_email}")
-                
-                if eligibility_request.status == 'processing':
-                    subject = '⏳ Certificate Application in Progress'
-                    applicant_message = 'Wait for your certificate to be approved'
-                    
-                elif eligibility_request.status == 'approved':
-                    subject = '✅ Certificate Approved - Ready to Print!'
-                    applicant_message = 'Congratulations! Your certificate has been approved, you can pick-up your eligibility certification'
-                    
-                elif eligibility_request.status == 'rejected':
-                    subject = '❌ Certificate Application - Status Update'
-                    applicant_message = 'Your certificate application has been reviewed. Unfortunately, it could not be approved at this time. Please contact DILG for more information.'
-                    
-                else:
-                    print(f"   ⚠️ Unknown status: {eligibility_request.status}")
-                    return False
-            
-            # Create reference number
-            reference_number = f"EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:03d}"
-            
-            # Prepare email content
-            email_body = f"""
-Hello,
+        """
+    Send email notification when application status changes
+    Now includes rejection reason
+    """
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        print(f"📧 Processing notification for request #{eligibility_request.id}")
+        print(f"   Status: {status}")
+        print(f"   Applicant email: {eligibility_request.email}")
+        
+        applicant_email = eligibility_request.email
+        
+        if not applicant_email:
+            print(f"   ⚠️ No email address found for request #{eligibility_request.id}")
+            return
+        
+        # Email content based on status
+        if status == 'approved':
+            subject = "✅ Certificate Application - Approved"
+            message = f"""Hello,
 
-{applicant_message}
+Great news! Your certificate application has been approved.
 
-════════════════════════════════════════
 APPLICATION DETAILS
-════════════════════════════════════════
+==========================================
+Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
+Applicant: {eligibility_request.full_name}
+Certifier: {eligibility_request.get_certifier_display()}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: APPROVED
 
- Reference Number: {reference_number}
- Applicant: {eligibility_request.full_name}
- Certifier: {eligibility_request.get_certifier_display()}
- Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
- Current Status: {eligibility_request.get_status_display().upper()}
-
-════════════════════════════════════════
+You can now collect your certificate at the DILG office.
 
 Thank you for using the DILG Certification System.
 
 ---
 DILG Lucena - Certification System
 This is an automated message. Please do not reply to this email.
-            """
+"""
+        
+        elif status == 'rejected':
+            subject = "❌ Certificate Application - Status Update"
             
-            # Send the email
-            send_mail(
-                subject=subject,
-                message=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[recipient_email],
-                fail_silently=False,
-            )
+            # ✅ Include rejection reason in the email
+            message = f"""Hello,
+
+Your certificate application has been reviewed. Unfortunately, it could not be approved at this time.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
+Applicant: {eligibility_request.full_name}
+Certifier: {eligibility_request.get_certifier_display()}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: REJECTED
+
+"""
+            # ✅ Add rejection reason if provided
+            if rejection_reason:
+                message += f"""REASON FOR REJECTION
+==========================================
+!!{rejection_reason}!!
+
+"""
             
-            print(f"✅ Email sent successfully to {recipient_email} for request #{eligibility_request.id}")
-            print(f"   Subject: {subject}")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Failed to send email for request #{eligibility_request.id}: {str(e)}")
-            import traceback
-            print(traceback.format_exc())
-            return False
+            message += """Please address the issue(s) mentioned above and resubmit your application, or contact DILG for more information.
+
+Thank you for using the DILG Certification System.
+
+---
+DILG Lucena - Certification System
+This is an automated message. Please do not reply to this email.
+"""
+        
+        elif status == 'processing':
+            subject = "⏳ Certificate Application - Processing"
+            message = f"""Hello,
+
+Your certificate application is now being processed.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
+Applicant: {eligibility_request.full_name}
+Certifier: {eligibility_request.get_certifier_display()}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: PROCESSING
+
+We will notify you once the review is complete.
+
+Thank you for using the DILG Certification System.
+
+---
+DILG Lucena - Certification System
+This is an automated message. Please do not reply to this email.
+"""
+        
+        else:
+            print(f"   ⚠️ Unknown status: {status}")
+            return
+        
+        # Send email
+        print(f"   → Sending to applicant: {applicant_email}")
+        
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[applicant_email],
+            fail_silently=False,
+        )
+        
+        print(f"✅ Email sent successfully to {applicant_email} for request #{eligibility_request.id}")
+        print(f"   Subject: {subject}")
+        
+    except Exception as e:
+        print(f"❌ Error sending email: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        raise
     
     # Start background thread
     email_thread = threading.Thread(target=send_email_task)
@@ -461,21 +623,17 @@ def track_status_change(sender, instance, **kwargs):
     else:
         instance._old_status = None
 
-
 @receiver(post_save, sender=EligibilityRequest)
 def notify_eligibility_status_change(sender, instance, created, **kwargs):
-    """Send email notification when status changes"""
-    
-    # Send notification on creation (pending status)
-    if created:
-        print(f"🆕 New request created: #{instance.id} - Sending email to DILG...")
-        send_certificate_notification_async(instance)
-    
-    # Send notification when status changes
-    elif hasattr(instance, '_old_status') and instance._old_status != instance.status:
-        print(f"🔄 Status changed for request #{instance.id}: {instance._old_status} → {instance.status}")
-        print(f"   Sending email to applicant: {instance.email}")
-        send_certificate_notification_async(instance)
+    """Signal to send email when status changes"""
+    if not created:  # Only for updates, not new records
+        if instance.status in ['approved', 'rejected', 'processing']:
+            # ✅ Pass all required arguments
+            send_certificate_notification_async(
+                instance, 
+                instance.status,
+                rejection_reason=instance.rejection_reason if instance.status == 'rejected' else None
+            )
 
 
 
@@ -511,6 +669,17 @@ class Requirement(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     period = models.CharField(max_length=20, choices=PERIOD_CHOICES)
+    due_date = models.DateField(null=True, blank=True) # ← Make sure this exists
+
+    priority = models.CharField(
+        max_length=20,
+        choices=[
+            ('normal', 'Normal'),
+            ('important', 'Important'),
+            ('urgent', 'Urgent'),
+        ],
+        default='normal'
+    )
     
     # Applicable to which barangays (if None, applies to all)
     applicable_barangays = models.ManyToManyField(Barangay, blank=True)
@@ -671,6 +840,8 @@ class Notification(models.Model):
         ('completed', 'Completed'),
         ('reminder', 'Reminder'),
         ('info', 'Information'),
+        ('new_requirement', 'New Requirement'),
+        ('new_submission', 'New Submission'),
         ('announcement', 'Announcement'),
     ]
     
@@ -680,7 +851,8 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info')
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
-    
+
+
     # Optional: Link to related objects
     submission = models.ForeignKey(
         'RequirementSubmission', 
@@ -725,6 +897,7 @@ class Announcement(models.Model):
     
     title = models.CharField(max_length=200)
     content = models.TextField()
+    date = models.DateField(default=timezone.now)  # ADD THIS LINE
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='announcements')
     posted_at = models.DateTimeField(auto_now_add=True)

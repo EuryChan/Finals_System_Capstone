@@ -73,34 +73,6 @@
       letter-spacing: 1px;
     }
 
-    .nav-menu {
-      list-style: none;
-      padding: 0 12px;
-    }
-
-    .nav-menu li {
-      margin-bottom: 4px;
-    }
-
-    .nav-menu a {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      border-radius: 6px;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .nav-menu a:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .nav-menu a.active {
-      background: var(--bg-tertiary);
-    }
 
     /* Main Content Area */
     .main-content {
@@ -752,6 +724,16 @@
       <ul class="nav-menu">
         <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
         <li><a href="{% url 'application_request' %}">Application Request</a></li>
+        <li>
+          <a href="{% url 'pending_users' %}" style="position: relative;">
+             User Approvals
+            {% if pending_count > 0 %}
+            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+              {{ pending_count }}
+            </span>
+            {% endif %}
+          </a>
+        </li>
         <li><a href="{% url 'employees_profile' %}" class="active">Employees Profile</a></li>
         <li><a href="{% url 'folder' %}">Folders</a></li>
         <li><a href="{% url 'settings' %}">Settings</a></li>

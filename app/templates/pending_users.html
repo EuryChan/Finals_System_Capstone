@@ -1,0 +1,946 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Approvals - DILG</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #868e96;
+            --border-color: #dee2e6;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+            --accent-primary: #007bff;
+            --accent-hover: #0056b3;
+            --success: #28a745;
+            --success-hover: #218838;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            overflow-x: hidden;
+        }
+
+        /* Main Layout */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+            color: #0b1a50;
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar .logo {
+            width: 140px;
+            margin: 24px auto;
+            display: block;
+        }
+
+        .menu-title {
+      padding: 16px 24px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px 40px;
+            background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+            color: #0b1a50;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--warning);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Stats Card */
+        .stats-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--warning);
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--warning);
+            opacity: 0.05;
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--warning);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-info h3 {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-info .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .section-card.scrollable {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .section-card.scrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .section-card.scrollable::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+        }
+
+        .section-card.scrollable::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 10px;
+        }
+
+        .section-card.scrollable::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .section-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* User Cards */
+        .user-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--warning);
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow);
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        .icon-img-large {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .role-badge.role-program-manager {
+            background: #6f42c1;
+        }
+
+        .role-badge.role-focal-person {
+            background: #17a2b8;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-approve {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: var(--success-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-reject {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-view {
+            background: var(--accent-primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .btn-view:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Approved User Cards */
+        .approved-user-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--success);
+            transition: all 0.3s ease;
+        }
+
+        .approved-user-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow);
+        }
+
+        .approved-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .approved-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 12px;
+        }
+
+        .approved-by {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.9375rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 20px;
+            }
+            .user-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Custom Confirmation Dialog */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translate(-50%, -48%) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 480px;
+            animation: slideIn 0.3s ease;
+            overflow: hidden;
+        }
+
+        .confirm-header {
+            padding: 24px 28px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .confirm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .confirm-icon.approve {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+
+        .confirm-icon.reject {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .confirm-header-text h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .confirm-header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .confirm-body {
+            padding: 24px 28px;
+        }
+
+        .user-preview {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .user-preview-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-preview-role {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .confirm-message {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .confirm-warning {
+            background: rgba(220, 53, 69, 0.05);
+            border-left: 4px solid var(--danger);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .confirm-warning p {
+            font-size: 0.875rem;
+            color: var(--danger);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .confirm-footer {
+            padding: 20px 28px;
+            background: var(--bg-secondary);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confirm-btn-cancel {
+            background: white;
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+        }
+
+        .confirm-btn-cancel:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        .confirm-btn-confirm {
+            background: var(--success);
+            color: white;
+        }
+
+        .confirm-btn-confirm:hover {
+            background: var(--success-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .confirm-btn-confirm.reject {
+            background: var(--danger);
+        }
+
+        .confirm-btn-confirm.reject:hover {
+            background: #c82333;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+  
+  .nav-menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .nav-menu li {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 10px;
+    text-align: center;
+    margin: 5px 0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* Hover effect for all items */
+  .nav-menu a:hover {
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+
+    .nav-menu a.active {
+      background: #0b1a50;
+      color: white;
+    }
+
+  .nav-menu li a {
+    text-decoration: none;
+    color: #1d1d1d;
+    display: block;
+    padding: 10px;
+    border-radius: 10px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="{% url 'landing_menu' %}">
+                <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+            </a>
+            <div class="menu-title">Navigation</div>
+            <ul class="nav-menu">
+                <li><a href="{% url 'dashboard' %}"> Dashboard</a></li>
+                <li><a href="{% url 'application_request' %}"> Application Request</a></li>
+                <li>
+                    <a href="{% url 'pending_users' %}" class="active" style="position: relative;">
+                         User Approvals
+                        {% if pending_count > 0 %}
+                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+                            {{ pending_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'employees_profile' %}"> Employees Profile</a></li>
+                <li><a href="{% url 'folder' %}"> Folders</a></li>
+                <li><a href="{% url 'settings' %}"> Settings</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>
+                     User Approvals
+                    {% if pending_count > 0 %}
+                    <span class="header-badge">
+                        {{ pending_count }} PENDING
+                    </span>
+                    {% endif %}
+                </h1>
+                <p>Review and manage user registration requests</p>
+            </div>
+
+            <!-- Pending Users Section -->
+            <div class="section-card scrollable">
+                <div class="section-header">
+                    <h2 class="section-title">
+                         Awaiting Approval
+                    </h2>
+                </div>
+
+                {% if pending_users %}
+                    {% for profile in pending_users %}
+                    <div class="user-card">
+                        <div class="user-info">
+                            <div class="user-details">
+                                <div class="user-name">
+                                    <img src="{% static 'Pictures/icons/user.png' %}" alt="User" class="icon-img-large">
+                                    {{ profile.user.username }}
+                                </div>
+                                <div class="user-meta">
+                                    <img src="{% static 'Pictures/icons/email.png' %}" alt="Email" class="icon-img">
+                                    {{ profile.user.email }}
+                                </div>
+                                <div class="user-meta">
+                                    <img src="{% static 'Pictures/icons/calendar.png' %}" alt="Calendar" class="icon-img">
+                                    Registered: {{ profile.submitted_at|date:"F d, Y - g:i A" }}
+                                </div>
+                                <span class="role-badge role-{{ profile.role|slugify }}">
+                                    <img src="{% static 'Pictures/icons/role.png' %}" alt="Role" class="icon-img">
+                                    {{ profile.get_role_display }}
+                                </span>
+                            </div>
+
+                            <div class="action-buttons">
+                                <a href="{% url 'approve_user' profile.user.id %}" 
+                                   class="btn btn-approve"
+                                   onclick="return showConfirmDialog(event, 'approve', '{{ profile.user.username }}', '{{ profile.get_role_display }}')">
+                                    ✓ Approve
+                                </a>
+                                <a href="{% url 'reject_user' profile.user.id %}" 
+                                   class="btn btn-reject"
+                                   onclick="return showConfirmDialog(event, 'reject', '{{ profile.user.username }}', '{{ profile.get_role_display }}')">
+                                    ✕ Reject
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i>✓</i>
+                        <h3>No Pending Approvals</h3>
+                        <p>All user registrations have been processed.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recently Approved Section -->
+            {% if approved_users %}
+            <div class="section-card">
+                <div class="section-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 class="section-title">
+                            ✓ Recently Approved
+                        </h2>
+                        <button class="btn btn-view" onclick="toggleApprovedView()">
+                            <span id="viewBtnIcon">👁️</span>
+                            <span id="viewBtnText">View All</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="approvedUsersList" style="display: none;">
+                    {% for profile in approved_users %}
+                    <div class="approved-user-card">
+                        <div class="approved-info">
+                            <div>
+                                <span class="approved-name">{{ profile.user.username }}</span>
+                                <span class="role-badge role-{{ profile.role|slugify }}">
+                                    {{ profile.get_role_display }}
+                                </span>
+                            </div>
+                            <div class="approved-by">
+                                ✓ Approved by {{ profile.approved_by.username }} on {{ profile.approved_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="approvedPlaceholder" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                    <p style="font-size: 0.9375rem;">Click "View All" to see {{ approved_users|length }} recently approved user{{ approved_users|length|pluralize }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Dialog -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-dialog">
+            <div class="confirm-header">
+                <div class="confirm-icon" id="confirmIcon">✓</div>
+                <div class="confirm-header-text">
+                    <h3 id="confirmTitle">Confirm Action</h3>
+                    <p id="confirmSubtitle">Please review before proceeding</p>
+                </div>
+            </div>
+            <div class="confirm-body">
+                <div class="user-preview">
+                    <div class="user-preview-name">
+                        <img src="{% static 'Pictures/icons/user.png' %}" alt="User" class="icon-img-large">
+                        <span id="confirmUsername">Username</span>
+                    </div>
+                    <span class="user-preview-role" id="confirmRole">Role</span>
+                </div>
+                <div class="confirm-message" id="confirmMessage">
+                    Are you sure you want to proceed with this action?
+                </div>
+                <div class="confirm-warning" id="confirmWarning" style="display: none;">
+                    <p>⚠️ This action cannot be undone!</p>
+                </div>
+            </div>
+            <div class="confirm-footer">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmDialog()">
+                    ✕ Cancel
+                </button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmButton" onclick="proceedAction()">
+                    ✓ Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingUrl = '';
+
+        function showConfirmDialog(event, action, username, role) {
+            event.preventDefault();
+            pendingUrl = event.currentTarget.href;
+
+            const overlay = document.getElementById('confirmOverlay');
+            const icon = document.getElementById('confirmIcon');
+            const title = document.getElementById('confirmTitle');
+            const subtitle = document.getElementById('confirmSubtitle');
+            const usernameEl = document.getElementById('confirmUsername');
+            const roleEl = document.getElementById('confirmRole');
+            const message = document.getElementById('confirmMessage');
+            const warning = document.getElementById('confirmWarning');
+            const confirmBtn = document.getElementById('confirmButton');
+
+            usernameEl.textContent = username;
+            roleEl.textContent = role;
+
+            if (action === 'approve') {
+                icon.textContent = '✓';
+                icon.className = 'confirm-icon approve';
+                title.textContent = 'Approve User Registration';
+                subtitle.textContent = 'Grant access to the system';
+                message.textContent = 'This user will gain access to the DILG system with their assigned role permissions.';
+                warning.style.display = 'none';
+                confirmBtn.className = 'confirm-btn confirm-btn-confirm';
+                confirmBtn.innerHTML = '✓ Approve User';
+            } else {
+                icon.textContent = '✕';
+                icon.className = 'confirm-icon reject';
+                title.textContent = 'Reject User Registration';
+                subtitle.textContent = 'Permanently delete this registration';
+                message.textContent = 'This will permanently delete the user account and all associated data from the system.';
+                warning.style.display = 'block';
+                confirmBtn.className = 'confirm-btn confirm-btn-confirm reject';
+                confirmBtn.innerHTML = '✕ Reject & Delete';
+            }
+
+            overlay.classList.add('show');
+            return false;
+        }
+
+        function closeConfirmDialog() {
+            const overlay = document.getElementById('confirmOverlay');
+            overlay.classList.remove('show');
+            pendingUrl = '';
+        }
+
+        function proceedAction() {
+            if (pendingUrl) {
+                window.location.href = pendingUrl;
+            }
+        }
+
+        // Close dialog when clicking overlay
+        document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmDialog();
+            }
+        });
+
+        // Close dialog with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeConfirmDialog();
+            }
+        });
+
+        // Toggle Approved Users View
+        let isApprovedVisible = false;
+
+        function toggleApprovedView() {
+            isApprovedVisible = !isApprovedVisible;
+            const list = document.getElementById('approvedUsersList');
+            const placeholder = document.getElementById('approvedPlaceholder');
+            const btnIcon = document.getElementById('viewBtnIcon');
+            const btnText = document.getElementById('viewBtnText');
+
+            if (isApprovedVisible) {
+                list.style.display = 'block';
+                placeholder.style.display = 'none';
+                btnIcon.textContent = '👁️‍🗨️';
+                btnText.textContent = 'Hide';
+            } else {
+                list.style.display = 'none';
+                placeholder.style.display = 'block';
+                btnIcon.textContent = '👁️';
+                btnText.textContent = 'View All';
+            }
+        }
+    </script>
+</body>
+</html>

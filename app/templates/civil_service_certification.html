@@ -5,20 +5,1594 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eligibility Certification</title>
-  <link rel="stylesheet" href="{% static 'CSS/dashboard.css' %}">
-  <link rel="stylesheet" href="{% static 'CSS/civil_service_certification.css' %}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
- 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #1e40af;
+      --primary-dark: #1e3a8a;
+      --primary-light: #3b82f6;
+      --secondary: #0891b2;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-image: url("{% static 'Pictures/logo3.png' %}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #0b1a50;
+      min-height: 100vh;
+      padding: 40px 20px;
+      line-height: 1.6;
+      position: relative;
+    }
+    body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+ background: rgba(0, 0, 0.3, 0.5);
+  z-index: -1;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .logo-title {
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .logo-title h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+
+    .logo {
+      width: 100px;
+      object-fit: contain;
+    }
+
+    /* USER PROFILE STYLES */
+    .user-profile {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+
+    }
+
+    .profile-button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: white;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow-md);
+    }
+
+    .profile-button:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .profile-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .profile-name {
+      font-weight: 600;
+      color: var(--gray-900);
+      font-size: 14px;
+    }
+
+    .profile-email {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    .dropdown-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-600);
+      transition: var(--transition);
+    }
+
+    .profile-button.active .dropdown-icon {
+      transform: rotate(180deg);
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-xl);
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+      overflow: hidden;
+    }
+
+    .profile-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--gray-700);
+      text-decoration: none;
+      transition: var(--transition);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .dropdown-item svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-600);
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 4px 0;
+    }
+
+    .dropdown-item.logout {
+      color: var(--danger);
+    }
+
+    .dropdown-item.logout svg {
+      color: var(--danger);
+    }
+    /* END USER PROFILE STYLES */
+
+    .logo-title h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+
+    .logo {
+      width: 100px;
+      object-fit: contain;
+    }
+
+    .breadcrumb {
+    
+      background: white;
+      padding: 20px 32px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s ease-out;
+      position: relative;
+      z-index: 2;
+    }
+
+    .breadcrumb span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      transition: var(--transition);
+    }
+
+    .breadcrumb span.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .breadcrumb .separator {
+      color: var(--gray-300);
+      font-weight: 400;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      padding: 48px;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    /* ... (rest of your existing styles remain the same) ... */
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 12px;
+      }
+
+      .form-card {
+        padding: 32px 24px;
+      }
+
+      .logo-title {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .logo-title h1 {
+        font-size: 24px;
+      }
+
+      .user-profile {
+        position: static;
+        margin-bottom: 20px;
+      }
+
+      .profile-button {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .profile-dropdown {
+        left: 0;
+        right: 0;
+      }
+    }
+
+    .breadcrumb {
+      background: white;
+      padding: 20px 32px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .breadcrumb span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      transition: var(--transition);
+    }
+
+    .breadcrumb span.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .breadcrumb .separator {
+      color: var(--gray-300);
+      font-weight: 400;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      padding: 48px;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .step {
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .step > p {
+      text-align: center;
+      color: var(--gray-600);
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+
+    /* Intro page styling */
+    #intro h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #intro > div > p {
+      font-size: 16px;
+      color: var(--gray-700);
+      text-align: center;
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    #intro h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      margin-top: 24px;
+    }
+
+    #intro ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 40px;
+    }
+
+    #intro ul li {
+      padding: 12px 0 12px 32px;
+      position: relative;
+      color: var(--gray-700);
+      font-size: 15px;
+    }
+
+    #intro ul li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--success);
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="date"],
+    input[type="number"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: inherit;
+      transition: var(--transition);
+      margin-bottom: 20px;
+      background: white;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    input::placeholder {
+      color: var(--gray-400);
+    }
+
+    small {
+      display: block;
+      font-size: 12px;
+      color: var(--gray-600);
+      margin-top: -15px;
+      margin-bottom: 15px;
+    }
+
+    /* Radio options */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .radio-option {
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      background: var(--gray-50);
+    }
+
+    .radio-option:hover {
+      border-color: var(--primary-light);
+      background: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .radio-option input[type="radio"] {
+      margin-right: 12px;
+      width: 20px;
+      height: 20px;
+      margin-bottom: 0;
+    }
+
+    .radio-option h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .radio-option p {
+      font-size: 14px;
+      color: var(--gray-600);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      gap: 16px;
+    }
+
+    .next-btn,
+    .btn-back {
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .next-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    }
+
+    .next-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4);
+    }
+
+    .next-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-back {
+      background: white;
+      color: var(--gray-700);
+      border: 2px solid var(--gray-300);
+    }
+
+    .btn-back:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    /* Signature canvas */
+    .signature-wrapper {
+      margin: 24px 0;
+    }
+
+    .signature-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray-400);
+    }
+
+    .signature-status.has-signature .status-dot {
+      background: var(--success);
+    }
+
+    .signature-info {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: #eff6ff;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--primary-light);
+      margin-bottom: 20px;
+    }
+
+    .signature-info svg {
+      width: 24px;
+      height: 24px;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .signature-info p {
+      font-size: 14px;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .signature-container {
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: white;
+    }
+
+    .signature-pad {
+      position: relative;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      background: white;
+    }
+
+    #signature-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .canvas-placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--gray-400);
+      pointer-events: none;
+      transition: var(--transition);
+    }
+
+    .canvas-placeholder svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .canvas-wrapper.has-signature .canvas-placeholder {
+      opacity: 0;
+    }
+
+    .signature-controls {
+      padding: 16px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .signature-controls button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: white;
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      color: var(--gray-700);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .signature-controls button:hover {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    .signature-controls button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Preview section */
+    .preview-section {
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .preview-item {
+      display: flex;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .preview-item:last-child {
+      border-bottom: none;
+    }
+
+    .preview-label {
+      font-weight: 600;
+      color: var(--gray-700);
+      min-width: 180px;
+      font-size: 14px;
+    }
+
+    .preview-value {
+      color: var(--gray-900);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Success message */
+    .success-message {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      margin: 0 auto 24px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    .success-message h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+
+    .success-message p {
+      font-size: 16px;
+      color: var(--gray-600);
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    /* Certificate styles */
+    .certificate-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      background: var(--gray-100);
+    }
+
+    .certificate-paper {
+      background: white;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      margin: 0 auto;
+      max-width: 900px;
+    }
+
+    .certificate-border {
+      border: 3px solid var(--primary);
+      padding: 40px;
+      position: relative;
+    }
+
+    .certificate-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 20px;
+    }
+
+    .cert-logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    .header-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .header-line {
+      font-size: 13px;
+      color: var(--gray-700);
+      margin: 3px 0;
+      font-weight: 500;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 6px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .form-reference {
+      text-align: right;
+      font-size: 11px;
+      color: var(--gray-600);
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .certificate-title-section {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .cert-main-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+
+    .cert-subtitle {
+      font-size: 16px;
+      color: var(--gray-700);
+      font-weight: 500;
+      margin: 8px 0;
+    }
+
+    .cert-position-type {
+      font-size: 14px;
+      color: var(--gray-600);
+      font-style: italic;
+    }
+
+    .certificate-body {
+      margin: 30px 0;
+      text-align: justify;
+    }
+
+    .cert-text {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--gray-800);
+    }
+
+    .cert-name {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .table-wrapper {
+      margin: 30px 0;
+      overflow-x: auto;
+    }
+
+    .certificate-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .certificate-table th,
+    .certificate-table td {
+      border: 1px solid var(--gray-900);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .table-header {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .table-subheader {
+      background: #e0e7ff;
+      color: var(--primary-dark);
+      font-weight: 600;
+      font-size: 10px;
+    }
+
+    .table-cell {
+      font-size: 12px;
+      color: var(--gray-800);
+    }
+
+    .certificate-footer-text {
+      margin: 30px 0;
+      text-align: justify;
+    }
+
+    .signature-section {
+      margin-top: 40px;
+      text-align: right;
+    }
+
+    .cert-date-text {
+      font-size: 14px;
+      color: var(--gray-800);
+      margin-bottom: 40px;
+    }
+
+    .signature-box {
+      display: inline-block;
+      text-align: center;
+      min-width: 300px;
+    }
+
+    .signature-line {
+      border-bottom: 2px solid var(--gray-900);
+      margin-bottom: 8px;
+      height: 60px;
+    }
+
+    .signatory-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin: 4px 0;
+      text-transform: uppercase;
+    }
+
+    .signatory-position {
+      font-size: 13px;
+      color: var(--gray-700);
+      font-weight: 500;
+    }
+
+    /* Certificate action buttons */
+    .certificate-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .cert-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .cert-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .cert-btn-print {
+      background: var(--primary);
+      color: white;
+    }
+
+    .cert-btn-print:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .cert-btn-download {
+      background: var(--success);
+      color: white;
+    }
+
+    .cert-btn-download:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .cert-btn-back {
+      background: white;
+      color: var(--gray-700);
+      border: 2px solid var(--gray-300);
+    }
+
+    .cert-btn-back:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    /* Popup modal */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .popup-overlay.active {
+      display: flex;
+    }
+
+    .popup-content {
+      background: white;
+      padding: 40px;
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-xl);
+      animation: scaleIn 0.3s ease-out;
+    }
+
+    .popup-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--success);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .popup-message {
+      font-size: 15px;
+      color: var(--gray-700);
+      line-height: 1.7;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .popup-button {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .popup-button:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Professional Modal Styles */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alert Modal Styles */
+.alert-modal .modal-header {
+  padding: 32px 32px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.alert-modal .modal-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.alert-modal.success .modal-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.alert-modal.error .modal-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.alert-modal.warning .modal-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.alert-modal.info .modal-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.alert-modal .modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 8px 0;
+}
+
+.alert-modal .modal-body {
+  padding: 24px 32px;
+}
+
+.alert-modal .modal-message {
+  font-size: 15px;
+  color: var(--gray-700);
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+
+.alert-modal .modal-footer {
+  padding: 20px 32px 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.alert-modal .modal-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+  min-width: 120px;
+}
+
+.alert-modal .modal-btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.alert-modal .modal-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+}
+
+.alert-modal .modal-btn-secondary {
+  background: white;
+  color: var(--gray-700);
+  border: 2px solid var(--gray-300);
+}
+
+.alert-modal .modal-btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+/* Profile Modal Styles */
+.profile-modal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  padding: 32px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  text-align: center;
+  position: relative;
+}
+
+.profile-modal .close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  font-size: 20px;
+}
+
+.profile-modal .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.profile-modal .profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: white;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.profile-modal .profile-name-large {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.profile-modal .profile-email-large {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.profile-modal .modal-body {
+  padding: 32px;
+}
+
+.profile-modal .profile-info-group {
+  margin-bottom: 24px;
+}
+
+.profile-modal .profile-info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.profile-modal .profile-info-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gray-900);
+  padding: 12px 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+
+.profile-modal .profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.profile-modal .stat-item {
+  text-align: center;
+}
+
+.profile-modal .stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.profile-modal .stat-label {
+  font-size: 12px;
+  color: var(--gray-600);
+  margin: 4px 0 0 0;
+}
+
+.profile-modal .modal-footer {
+  padding: 20px 32px 32px;
+  display: flex;
+  gap: 12px;
+}
+
+.profile-modal .modal-footer button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-modal .btn-edit {
+  background: var(--primary);
+  color: white;
+}
+
+.profile-modal .btn-edit:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.profile-modal .btn-logout {
+  background: white;
+  color: var(--danger);
+  border: 2px solid var(--danger);
+}
+
+.profile-modal .btn-logout:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .alert-modal .modal-header,
+  .alert-modal .modal-body,
+  .alert-modal .modal-footer,
+  .profile-modal .modal-body,
+  .profile-modal .modal-footer {
+    padding: 20px;
+  }
+
+  .profile-modal .modal-header {
+    padding: 24px 20px;
+  }
+
+  .profile-modal .profile-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .profile-modal .modal-footer {
+    flex-direction: column;
+  }
+}
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 12px;
+      }
+
+      .form-card {
+        padding: 32px 24px;
+      }
+
+      .logo-title {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .logo-title h1 {
+        font-size: 24px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+
+      .btn-row {
+        flex-direction: column;
+      }
+
+      .btn-row button {
+        width: 100%;
+      }
+
+      .certificate-border {
+        padding: 20px;
+      }
+
+      .certificate-header {
+        flex-direction: column;
+      }
+
+      .cert-logo {
+        width: 60px;
+        height: 60px;
+      }
+
+      .preview-item {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .preview-label {
+        min-width: auto;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .certificate-actions {
+        display: none;
+      }
+
+      .certificate-container {
+        padding: 0;
+        background: white;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="logo-title">
-        <h1>Eligibility Certification</h1>
-        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+      <!-- User Profile Dropdown -->
+      <div class="user-profile">
+        <div class="profile-button" onclick="toggleProfileDropdown()">
+          <div class="profile-avatar" id="userAvatar">U</div>
+          <div class="profile-info">
+            <span class="profile-name" id="userName">User Name</span>
+            <span class="profile-email" id="userEmail">user@email.com</span>
+          </div>
+          <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <button class="dropdown-item" onclick="showProfileModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            My Profile
+          </button>
+           <!-- ✅ DASHBOARD BUTTON - Only show for DILG Staff and Municipal Officers -->
+        {% if is_dilg_staff or is_municipal_officer %}
+        <a href="{% url 'landing_menu' %}" class="dropdown-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          Menu
+        </a>
+        {% endif %}
+          <div class="dropdown-divider"></div>
+        </div>
       </div>
     </div>
 
@@ -37,80 +1611,43 @@
 
     <!-- Form Container -->
     <div class="form-card">
+      <div class="logo-title">
+        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+        <h1>Eligibility Certification</h1>
+      </div>
       <!-- Introduction Page -->
       <div id="intro" class="step active">
-        <div style="text-align: center; padding: 20px 0;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);">
-            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-          </div>
-          <h2 style="color: #1A237E; font-size: 28px; margin-bottom: 15px; font-weight: 700;">Eligibility Certification</h2>
-          <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 30px; max-width: 400px; margin-left: auto; margin-right: auto;">
-            This certification verifies your eligibility to hold a position in the government service. Please select the type of position you are applying for.
-          </p>
-          <div style="background: #f0f4ff; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <h3 style="color: #1A237E; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Requirements:</h3>
-            <ul style="text-align: left; color: #555; font-size: 14px; line-height: 1.8; padding-left: 20px;">
-              <li>Valid Government-issued ID</li>
-              <li>Complete personal information</li>
-              <li>Position details</li>
-              <li>Electronic signature</li>
-            </ul>
-          </div>
+        <p>This certification verifies your eligibility to hold a position in the government service. Please select the type of position you are applying for.</p>
+        <h3>Requirements:</h3>
+        <ul>
+          <li>Valid Government-issued ID</li>
+          <li>Complete personal information</li>
+          <li>Position details</li>
+          <li>Electronic signature</li>
+        </ul>
+        <div style="text-align: center; margin-top: 32px;">
           <button type="button" class="next-btn" onclick="showSelectionPage()">Get Started →</button>
         </div>
       </div>
-
-      <!-- Selection Page: Appointive or Elective -->
+      <!-- Selection Page -->
       <div id="selection" class="step">
         <h2 class="section-title">Select Position Type</h2>
-        <p style="text-align: center; color: #666; margin-bottom: 30px;">
-          Choose whether you are applying for an appointive or elective position
-        </p>
+        <p>Choose whether you are applying for an appointive or elective position</p>
         <div class="radio-group">
-          <div class="radio-option" onclick="selectPositionType('appointive')" style="padding: 25px;">
-            <div style="flex: 1;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </div>
-                <h3 style="margin: 0; color: #1A237E; font-size: 18px; font-weight: 600;">Appointive Position</h3>
-              </div>
-              <p style="color: #666; font-size: 14px; margin: 0 0 0 55px; line-height: 1.5;">
-                For positions filled through appointment by an authorized official
-              </p>
+          <div class="radio-option" onclick="selectPositionType('appointive')">
+            <div>
+              <h3>Appointive Position</h3>
+              <p>For positions filled through appointment by an authorized official</p>
             </div>
           </div>
           
-          <div class="radio-option" onclick="selectPositionType('elective')" style="padding: 25px;">
-            <div style="flex: 1;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                </div>
-                <h3 style="margin: 0; color: #1A237E; font-size: 18px; font-weight: 600;">Elective Position</h3>
-              </div>
-              <p style="color: #666; font-size: 14px; margin: 0 0 0 55px; line-height: 1.5;">
-                For positions filled through electoral process by the people
-              </p>
+          <div class="radio-option" onclick="selectPositionType('elective')">
+            <div>
+              <h3>Elective Position</h3>
+              <p>For positions filled through electoral process by the people</p>
             </div>
           </div>
         </div>
-        
         <div class="btn-row">
           <button type="button" class="btn-back" onclick="showIntroPage()">← Back</button>
           <div></div>
@@ -118,40 +1655,69 @@
       </div>
 
       <!-- Step 1: Personal Information -->
-      <!-- Step 1: Personal Information -->
-<div id="step1" class="step">
-  <h2 class="section-title">Personal Information</h2>
-  <form>
-    <label for="last_name">Last Name</label>
-    <input type="text" id="last_name" name="last_name" required>
+      <div id="step1" class="step">
+        <h2 class="section-title">Personal Information</h2>
+        <form>
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" name="last_name" required>
 
-    <label for="first_name">First Name</label>
-    <input type="text" id="first_name" name="first_name" required>
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" name="first_name" required>
 
-    <label for="middle_initial">Middle Initial</label>
-    <input type="text" id="middle_initial" name="middle_initial">
+          <label for="middle_initial">Middle Initial</label>
+          <input type="text" id="middle_initial" name="middle_initial">
 
-    <!-- NEW BARANGAY FIELD -->
-    <label for="barangay">Barangay</label>
-    <input type="text" id="barangay" name="barangay" placeholder="e.g., Ibabang Iyam, Market View" required>
-    <small style="display: block; margin-top: -15px; margin-bottom: 15px; color: #666; font-size: 12px;">
-      Enter the barangay where you served/are serving
-    </small>
+          <label for="barangay">Barangay</label>
+            <select id="barangay" name="barangay" required>
+              <option value="" disabled selected>Select barangay...</option>
+              <option value="Barangay I">Barangay I</option>
+              <option value="Barangay II">Barangay II</option>
+              <option value="Barangay III">Barangay III</option>
+              <option value="Barangay IV">Barangay IV</option>
+              <option value="Barangay V">Barangay V</option>
+              <option value="Barangay VI">Barangay VI</option>
+              <option value="Barangay VII">Barangay VII</option>
+              <option value="Barangay VIII">Barangay VIII</option>
+              <option value="Barangay IX">Barangay IX</option>
+              <option value="Barangay X">Barangay X</option>
+              <option value="Barangay XI">Barangay XI</option>
+              <option value="Barra">Barra</option>
+              <option value="Bocohan">Bocohan</option>
+              <option value="Cotta">Cotta</option>
+              <option value="Dalahican">Dalahican</option>
+              <option value="Domoit">Domoit</option>
+              <option value="Gulang-Gulang">Gulang-Gulang</option>
+              <option value="Ibabang Dupay">Ibabang Dupay</option>
+              <option value="Ibabang Iyam">Ibabang Iyam</option>
+              <option value="Ibabang Talim">Ibabang Talim</option>
+              <option value="Ilayang Dupay">Ilayang Dupay</option>
+              <option value="Ilayang Iyam">Ilayang Iyam</option>
+              <option value="Ilayang Talim">Ilayang Talim</option>
+              <option value="Isabang">Isabang</option>
+              <option value="Market View">Market View</option>
+              <option value="Mayao Castillo">Mayao Castillo</option>
+              <option value="Mayao Crossing">Mayao Crossing</option>
+              <option value="Mayao Kanluran">Mayao Kanluran</option>
+              <option value="Mayao Parada">Mayao Parada</option>
+              <option value="Mayao Silangan">Mayao Silangan</option>
+              <option value="Ransohan">Ransohan</option>
+              <option value="Salinas">Salinas</option>
+              <option value="Talao-Talao">Talao-Talao</option>
+            </select>
+            <small>Select the barangay where you served/are serving</small>
 
-    <label for="email">Email Address <span style="color: red;">*</span></label>
-    <input type="email" id="email" name="email" placeholder="your-email@gmail.com" required>
-    <small style="display: block; margin-top: -15px; margin-bottom: 15px; color: #666; font-size: 12px;">
-      You will receive status updates at this email address
-    </small>
+          <label for="email">Email Address <span style="color: red;">*</span></label>
+          <input type="email" id="email" name="email" placeholder="your-email@gmail.com" required>
+          <small>You will receive status updates at this email address</small>
 
-    <div class="btn-row">
-      <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
-      <button type="button" id="step1-next" class="next-btn" onclick="nextStep()" disabled>Next →</button>
-    </div>
-  </form>
-</div>
+          <div class="btn-row">
+            <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
+            <button type="button" id="step1-next" class="next-btn" onclick="nextStep()" disabled>Next →</button>
+          </div>
+        </form>
+      </div>
 
-      <!-- Step 2: Position Details (Dynamic based on selection) -->
+      <!-- Step 2: Position Details -->
       <div id="step2" class="step">
         <!-- Appointive Fields -->
         <div id="appointive-fields" style="display: none;">
@@ -211,11 +1777,11 @@
             <div class="radio-group" style="margin-bottom: 20px;">
               <div class="radio-option">
                 <input type="radio" id="term_yes" name="completed_term" value="yes" required>
-                <label for="term_yes">Yes</label>
+                <label for="term_yes" style="display: inline; margin: 0;">Yes</label>
               </div>
               <div class="radio-option">
                 <input type="radio" id="term_no" name="completed_term" value="no">
-                <label for="term_no">No</label>
+                <label for="term_no" style="display: inline; margin: 0;">No</label>
               </div>
             </div>
 
@@ -234,24 +1800,25 @@
 
       <!-- Step 3: Certifier Selection -->
       <div id="step3" class="step">
-        <h2 class="section-title">Certification from the following officials</h2>
+        <h2 class="section-title">Select Certifying Official</h2>
+        <p>Choose the official who will certify your eligibility</p>
         <form>
           <div class="radio-group">
             <div class="radio-option">
               <input type="radio" id="barangay" name="certifier" value="punong_barangay" required>
-              <label for="barangay">Punong Barangay</label>
+              <label for="barangay" style="display: inline; margin: 0;">Punong Barangay</label>
             </div>
             <div class="radio-option">
               <input type="radio" id="municipality" name="certifier" value="dilg_municipality">
-              <label for="municipality">DILG - Municipality</label>
+              <label for="municipality" style="display: inline; margin: 0;">DILG - Municipality</label>
             </div>
             <div class="radio-option">
               <input type="radio" id="provincial" name="certifier" value="dilg_provincial">
-              <label for="provincial">DILG - Provincial</label>
+              <label for="provincial" style="display: inline; margin: 0;">DILG - Provincial</label>
             </div>
             <div class="radio-option">
               <input type="radio" id="regional" name="certifier" value="dilg_regional">
-              <label for="regional">DILG - Regional</label>
+              <label for="regional" style="display: inline; margin: 0;">DILG - Regional</label>
             </div>
           </div>
 
@@ -265,14 +1832,15 @@
       <!-- Step 4: Valid ID Upload -->
       <div id="step4" class="step">
         <h2 class="section-title">Upload Your Valid ID</h2>
+        <p>Please upload clear photos of both sides of your government-issued ID</p>
         <form>
           <label for="idFront">Front Page of ID</label>
           <input type="file" id="idFront" name="idFront" accept="image/*" required>
-          <div id="frontPreview"></div>
+          <div id="frontPreview" style="margin-bottom: 20px;"></div>
 
           <label for="idBack">Back Page of ID</label>
           <input type="file" id="idBack" name="idBack" accept="image/*" required>
-          <div id="backPreview"></div>
+          <div id="backPreview" style="margin-bottom: 20px;"></div>
 
           <div class="btn-row">
             <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
@@ -281,12 +1849,12 @@
         </form>
       </div>
 
-      <!-- Step 5: Signature (IMPROVED VERSION) -->
+      <!-- Step 5: Signature -->
       <div id="step5" class="step">
-        <h2 class="section-title">Draw e-Signature</h2>
+        <h2 class="section-title">Draw Your Signature</h2>
         
         <div class="signature-wrapper">
-          <div class="signature-status">
+          <div class="signature-status" id="signature-status-box">
             <span class="status-dot" id="statusDot"></span>
             <span id="statusText">No signature drawn</span>
           </div>
@@ -334,9 +1902,7 @@
       <!-- Step 6: Preview -->
       <div id="step6" class="step">
         <h2 class="section-title">Review Your Application</h2>
-        <p style="margin-bottom: 20px; color: #555; text-align: center;">
-          Please ensure that each detail is correct before proceeding.
-        </p>
+        <p>Please ensure that each detail is correct before proceeding</p>
         <div class="preview-section">
           <div class="preview-item">
             <div class="preview-label">Full Name:</div>
@@ -353,7 +1919,6 @@
             <div class="preview-value" id="preview-position-type"></div>
           </div>
 
-          <!-- Appointive specific -->
           <div id="preview-appointive" style="display: none;">
             <div class="preview-item">
               <div class="preview-label">Appointing Authority:</div>
@@ -367,13 +1932,8 @@
               <div class="preview-label">Years in Service:</div>
               <div class="preview-value" id="preview-years-service"></div>
             </div>
-            <div class="preview-item">
-              <div class="preview-label">Barangay:</div>
-              <div class="preview-value" id="preview-barangay"></div>
-            </div>
           </div>
 
-          <!-- Elective specific -->
           <div id="preview-elective" style="display: none;">
             <div class="preview-item">
               <div class="preview-label">Position Held:</div>
@@ -388,6 +1948,7 @@
               <div class="preview-value" id="preview-term-completed"></div>
             </div>
           </div>
+
           <div class="preview-item">
             <div class="preview-label">Barangay:</div>
             <div class="preview-value" id="preview-barangay"></div>
@@ -400,11 +1961,12 @@
           
           <div class="preview-item">
             <div class="preview-label">ID Documents:</div>
-            <div class="preview-value" id="preview-ids">Front and Back ID uploaded</div>
+            <div class="preview-value">Front and Back ID uploaded</div>
           </div>
+
           <div class="preview-item">
             <div class="preview-label">Signature:</div>
-            <div class="preview-value" id="preview-signature">Signature captured</div>
+            <div class="preview-value">Signature captured</div>
           </div>
         </div>
 
@@ -420,18 +1982,16 @@
           <div class="success-icon">✓</div>
           <h2>Application Submitted Successfully!</h2>
           <p>Your eligibility certification request has been received and is currently under review.</p>
-          <button type="button" id="view-certificate-btn" onclick="showCertificate()" class="next-btn" style="display: none; margin-bottom: 10px;">View Certificate</button>
+          <button type="button" id="view-certificate-btn" onclick="showCertificate()" class="next-btn" style="margin-bottom: 10px;">View Certificate</button>
           <button type="button" onclick="restartProcess()" class="next-btn">Start New Application</button>
         </div>
       </div>
 
-      <!-- Certificate (Appointive Only) -->
+      <!-- Certificate (Appointive) -->
       <div id="certificate" class="step">
         <div class="certificate-container">
           <div class="certificate-paper">
-            <!-- Decorative Border -->
             <div class="certificate-border">
-              <!-- Header with Logos -->
               <div class="certificate-header">
                 <div class="logo-left">
                   <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="cert-logo">
@@ -443,48 +2003,45 @@
                   <p class="header-line">CITY OF LUCENA</p>
                 </div>
                 <div class="logo-right">
-                  <img src="{% static 'Pictures/logo1.png' %}" alt="Bagong Pilipinas Logo" class="cert-logo">
+                  <img src="{% static 'Pictures/logo1.png' %}" alt="Logo" class="cert-logo">
                 </div>
               </div>
 
               <p class="form-reference">CSC-ERPO BOE Form 1(b). April 2012</p>
 
-              <!-- Certificate Title -->
               <div class="certificate-title-section">
                 <h2 class="cert-main-title">CERTIFICATION</h2>
-                <p class="cert-subtitle">on Services Rendered in the Barangay*</p>
+                <p class="cert-subtitle">on Services Rendered in the Barangay</p>
                 <p class="cert-position-type">(Appointive Official)</p>
               </div>
 
-              <!-- Certificate Body -->
               <div class="certificate-body">
                 <p class="cert-text">
-                  This is to certify that <strong class="cert-name" id="cert-full-name"></strong> has rendered services in Barangay <strong><span id="cert-barangay"></span></strong>, , with the following details:
+                  This is to certify that <strong class="cert-name" id="cert-full-name"></strong> has rendered services in Barangay <strong><span id="cert-barangay"></span></strong>, with the following details:
                 </p>
               </div>
 
-              <!-- Certificate Table -->
               <div class="table-wrapper">
                 <table class="certificate-table">
                   <thead>
                     <tr class="table-header-row">
                       <th rowspan="2" class="table-header">Position Held</th>
-                      <th rowspan="2" class="table-header">Date of Appointment<br/>(start from most recent)</th>
+                      <th rowspan="2" class="table-header">Date of Appointment</th>
                       <th colspan="2" class="table-header">Inclusive Dates of Years Served</th>
                       <th rowspan="2" class="table-header">No. of Years Served</th>
                       <th colspan="3" class="table-header">Appointing Punong Barangay</th>
                     </tr>
                     <tr class="table-subheader-row">
-                      <th class="table-subheader">From<br/>(mm/dd/yyyy)</th>
-                      <th class="table-subheader">To<br/>(mm/dd/yyyy)</th>
+                      <th class="table-subheader">From</th>
+                      <th class="table-subheader">To</th>
                       <th class="table-subheader">Name</th>
                       <th class="table-subheader">Date Elected</th>
-                      <th class="table-subheader">Term of Office<br/>(no. of years)</th>
+                      <th class="table-subheader">Term of Office</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr class="table-data-row">
-                      <td class="table-cell cell-position">Barangay Secretary</td>
+                      <td class="table-cell">Barangay Secretary</td>
                       <td class="table-cell" id="cert-appointment-date"></td>
                       <td class="table-cell" id="cert-date-from"></td>
                       <td class="table-cell" id="cert-date-to"></td>
@@ -497,17 +2054,15 @@
                 </table>
               </div>
 
-              <!-- Footer Text -->
               <div class="certificate-footer-text">
                 <p class="cert-text">
-                  This Certification is issued in support of the evaluation/processing of the application of <strong class="cert-name" id="cert-full-name-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160, in accordance with CSC Resolution No. 13 series of 2012.
+                  This Certification is issued in support of the evaluation/processing of the application of <strong class="cert-name" id="cert-full-name-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160.
                 </p>
               </div>
 
-              <!-- Date and Signature Section -->
               <div class="signature-section">
                 <p class="cert-date-text">
-                   <span id="cert-date"></span>.
+                  Lucena City, Quezon, <span id="cert-date"></span>.
                 </p>
                 
                 <div class="signature-box">
@@ -520,563 +2075,136 @@
           </div>
         </div>
 
-        <!-- Action Buttons -->
         <div class="certificate-actions">
-          <button type="button" onclick="printCertificate()" class="cert-btn cert-btn-print">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-            </svg>
-            Print Certificate
-          </button>
-          <button type="button" onclick="downloadCertificate()" class="cert-btn cert-btn-download">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Download PDF
-          </button>
           <button type="button" onclick="backToSuccess()" class="cert-btn cert-btn-back">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
             Back
           </button>
         </div>
       </div>
-                <!-- Certificate (Elective Official) -->
-          <div id="certificate-elective" class="step">
-            <div class="certificate-container">
-              <div class="certificate-paper">
-                <!-- Decorative Border -->
-                <div class="certificate-border">
-                  <!-- Header with Logos -->
-                  <div class="certificate-header">
-                    <div class="logo-left">
-                      <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="cert-logo">
-                    </div>
-                    <div class="header-text">
-                      <p class="header-line">Republic of the Philippines</p>
-                      <h1 class="header-title">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</h1>
-                      <p class="header-line">REGION IV-A CALABARZON</p>
-                      <p class="header-line">CITY OF LUCENA</p>
-                    </div>
-                    <div class="logo-right">
-                      <img src="{% static 'Pictures/logo1.png' %}" alt="Bagong Pilipinas Logo" class="cert-logo">
-                    </div>
+
+      <!-- Certificate (Elective) -->
+      <div id="certificate-elective" class="step">
+        <div class="certificate-container">
+          <div class="certificate-paper">
+            <div class="certificate-border">
+              <div class="certificate-header">
+                <div class="logo-left">
+                  <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="cert-logo">
+                </div>
+                <div class="header-text">
+                  <p class="header-line">Republic of the Philippines</p>
+                  <h1 class="header-title">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</h1>
+                  <p class="header-line">REGION IV-A CALABARZON</p>
+                  <p class="header-line">CITY OF LUCENA</p>
+                </div>
+                <div class="logo-right">
+                  <img src="{% static 'Pictures/logo1.png' %}" alt="Logo" class="cert-logo">
+                </div>
+              </div>
+
+              <p class="form-reference">CSC-ERPO BOE Form 1(a) (Revised, June 2017)</p>
+
+              <div class="certificate-title-section">
+                <h2 class="cert-main-title">CERTIFICATION</h2>
+                <p class="cert-subtitle">on Services Rendered in the Barangay</p>
+                <p class="cert-position-type">(Elective Official)</p>
+              </div>
+
+              <div class="certificate-body">
+                <p class="cert-text">
+                  This is to certify that <strong class="cert-name" id="cert-elec-full-name"></strong> has rendered services in Barangay <strong><span id="cert-elec-barangay"></span></strong>, with the following details:
+                </p>
+              </div>
+
+              <div class="table-wrapper">
+                <table class="certificate-table">
+                  <thead>
+                    <tr class="table-header-row">
+                      <th class="table-header">Position Held</th>
+                      <th class="table-header">Date of Election</th>
+                      <th class="table-header">Term of Office</th>
+                      <th class="table-header" colspan="2">Inclusive Dates</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="table-data-row">
+                      <td class="table-cell" id="cert-elec-position"></td>
+                      <td class="table-cell" id="cert-elec-election-date"></td>
+                      <td class="table-cell" id="cert-elec-term"></td>
+                      <td class="table-cell" id="cert-elec-date-from"></td>
+                      <td class="table-cell" id="cert-elec-date-to"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="margin: 25px 20px;">
+                <p style="font-size: 14px; margin-bottom: 15px;"><strong>Completed Term of Office?</strong></p>
+                <div style="display: flex; gap: 30px; margin-left: 30px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #1A237E;" id="cert-elec-yes-check"></span>
+                    <span>YES</span>
                   </div>
-
-                  <p class="form-reference">CSC-ERPO BOE Form 1(a) (Revised, June 2017)</p>
-
-                  <!-- Certificate Title -->
-                  <div class="certificate-title-section">
-                    <h2 class="cert-main-title">CERTIFICATION</h2>
-                    <p class="cert-subtitle">on Services Rendered in the Barangay</p>
-                    <p class="cert-position-type">(Elective Official)</p>
-                  </div>
-
-                  <!-- Certificate Body -->
-                  <div class="certificate-body">
-                    <p class="cert-text">
-                      This is to certify that <strong class="cert-name" id="cert-elec-full-name"></strong> has rendered services in Barangay <strong><span id="cert-elec-barangay"></span></strong>, with the following details:
-                    </p>
-                  </div>
-
-                  <!-- Certificate Table for Elective -->
-                  <div class="table-wrapper">
-                    <table class="certificate-table">
-                      <thead>
-                        <tr class="table-header-row">
-                          <th class="table-header">Position Held</th>
-                          <th class="table-header">Date of Election<br/>(mm/dd/yyyy)</th>
-                          <th class="table-header">Term of Office<br/>(no. of years)</th>
-                          <th class="table-header" colspan="2">Inclusive Dates<br/>From (mm/dd/yyyy) - To (mm/dd/yyyy)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr class="table-data-row">
-                          <td class="table-cell cell-position" id="cert-elec-position"></td>
-                          <td class="table-cell" id="cert-elec-election-date"></td>
-                          <td class="table-cell" id="cert-elec-term"></td>
-                          <td class="table-cell" id="cert-elec-date-from"></td>
-                          <td class="table-cell" id="cert-elec-date-to"></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <!-- Completion Status -->
-                  <div style="margin: 25px 20px;">
-                    <p style="font-size: 14px; color: #333; margin-bottom: 15px;">
-                      <strong>Completed Term of Office?</strong> (Please check (√) appropriate box)
-                    </p>
-                    <div style="display: flex; gap: 30px; margin-left: 30px;">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #1A237E; text-align: center; line-height: 14px; font-weight: bold;" id="cert-elec-yes-check"></span>
-                        <span style="font-size: 13px; color: #1a1a1a;">YES</span>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #1A237E; text-align: center; line-height: 14px; font-weight: bold;" id="cert-elec-no-check"></span>
-                        <span style="font-size: 13px; color: #333;">NO, Specify total number of days not served <span style="text-decoration: underline;" id="cert-elec-incomplete-days"></span></span>
-                      </div>
-                    </div>
-                    
-                    <div id="cert-elec-reason-section" style="margin-top: 20px; margin-left: 30px; display: none;">
-                      <p style="font-size: 13px; color: #1a1a1a;">
-                        <strong>Reason for non-completion:</strong>
-                      </p>
-                      <p style="font-size: 13px; color: #333; margin-top: 8px; padding: 10px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #1A237E;" id="cert-elec-reason-text"></p>
-                    </div>
-
-                    <div style="margin-top: 20px; margin-left: 30px;">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #1A237E;"></span>
-                        <span style="font-size: 13px; color: #333;">Assumed under rule on succession.</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Footer Text -->
-                  <div class="certificate-footer-text">
-                    <p class="cert-text">
-                      This Certification is issued in support of the evaluation/processing of the application of <strong class="cert-name" id="cert-elec-full-name-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160, in accordance with CSC Resolution No. <strong>1200865</strong> dated June 14, 2012 and CSC Resolution No. <strong>1601257</strong> dated November 21, 2016.
-                    </p>
-                  </div>
-
-                  <!-- Date and Signature Section -->
-                  <div class="signature-section">
-                    <p class="cert-date-text">
-                      Lucena City, Quezon, <span id="cert-elec-date"></span>.
-                    </p>
-                    
-                    <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <p class="signatory-name">LEANDRO SIPOY GIGANTOCA, CESE</p>
-                      <p class="signatory-position">OIC-HUC Director</p>
-                    </div>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #1A237E;" id="cert-elec-no-check"></span>
+                    <span>NO</span>
                   </div>
                 </div>
               </div>
+
+              <!-- ADD THIS SECTION FOR REASON -->
+              <div id="cert-elec-reason-section" style="display: none; margin-top: 20px; margin-left: 30px;">
+                <p style="font-size: 13px; margin-bottom: 8px;"><strong>Reason for Incomplete Term:</strong></p>
+                <p id="cert-elec-reason-text" style="font-size: 13px; color: var(--gray-700); font-style: italic;"></p>
+              </div>
             </div>
 
-            <!-- Action Buttons -->
-              <button type="button" onclick="backToSuccess()" class="cert-btn cert-btn-back">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Back
-              </button>
+              <div class="certificate-footer-text">
+                <p class="cert-text">
+                  This Certification is issued in support of the evaluation/processing of the application of <strong class="cert-name" id="cert-elec-full-name-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160.
+                </p>
+              </div>
+
+              <div class="signature-section">
+                <p class="cert-date-text">
+                  Lucena City, Quezon, <span id="cert-elec-date"></span>.
+                </p>
+                
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <p class="signatory-name">LEANDRO SIPOY GIGANTOCA, CESE</p>
+                  <p class="signatory-position">OIC-HUC Director</p>
+                </div>
+              </div>
             </div>
           </div>
-      
+        </div>
+
+        <div class="certificate-actions">
+          <!-- <button type="button" onclick="backToSuccess()" class="cert-btn cert-btn-back">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back
+          </button> -->
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Popup Modal -->
   <div id="popup-overlay" class="popup-overlay">
     <div class="popup-content">
-      <h3 class="popup-title">Application Submitted Successfully!</h3>
-      <p class="popup-message">Your eligibility certification request has been received and is currently under review. Please wait for approval from the designated officials. You will be notified once your request has been processed.</p>
+      <h3 class="popup-title">Application Submitted!</h3>
+      <p class="popup-message">Your eligibility certification request has been received and is currently under review.</p>
       <button type="button" class="popup-button" onclick="closePopup()">Done</button>
     </div>
   </div>
 
   <script>
-    // Calculate detailed time difference (years, months, days)
-function calculateDetailedDifference(fromDate, toDate) {
-  if (!fromDate || !toDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
-  
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
-  
-  // Calculate total days
-  const timeDiff = to.getTime() - from.getTime();
-  const totalDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  
-  // Calculate years, months, days
-  let years = to.getFullYear() - from.getFullYear();
-  let months = to.getMonth() - from.getMonth();
-  let days = to.getDate() - from.getDate();
-  
-  // Adjust for negative days
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(to.getFullYear(), to.getMonth(), 0);
-    days += prevMonth.getDate();
-  }
-  
-  // Adjust for negative months
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-  
-  return { years, months, days, totalDays };
-}
-
-// Format the difference as a readable string
-function setupAppointiveCalculations() {
-  console.log('Setting up appointive calculations...');
-  
-  const appointmentFrom = document.getElementById('appointment_from');
-  const appointmentTo = document.getElementById('appointment_to');
-  const yearsInService = document.getElementById('years_in_service');
-  
-  if (!appointmentFrom || !appointmentTo || !yearsInService) {
-    console.log('Appointive fields not found');
-    return;
-  }
-  
-  console.log('Appointive fields found!');
-  
-  // Make the field readonly and show it's auto-calculated
-  yearsInService.setAttribute('readonly', 'readonly');
-  yearsInService.style.backgroundColor = 'var(--bg-tertiary)';
-  yearsInService.style.cursor = 'not-allowed';
-  yearsInService.placeholder = 'Auto-calculated from dates';
-  
-  // Create a helper div to show detailed breakdown
-  let helperDiv = document.getElementById('years-service-helper');
-  if (!helperDiv) {
-    helperDiv = document.createElement('small');
-    helperDiv.id = 'years-service-helper';
-    helperDiv.style.cssText = 'display: block; font-size: 12px; color: #666; margin-top: -15px; margin-bottom: 15px;';
-    yearsInService.parentNode.insertBefore(helperDiv, yearsInService.nextSibling);
-  }
-  
-  const calculate = () => {
-    console.log('Calculating appointive years...', appointmentFrom.value, appointmentTo.value);
-    
-    if (appointmentFrom.value && appointmentTo.value) {
-      const diff = calculateDetailedDifference(appointmentFrom.value, appointmentTo.value);
-      const decimalYears = calculateDecimalYears(appointmentFrom.value, appointmentTo.value);
-      
-      yearsInService.value = decimalYears;
-      helperDiv.innerHTML = `📊 <strong>${formatDifference(diff)}</strong> (${diff.totalDays} total days)`;
-      helperDiv.style.color = '#28a745';
-      
-      console.log('Calculated:', decimalYears, 'years');
-    } else {
-      yearsInService.value = '';
-      helperDiv.textContent = 'Enter both dates to calculate years of service';
-      helperDiv.style.color = '#666';
-    }
-    
-    if (typeof updateStepValidation === 'function') {
-      updateStepValidation();
-    }
-  };
-  
-  // Remove old listeners and add new ones
-  appointmentFrom.removeEventListener('change', calculate);
-  appointmentTo.removeEventListener('change', calculate);
-  appointmentFrom.addEventListener('change', calculate);
-  appointmentTo.addEventListener('change', calculate);
-  
-  // Trigger initial calculation if values exist
-  if (appointmentFrom.value && appointmentTo.value) {
-    calculate();
-  }
-}
-
-
-
-   
-// Initialize all calculations when step 2 is shown
-function initializeDateCalculations() {
-  console.log('Initializing date calculations for position type:', positionType);
-  
-  // Use a longer delay to ensure DOM is fully ready
-  setTimeout(() => {
-    if (positionType === 'appointive') {
-      console.log('Initializing APPOINTIVE calculations...');
-      setupAppointiveCalculations();
-      setupPBYearsCalculation();
-    } else if (positionType === 'elective') {
-      console.log('Initializing ELECTIVE calculations...');
-      setupElectiveCalculations();
-    }
-  }, 200);
-}
-
-function setupPBYearsCalculation() {
-  console.log('Setting up PB years calculation...');
-  
-  const pbDateElected = document.getElementById('pb_date_elected');
-  const pbYearsService = document.getElementById('pb_years_service');
-  
-  if (!pbDateElected || !pbYearsService) {
-    console.log('PB fields not found');
-    return;
-  }
-  
-  console.log('PB fields found!');
-  
-  pbYearsService.setAttribute('readonly', 'readonly');
-  pbYearsService.style.backgroundColor = 'var(--bg-tertiary)';
-  pbYearsService.style.cursor = 'not-allowed';
-  pbYearsService.placeholder = 'Auto-calculated from election date';
-  
-  // Create helper div
-  let helperDiv = document.getElementById('pb-years-helper');
-  if (!helperDiv) {
-    helperDiv = document.createElement('small');
-    helperDiv.id = 'pb-years-helper';
-    helperDiv.style.cssText = 'display: block; font-size: 12px; color: #666; margin-top: -15px; margin-bottom: 15px;';
-    pbYearsService.parentNode.insertBefore(helperDiv, pbYearsService.nextSibling);
-  }
-  
-  const calculate = () => {
-    console.log('Calculating PB years...', pbDateElected.value);
-    
-    if (pbDateElected.value) {
-      const today = new Date().toISOString().split('T')[0];
-      const diff = calculateDetailedDifference(pbDateElected.value, today);
-      const decimalYears = calculateDecimalYears(pbDateElected.value, today);
-      
-      pbYearsService.value = decimalYears;
-      helperDiv.innerHTML = `📊 <strong>${formatDifference(diff)}</strong> (up to today)`;
-      helperDiv.style.color = '#28a745';
-      
-      console.log('PB Calculated:', decimalYears, 'years');
-    } else {
-      pbYearsService.value = '';
-      helperDiv.textContent = 'Enter election date to calculate years in service';
-      helperDiv.style.color = '#666';
-    }
-    
-    if (typeof updateStepValidation === 'function') {
-      updateStepValidation();
-    }
-  };
-  
-  // Remove old listener and add new one
-  pbDateElected.removeEventListener('change', calculate);
-  pbDateElected.addEventListener('change', calculate);
-  
-  // Trigger initial calculation if value exists
-  if (pbDateElected.value) {
-    calculate();
-  }
-}
-    
-
-function setupElectiveCalculations() {
-  console.log('Setting up elective calculations...');
-  
-  const electionFrom = document.getElementById('election_from');
-  const electionTo = document.getElementById('election_to');
-  const termOffice = document.getElementById('term_office');
-  const termYes = document.querySelector('input[name="completed_term"][value="yes"]');
-  const termNo = document.querySelector('input[name="completed_term"][value="no"]');
-  const incompleteReasonText = document.getElementById('incomplete_reason_text');
-  
-  if (!electionFrom || !electionTo) {
-    console.log('Elective fields not found');
-    return;
-  }
-  
-  console.log('Elective fields found!');
-  
-  // Create a hidden field to store days not served
-  let daysNotServedInput = document.getElementById('days_not_served_value');
-  if (!daysNotServedInput) {
-    daysNotServedInput = document.createElement('input');
-    daysNotServedInput.type = 'hidden';
-    daysNotServedInput.id = 'days_not_served_value';
-    daysNotServedInput.name = 'days_not_served';
-    if (termNo && termNo.parentNode) {
-      termNo.parentNode.appendChild(daysNotServedInput);
-    }
-  }
-  
-  // Create a display field for auto-calculated term
-  let termDisplay = document.getElementById('term-auto-display');
-  if (!termDisplay && termOffice) {
-    termDisplay = document.createElement('div');
-    termDisplay.id = 'term-auto-display';
-    termDisplay.style.cssText = 'font-size: 13px; color: #28a745; margin-top: 8px; margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #28a745;';
-    termOffice.parentNode.insertBefore(termDisplay, termOffice.nextSibling);
-  }
-  
-  // Create days not served display
-  let daysNotServedDisplay = document.getElementById('days-not-served-display');
-  if (!daysNotServedDisplay && incompleteReasonText) {
-    daysNotServedDisplay = document.createElement('div');
-    daysNotServedDisplay.id = 'days-not-served-display';
-    daysNotServedDisplay.style.cssText = 'font-size: 13px; color: #dc3545; margin-top: 8px; margin-bottom: 15px; padding: 12px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107; display: none;';
-    incompleteReasonText.parentNode.insertBefore(daysNotServedDisplay, incompleteReasonText.nextSibling);
-  }
-  
-  const calculate = () => {
-    console.log('Calculating elective term...', electionFrom.value, electionTo.value);
-    
-    if (electionFrom.value && electionTo.value) {
-      const diff = calculateDetailedDifference(electionFrom.value, electionTo.value);
-      
-      if (termDisplay) {
-        termDisplay.innerHTML = `
-          <strong>📅 Calculated Term Period:</strong><br>
-          <div style="margin-top: 6px;">
-            • Duration: <strong>${formatDifference(diff)}</strong><br>
-            • Total Days: <strong>${diff.totalDays} days</strong><br>
-            • Years (decimal): <strong>${calculateDecimalYears(electionFrom.value, electionTo.value)} years</strong>
-          </div>
-        `;
-      }
-      
-      // Auto-fill term_office field with formatted date range
-      if (termOffice) {
-        const fromDate = new Date(electionFrom.value);
-        const toDate = new Date(electionTo.value);
-        const fromFormatted = fromDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        const toFormatted = toDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        termOffice.value = `${fromFormatted} - ${toFormatted}`;
-      }
-      
-      console.log('Elective calculation complete');
-    }
-    
-    if (typeof updateStepValidation === 'function') {
-      updateStepValidation();
-    }
-  };
-  
-  // Calculate days not served when "No" is selected
-  const calculateDaysNotServed = () => {
-    console.log('Checking days not served...');
-    
-    // Get fresh reference to ensure we have the current checked state
-    const termNoChecked = document.querySelector('input[name="completed_term"][value="no"]:checked');
-    
-    console.log('termNo checked:', termNoChecked !== null);
-    console.log('electionFrom:', electionFrom.value);
-    console.log('electionTo:', electionTo.value);
-    
-    if (termNoChecked && electionFrom.value && electionTo.value) {
-      const totalDiff = calculateDetailedDifference(electionFrom.value, electionTo.value);
-      const today = new Date();
-      const electionToDate = new Date(electionTo.value);
-      
-      let daysNotServed = 0;
-      let displayMessage = '';
-      
-      if (today < electionToDate) {
-        // Term not yet completed - calculate remaining days
-        const actualDiff = calculateDetailedDifference(electionFrom.value, today.toISOString().split('T')[0]);
-        daysNotServed = totalDiff.totalDays - actualDiff.totalDays;
-        displayMessage = `<span style="color: #dc3545; font-weight: bold; font-size: 16px;">${daysNotServed} days</span>`;
-        
-        if (daysNotServedDisplay) {
-          daysNotServedDisplay.style.display = 'block';
-          daysNotServedDisplay.innerHTML = `
-            <strong>⚠️ Days Not Served Calculation:</strong><br>
-            <div style="margin-top: 6px;">
-              Total term days: <strong>${totalDiff.totalDays}</strong><br>
-              Days served so far: <strong>${actualDiff.totalDays}</strong><br>
-              <strong style="color: #dc3545; font-size: 16px;">Days not served: ${daysNotServed} days</strong><br>
-              <small style="color: #666;">(Term ends ${electionTo.value})</small>
-            </div>
-          `;
-        }
-        
-        console.log('✅ Days not served calculated:', daysNotServed);
-      } else {
-        // Term already completed - show 0 days
-        daysNotServed = 0;
-        displayMessage = `<span style="color: #28a745; font-weight: bold; font-size: 16px;">0 days</span> <small style="color: #666;">(term completed ${electionTo.value})</small>`;
-        
-        if (daysNotServedDisplay) {
-          daysNotServedDisplay.style.display = 'block';
-          daysNotServedDisplay.innerHTML = `
-            <strong style="color: #28a745;">✓ Term Completed</strong><br>
-            <div style="margin-top: 6px;">
-              Total term: <strong>${totalDiff.totalDays} days</strong> (${formatDifference(totalDiff)})<br>
-              Status: <strong style="color: #28a745;">Full term served</strong><br>
-              <small style="color: #666;">Term ended on ${electionTo.value}</small>
-            </div>
-          `;
-        }
-        
-        console.log('✅ Term completed, 0 days not served');
-      }
-      
-      // Update the label with the calculated days
-      const termNoLabel = document.querySelector('label[for="term_no"]');
-      if (termNoLabel) {
-        termNoLabel.innerHTML = `No, Specify total number of days not served ${displayMessage}`;
-      }
-      
-      // Store in hidden field
-      if (daysNotServedInput) {
-        daysNotServedInput.value = daysNotServed;
-      }
-      
-    } else {
-      // Reset label if "No" is not checked or dates missing
-      const termNoLabel = document.querySelector('label[for="term_no"]');
-      if (termNoLabel && !termNoChecked) {
-        termNoLabel.textContent = 'No';
-      } else if (termNoLabel && termNoChecked && (!electionFrom.value || !electionTo.value)) {
-        termNoLabel.innerHTML = 'No, Specify total number of days not served <span style="color: #ff9800; font-style: italic;">(enter dates above first)</span>';
-      }
-      
-      if (daysNotServedDisplay) {
-        daysNotServedDisplay.style.display = 'none';
-      }
-      
-      console.log('⚠️ Cannot calculate: missing data or checkbox not checked');
-    }
-  };
-  
-  // Remove old listeners and add new ones
-  electionFrom.removeEventListener('change', calculate);
-  electionTo.removeEventListener('change', calculate);
-  electionFrom.addEventListener('change', () => {
-    calculate();
-    calculateDaysNotServed();
-  });
-  
-  electionTo.addEventListener('change', () => {
-    calculate();
-    calculateDaysNotServed();
-  });
-  
-  // CRITICAL FIX: Add listeners to BOTH radio buttons
-  if (termNo) {
-    termNo.removeEventListener('change', calculateDaysNotServed);
-    termNo.addEventListener('change', () => {
-      console.log('termNo changed!');
-      // Small delay to ensure DOM is updated
-      setTimeout(calculateDaysNotServed, 50);
-    });
-  }
-  
-  if (termYes) {
-    termYes.removeEventListener('change', () => {});
-    termYes.addEventListener('change', () => {
-      console.log('termYes changed!');
-      if (daysNotServedDisplay) {
-        daysNotServedDisplay.style.display = 'none';
-      }
-      // Reset the "No" label
-      const termNoLabel = document.querySelector('label[for="term_no"]');
-      if (termNoLabel) {
-        termNoLabel.textContent = 'No';
-      }
-    });
-  }
-  
-  // Trigger initial calculation if values exist
-  if (electionFrom.value && electionTo.value) {
-    calculate();
-    // Check if termNo is already checked
-    if (document.querySelector('input[name="completed_term"][value="no"]:checked')) {
-      setTimeout(calculateDaysNotServed, 100);
-    }
-  }
-}
-  
- 
-
     let currentStep = 'intro';
     let positionType = null;
     let formData = {};
@@ -1085,90 +2213,446 @@ function setupElectiveCalculations() {
     let hasSignature = false;
 
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Page loaded, initializing...');
       setupEventListeners();
-      // These functions are called when step2 is shown, not on page load
       showStep('intro');
+      initializeSignatureCanvas();
+      initializeUserProfile();
+    });
+// Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        const profile = document.querySelector('.user-profile');
+        const profileModal = document.getElementById('profileModal');
+        const alertModal = document.getElementById('alertModal');
+        
+        if (profile && !profile.contains(e.target)) {
+          closeProfileDropdown();
+        }
+        
+        // Close modals when clicking outside
+        if (e.target === profileModal) {
+          closeProfileModal();
+        }
+        if (e.target === alertModal) {
+          closeAlertModal();
+        }
+      });
+    
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeProfileModal();
+        closeAlertModal();
+      }
     });
 
-    function showStep(stepId) {
-      console.log('Showing step:', stepId);
+    // ========== ALERT MODAL FUNCTIONS ==========
+    function showAlert(type, title, message) {
+      const modal = document.getElementById('alertModal');
+      const modalContent = modal.querySelector('.alert-modal');
+      const icon = document.getElementById('alertIcon');
+      const titleEl = document.getElementById('alertTitle');
+      const messageEl = document.getElementById('alertMessage');
       
-      // Get elements
-      const container = document.querySelector('.container');
-      const formCard = document.querySelector('.form-card');
+      // Remove all type classes
+      modalContent.classList.remove('success', 'error', 'warning', 'info');
       
-      // Hide all steps first
-      const allSteps = document.querySelectorAll('.step');
-      allSteps.forEach(step => {
+      // Add appropriate type class
+      modalContent.classList.add(type);
+      
+      // Set icon based on type
+      const icons = {
+        'success': '✓',
+        'error': '✕',
+        'warning': '⚠',
+        'info': 'ℹ'
+      };
+      icon.textContent = icons[type] || 'ℹ';
+      
+      // Set content
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+      
+      // Show modal
+      modal.classList.add('active');
+    }
+
+    function closeAlertModal() {
+      const modal = document.getElementById('alertModal');
+      modal.classList.remove('active');
+    }
+
+    // ========== PROFILE MODAL FUNCTIONS ==========
+    function showProfileModal() {
+      const modal = document.getElementById('profileModal');
+      
+      // Populate profile data
+      const firstName = "{{ user.first_name|escapejs }}";
+      const lastName = "{{ user.last_name|escapejs }}";
+      const userEmail = "{{ user.email|escapejs }}";
+      const username = "{{ user.username|escapejs }}";
+      
+      let fullName = '';
+      if (firstName && lastName) {
+        fullName = firstName + ' ' + lastName;
+      } else if (firstName) {
+        fullName = firstName;
+      } else if (lastName) {
+        fullName = lastName;
+      } else {
+        fullName = username || 'User';
+      }
+      
+      const initial = fullName ? fullName.charAt(0).toUpperCase() : 'U';
+      
+      document.getElementById('profileModalAvatar').textContent = initial;
+      document.getElementById('profileModalName').textContent = fullName;
+      document.getElementById('profileModalEmail').textContent = userEmail || 'No email provided';
+      document.getElementById('profileModalUsername').textContent = username;
+      
+      // You can populate role and barangay from Django context if available
+      document.getElementById('profileModalRole').textContent = 'User'; // Replace with actual role
+      document.getElementById('profileModalBarangay').textContent = 'Not assigned'; // Replace with actual barangay
+      
+      // Populate stats (you can fetch these via AJAX)
+      document.getElementById('statLoginCount').textContent = '0';
+      document.getElementById('statRequests').textContent = '0';
+      document.getElementById('statSince').textContent = new Date().getFullYear();
+      
+      modal.classList.add('active');
+      closeProfileDropdown(); // Close dropdown when opening modal
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profileModal');
+      modal.classList.remove('active');
+    }
+
+    function confirmLogout() {
+  // Close the profile modal first
+  closeProfileModal();
+  
+  // Small delay to ensure smooth transition
+  setTimeout(() => {
+    showAlert('warning', 'Confirm Logout', 'Are you sure you want to logout?');
+    
+    // Replace the button in alert modal with Yes/No buttons
+    const footer = document.querySelector('.alert-modal .modal-footer');
+    footer.innerHTML = `
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAlertModal()">
+        Cancel
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="performLogout()">
+        Yes, Logout
+      </button>
+    `;
+  }, 150); // 150ms delay for smooth transition
+}
+
+    function performLogout() {
+      window.location.href = '/logout/';
+    }
+
+    // USER PROFILE FUNCTIONS
+    function initializeUserProfile() {
+      const firstName = "{{ user.first_name|escapejs }}";
+      const lastName = "{{ user.last_name|escapejs }}";
+      const userEmail = "{{ user.email|escapejs }}";
+      const username = "{{ user.username|escapejs }}";
+      
+      let fullName = '';
+      if (firstName && lastName) {
+        fullName = firstName + ' ' + lastName;
+      } else if (firstName) {
+        fullName = firstName;
+      } else if (lastName) {
+        fullName = lastName;
+      } else {
+        fullName = username || 'User';
+      }
+      
+      document.getElementById('userName').textContent = fullName;
+      document.getElementById('userEmail').textContent = userEmail || 'No email provided';
+      
+      const initial = fullName ? fullName.charAt(0).toUpperCase() : 'U';
+      document.getElementById('userAvatar').textContent = initial;
+    }
+
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById('profileDropdown');
+      const button = document.querySelector('.profile-button');
+      
+      dropdown.classList.toggle('active');
+      button.classList.toggle('active');
+    }
+
+    function closeProfileDropdown() {
+      const dropdown = document.getElementById('profileDropdown');
+      const button = document.querySelector('.profile-button');
+      
+      dropdown.classList.remove('active');
+      button.classList.remove('active');
+    }
+
+    function logout() {
+      confirmLogout();
+    }
+
+
+    function setupEventListeners() {
+      // Step 1 validation
+      ['last_name', 'first_name', 'barangay', 'email'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => updateStepValidation());
+      });
+
+      // ADD THIS: Separate handler for barangay dropdown (uses 'change' instead of 'input')
+      const barangaySelect = document.getElementById('barangay');
+      if (barangaySelect) {
+        barangaySelect.addEventListener('change', () => updateStepValidation());
+      }
+
+
+      // Step 2 appointive validation
+      ['appointing_authority', 'appointment_from', 'appointment_to', 'years_in_service', 
+       'appointing_punong_barangay', 'pb_date_elected', 'pb_years_service'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => updateStepValidation());
+      });
+
+      // Step 2 elective validation
+      ['position_held', 'election_from', 'election_to', 'term_office'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => updateStepValidation());
+      });
+
+      // Radio buttons for term completion
+      const termRadios = document.querySelectorAll('input[name="completed_term"]');
+      termRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          const incompleteReason = document.getElementById('incomplete-reason');
+          if (this.value === 'no') {
+            incompleteReason.style.display = 'block';
+          } else {
+            incompleteReason.style.display = 'none';
+          }
+          updateStepValidation();
+        });
+      });
+
+      // Step 3 certifier validation
+      const certifiers = document.querySelectorAll('input[name="certifier"]');
+      certifiers.forEach(radio => {
+        radio.addEventListener('change', () => updateStepValidation());
+      });
+
+      // Step 4 ID uploads
+      const idFront = document.getElementById('idFront');
+      const idBack = document.getElementById('idBack');
+      if (idFront) {
+        idFront.addEventListener('change', function() {
+          previewImage(this, 'frontPreview');
+          updateStepValidation();
+        });
+      }
+      if (idBack) {
+        idBack.addEventListener('change', function() {
+          previewImage(this, 'backPreview');
+          updateStepValidation();
+        });
+      }
+    }
+
+    function previewImage(input, previewId) {
+      const preview = document.getElementById(previewId);
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gray-200);">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function updateStepValidation() {
+      if (currentStep === 'step1') {
+        const lastName = document.getElementById('last_name').value.trim();
+        const firstName = document.getElementById('first_name').value.trim();
+        const barangay = document.getElementById('barangay').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const isValid = lastName && firstName && barangay && email;
+        document.getElementById('step1-next').disabled = !isValid;
+      }
+      
+      if (currentStep === 'step2' && positionType === 'appointive') {
+        const fields = ['appointing_authority', 'appointment_from', 'appointment_to', 
+                       'years_in_service', 'appointing_punong_barangay', 'pb_date_elected', 'pb_years_service'];
+        const isValid = fields.every(id => document.getElementById(id)?.value.trim());
+        document.getElementById('step2-appointive-next').disabled = !isValid;
+      }
+      
+      if (currentStep === 'step2' && positionType === 'elective') {
+        const positionHeld = document.getElementById('position_held').value;
+        const electionFrom = document.getElementById('election_from').value;
+        const electionTo = document.getElementById('election_to').value;
+        const termOffice = document.getElementById('term_office').value.trim();
+        const termCompleted = document.querySelector('input[name="completed_term"]:checked');
+        
+        let isValid = positionHeld && electionFrom && electionTo && termOffice && termCompleted;
+        
+        if (termCompleted?.value === 'no') {
+          const reason = document.getElementById('incomplete_reason_text').value.trim();
+          isValid = isValid && reason;
+        }
+        
+        document.getElementById('step2-elective-next').disabled = !isValid;
+      }
+      
+      if (currentStep === 'step3') {
+        const certifier = document.querySelector('input[name="certifier"]:checked');
+        document.getElementById('step3-next').disabled = !certifier;
+      }
+      
+      if (currentStep === 'step4') {
+        const idFront = document.getElementById('idFront').files.length > 0;
+        const idBack = document.getElementById('idBack').files.length > 0;
+        document.getElementById('step4-next').disabled = !(idFront && idBack);
+      }
+      
+      if (currentStep === 'step5') {
+        document.getElementById('step5-next').disabled = !hasSignature;
+      }
+    }
+
+    function initializeSignatureCanvas() {
+      signatureCanvas = document.getElementById('signature-canvas');
+      if (!signatureCanvas) return;
+      
+      signatureCtx = signatureCanvas.getContext('2d');
+      signatureCtx.strokeStyle = '#1e40af';
+      signatureCtx.lineWidth = 2;
+      signatureCtx.lineCap = 'round';
+      signatureCtx.lineJoin = 'round';
+
+      // Mouse events
+      signatureCanvas.addEventListener('mousedown', startDrawing);
+      signatureCanvas.addEventListener('mousemove', draw);
+      signatureCanvas.addEventListener('mouseup', stopDrawing);
+      signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+      // Touch events
+      signatureCanvas.addEventListener('touchstart', handleTouchStart);
+      signatureCanvas.addEventListener('touchmove', handleTouchMove);
+      signatureCanvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = signatureCanvas.getBoundingClientRect();
+      signatureCtx.beginPath();
+      signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = signatureCanvas.getBoundingClientRect();
+      signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      signatureCtx.stroke();
+      hasSignature = true;
+      updateSignatureStatus();
+      updateStepValidation();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      signatureCanvas.dispatchEvent(mouseEvent);
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      signatureCanvas.dispatchEvent(mouseEvent);
+    }
+
+    function clearSignature() {
+      signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      hasSignature = false;
+      updateSignatureStatus();
+      updateStepValidation();
+    }
+
+    function updateSignatureStatus() {
+      const statusBox = document.getElementById('signature-status-box');
+      const statusText = document.getElementById('statusText');
+      const canvasWrapper = document.getElementById('canvasWrapper');
+      
+      if (hasSignature) {
+        statusBox.classList.add('has-signature');
+        statusText.textContent = 'Signature captured';
+        canvasWrapper.classList.add('has-signature');
+      } else {
+        statusBox.classList.remove('has-signature');
+        statusText.textContent = 'No signature drawn';
+        canvasWrapper.classList.remove('has-signature');
+      }
+    }
+
+     function showStep(stepId) {
+      // Hide ALL steps first
+      document.querySelectorAll('.step').forEach(step => {
         step.classList.remove('active');
+        step.style.display = 'none';
       });
       
-      // Special handling for certificate steps
-      if (stepId === 'certificate' || stepId === 'certificate-elective') {
-        // EXPAND EVERYTHING for certificate view
-        if (container) {
-          container.style.maxWidth = 'none';
-          container.style.width = '100%';
-          container.style.padding = '20px';
-        }
-        if (formCard) {
-          formCard.style.padding = '0';
-          formCard.style.maxWidth = 'none';
-          formCard.style.width = '100%';
-          formCard.style.overflow = 'visible';
-        }
-        
-        // Hide breadcrumb for certificate
-        const breadcrumb = document.getElementById('breadcrumb-nav');
-        if (breadcrumb) {
-          breadcrumb.style.display = 'none';
-        }
-      } else {
-        // RESTORE normal width for other steps
-        if (container) {
-          container.style.maxWidth = '1200px';
-          container.style.width = 'auto';
-          container.style.padding = '20px';
-        }
-        if (formCard) {
-          formCard.style.padding = '48px';
-          formCard.style.maxWidth = '';
-          formCard.style.width = '';
-          formCard.style.overflow = '';
-        }
-        
-        // Handle breadcrumb visibility
-        const breadcrumb = document.getElementById('breadcrumb-nav');
-        if (breadcrumb) {
-          if (stepId === 'intro' || stepId === 'selection' || stepId === 'success') {
-            breadcrumb.style.display = 'none';
-          } else {
-            breadcrumb.style.display = 'flex';
-            updateBreadcrumb();
-          }
-        }
+      // Show only the target step
+      const step = document.getElementById(stepId);
+      if (step) {
+        step.classList.add('active');
+        step.style.display = 'block';
       }
       
-      // Show current step
-      const currentStepEl = document.getElementById(stepId);
       currentStep = stepId;
       
-      if (currentStepEl) {
-        currentStepEl.classList.add('active');
-        currentStepEl.style.display = 'block';
+      // Update breadcrumb
+      updateBreadcrumb();
+      
+      // Show/hide breadcrumb
+      const breadcrumb = document.getElementById('breadcrumb-nav');
+      if (['intro', 'selection', 'success', 'certificate', 'certificate-elective'].includes(stepId)) {
+        breadcrumb.style.display = 'none';
+      } else {
+        breadcrumb.style.display = 'flex';
       }
       
-      // ✅ ADD THIS SECTION HERE - Right after showing the step
-      // Initialize signature canvas ONLY when user reaches step5
-      if (stepId === 'step5' && !signatureCanvas) {
-        console.log('🖊️ Initializing signature canvas for step5');
-        setupSignatureCanvas();
-      }
-      
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      updateStepValidation();
     }
+
+    function updateBreadcrumb() {
+      const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+      steps.forEach((step, index) => {
+        const breadcrumb = document.getElementById(`${step}-breadcrumb`);
+        if (breadcrumb) {
+          if (step === currentStep) {
+            breadcrumb.classList.add('active');
+          } else {
+            breadcrumb.classList.remove('active');
+          }
+        }
+      });
+    }
+
     function showIntroPage() {
       showStep('intro');
     }
@@ -1179,573 +2663,145 @@ function setupElectiveCalculations() {
 
     function selectPositionType(type) {
       positionType = type;
-      formData.positionType = type;
-      console.log('Selected position type:', type);
       showStep('step1');
-    }
-
-    // In civil_service_certification.html or wherever signature is captured
-    const canvas = document.getElementById('signatureCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // Set WHITE background
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Set BLACK pen color
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 2;
-
-    function setupSignatureCanvas() {
-      signatureCanvas = document.getElementById('signature-canvas');
       
-      // ✅ EARLY EXIT if canvas doesn't exist
-      if (!signatureCanvas) {
-        console.log('⚠️ Signature canvas not found - skipping initialization');
-        return;
-      }
-      
-      const canvasWrapper = document.getElementById('canvasWrapper');
-      const placeholder = document.getElementById('placeholder');
-      const statusDot = document.getElementById('statusDot');
-      const statusText = document.getElementById('statusText');
-      
-      signatureCtx = signatureCanvas.getContext('2d');
-      signatureCtx.strokeStyle = '#000';
-      signatureCtx.lineWidth = 2.5;
-      signatureCtx.lineCap = 'round';
-      signatureCtx.lineJoin = 'round';
-
-      signatureCanvas.addEventListener('mousedown', startDrawing);
-      signatureCanvas.addEventListener('mousemove', draw);
-      signatureCanvas.addEventListener('mouseup', stopDrawing);
-      signatureCanvas.addEventListener('mouseout', stopDrawing);
-
-      signatureCanvas.addEventListener('touchstart', handleTouch);
-      signatureCanvas.addEventListener('touchmove', handleTouch);
-      signatureCanvas.addEventListener('touchend', stopDrawing);
-
-      function startDrawing(e) {
-        isDrawing = true;
-        const rect = signatureCanvas.getBoundingClientRect();
-        signatureCtx.beginPath();
-        signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        
-        if (canvasWrapper) canvasWrapper.classList.add('active');
-        if (placeholder) placeholder.classList.add('hidden');
-      }
-
-      function draw(e) {
-        if (!isDrawing) return;
-        const rect = signatureCanvas.getBoundingClientRect();
-        signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-        signatureCtx.stroke();
-        hasSignature = true;
-        updateSignatureStatus();
-      }
-
-      function stopDrawing() {
-        if (isDrawing) {
-          isDrawing = false;
-          if (canvasWrapper) canvasWrapper.classList.remove('active');
-        }
-      }
-
-      function handleTouch(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
-                                        e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        signatureCanvas.dispatchEvent(mouseEvent);
-      }
-
-      function updateSignatureStatus() {
-        if (statusDot && statusText) {
-          if (hasSignature) {
-            statusDot.classList.add('active');
-            statusText.textContent = 'Signature captured';
-          } else {
-            statusDot.classList.remove('active');
-            statusText.textContent = 'No signature drawn';
-          }
-        }
-        updateStepValidation();
-      }
-    }
-
-    function clearSignature() {
-      if (signatureCtx) {
-        signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-        hasSignature = false;
-        
-        const placeholder = document.getElementById('placeholder');
-        if (placeholder) placeholder.classList.remove('hidden');
-        
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        if (statusDot) statusDot.classList.remove('active');
-        if (statusText) statusText.textContent = 'No signature drawn';
-        
-        updateStepValidation();
-      }
-    }
- 
-
-    function setupEventListeners() {
-      ['last_name', 'first_name', 'middle_initial', 'barangay', 'email'].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.addEventListener('input', updateStepValidation);
-    }
-  });
-
-      ['appointing_authority', 'appointment_from', 'appointment_to', 'years_in_service', 
-       'appointing_punong_barangay', 'pb_date_elected', 'pb_years_service'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.addEventListener('input', updateStepValidation);
-        }
-      });
-
-      ['position_held', 'election_from', 'election_to', 'term_office'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.addEventListener('input', updateStepValidation);
-        }
-      });
-
-      document.querySelectorAll('input[name="completed_term"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-          document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
-          this.closest('.radio-option').classList.add('selected');
-          
-          const reasonDiv = document.getElementById('incomplete-reason');
-          if (this.value === 'no') {
-            reasonDiv.style.display = 'block';
-          } else {
-            reasonDiv.style.display = 'none';
-          }
-          updateStepValidation();
-        });
-      });
-
-      document.querySelectorAll('input[name="certifier"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-          document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
-          this.closest('.radio-option').classList.add('selected');
-          updateStepValidation();
-        });
-      });
-
-      const idFront = document.getElementById('idFront');
-      const idBack = document.getElementById('idBack');
-      
-      if (idFront) {
-        idFront.addEventListener('change', function() {
-          handleFileUpload(this, 'frontPreview');
-        });
-      }
-      
-      if (idBack) {
-        idBack.addEventListener('change', function() {
-          handleFileUpload(this, 'backPreview');
-        });
-      }
-    }
-
-    function handleFileUpload(input, previewId) {
-      const file = input.files[0];
-      const preview = document.getElementById(previewId);
-      
-      if (file && preview) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          preview.innerHTML = `<img src="${e.target.result}" alt="ID Preview" class="file-preview">`;
-        };
-        reader.readAsDataURL(file);
-      }
-      updateStepValidation();
-    }
-
-    function updateStepValidation() {
-       const step1Next = document.getElementById('step1-next');
-  if (step1Next) {
-    const lastName = document.getElementById('last_name')?.value?.trim() || '';
-    const firstName = document.getElementById('first_name')?.value?.trim() || '';
-    const barangay = document.getElementById('barangay')?.value?.trim() || '';
-    const email = document.getElementById('email')?.value?.trim() || '';
-    // Now requires barangay too
-    step1Next.disabled = !lastName || !firstName || !barangay || !email;
-  }
-
-      if (positionType === 'appointive') {
-        const step2AppointiveNext = document.getElementById('step2-appointive-next');
-        if (step2AppointiveNext) {
-          const authority = document.getElementById('appointing_authority')?.value?.trim() || '';
-          const from = document.getElementById('appointment_from')?.value || '';
-          const to = document.getElementById('appointment_to')?.value || '';
-          const years = document.getElementById('years_in_service')?.value || '';
-          const pbName = document.getElementById('appointing_punong_barangay')?.value?.trim() || '';
-          const pbDate = document.getElementById('pb_date_elected')?.value || '';
-          const pbYears = document.getElementById('pb_years_service')?.value || '';
-          
-          step2AppointiveNext.disabled = !authority || !from || !to || !years || !pbName || !pbDate || !pbYears;
-        }
-      } else if (positionType === 'elective') {
-        const step2ElectiveNext = document.getElementById('step2-elective-next');
-        if (step2ElectiveNext) {
-          const position = document.getElementById('position_held')?.value?.trim() || '';
-          const from = document.getElementById('election_from')?.value || '';
-          const to = document.getElementById('election_to')?.value || '';
-          const term = document.getElementById('term_office')?.value?.trim() || '';
-          const completed = document.querySelector('input[name="completed_term"]:checked');
-          
-          let isValid = position && from && to && term && completed;
-          
-          if (completed && completed.value === 'no') {
-            const reason = document.getElementById('incomplete_reason_text')?.value?.trim() || '';
-            isValid = isValid && reason;
-          }
-          
-          step2ElectiveNext.disabled = !isValid;
-        }
-      }
-
-      const step3Next = document.getElementById('step3-next');
-      if (step3Next) {
-        const certifier = document.querySelector('input[name="certifier"]:checked');
-        step3Next.disabled = !certifier;
-      }
-
-      const step4Next = document.getElementById('step4-next');
-      if (step4Next) {
-        const idFront = document.getElementById('idFront')?.files[0];
-        const idBack = document.getElementById('idBack')?.files[0];
-        step4Next.disabled = !idFront || !idBack;
-      }
-
-      const step5Next = document.getElementById('step5-next');
-      if (step5Next) {
-        step5Next.disabled = !hasSignature;
-      }
-    }
-
-    function updateBreadcrumb() {
-      const stepMapping = {
-        'step1': 1,
-        'step2': 2,
-        'step3': 3,
-        'step4': 4,
-        'step5': 5,
-        'step6': 6
-      };
-      
-      const currentStepNum = stepMapping[currentStep];
-      
-      for (let i = 1; i <= 5; i++) {
-        const breadcrumb = document.getElementById(`step${i}-breadcrumb`);
-        if (breadcrumb) {
-          breadcrumb.classList.remove('active', 'completed');
-          
-          if (i < currentStepNum) {
-            breadcrumb.classList.add('completed');
-          } else if (i === currentStepNum) {
-            breadcrumb.classList.add('active');
-          }
-        }
+      // Show appropriate fields in step2
+      if (type === 'appointive') {
+        document.getElementById('appointive-fields').style.display = 'block';
+        document.getElementById('elective-fields').style.display = 'none';
+      } else {
+        document.getElementById('appointive-fields').style.display = 'none';
+        document.getElementById('elective-fields').style.display = 'block';
       }
     }
 
     function nextStep() {
-      console.log('Next step clicked, current step:', currentStep);
+      const stepMap = {
+        'step1': 'step2',
+        'step2': 'step3',
+        'step3': 'step4',
+        'step4': 'step5',
+        'step5': 'step6'
+      };
       
-      saveStepData();
-      
-      const stepOrder = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
-      const currentIndex = stepOrder.indexOf(currentStep);
-      
-      if (currentIndex < stepOrder.length - 1) {
-        const nextStepId = stepOrder[currentIndex + 1];
-        
-        if (nextStepId === 'step2') {
-  if (positionType === 'appointive') {
-    document.getElementById('appointive-fields').style.display = 'block';
-    document.getElementById('elective-fields').style.display = 'none';
-  } else if (positionType === 'elective') {
-    document.getElementById('appointive-fields').style.display = 'none';
-    document.getElementById('elective-fields').style.display = 'block';
-  }
-  initializeDateCalculations();  // ADD this single line
-}
-        
-        if (nextStepId === 'step6') {
-          updatePreview();
-        }
-        
-        showStep(nextStepId);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (stepMap[currentStep]) {
+        showStep(stepMap[currentStep]);
       }
     }
 
     function prevStep() {
-      console.log('Previous step clicked, current step:', currentStep);
-      
-      const stepOrder = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
-      const currentIndex = stepOrder.indexOf(currentStep);
-      
-      if (currentIndex > 0) {
-        const prevStepId = stepOrder[currentIndex - 1];
-        showStep(prevStepId);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (currentStep === 'step1') {
-        showStep('selection');
-      }
-    }
-
-    function saveStepData() {
-      switch(currentStep) {
-        case 'step1':
-          formData.last_name = document.getElementById('last_name')?.value?.trim() || '';
-          formData.first_name = document.getElementById('first_name')?.value?.trim() || '';
-          formData.middle_initial = document.getElementById('middle_initial')?.value?.trim() || '';
-          formData.barangay = document.getElementById('barangay')?.value?.trim() || ''; // NEW
-          formData.email = document.getElementById('email')?.value?.trim() || '';
-          console.log('Saved step 1 data:', formData);
-          break;
-          
-        case 'step2':
-          if (positionType === 'appointive') {
-            formData.appointing_authority = document.getElementById('appointing_authority')?.value?.trim() || '';
-            formData.appointment_from = document.getElementById('appointment_from')?.value || '';
-            formData.appointment_to = document.getElementById('appointment_to')?.value || '';
-            formData.years_in_service = document.getElementById('years_in_service')?.value || '';
-            formData.appointing_punong_barangay = document.getElementById('appointing_punong_barangay')?.value?.trim() || '';
-            formData.pb_date_elected = document.getElementById('pb_date_elected')?.value || '';
-            formData.pb_years_service = document.getElementById('pb_years_service')?.value || '';
-          } else if (positionType === 'elective') {
-            formData.position_held = document.getElementById('position_held')?.value?.trim() || '';
-            formData.election_from = document.getElementById('election_from')?.value || '';
-            formData.election_to = document.getElementById('election_to')?.value || '';
-            formData.term_office = document.getElementById('term_office')?.value?.trim() || '';
-            const completedTerm = document.querySelector('input[name="completed_term"]:checked');
-            formData.completed_term = completedTerm ? completedTerm.value : '';
-            formData.incomplete_reason = document.getElementById('incomplete_reason_text')?.value?.trim() || '';
-          }
-          console.log('Saved step 2 data:', formData);
-          break;
-          
-        case 'step3':
-          const certifier = document.querySelector('input[name="certifier"]:checked');
-          formData.certifier = certifier ? certifier.value : '';
-          console.log('Saved step 3 data:', formData);
-          break;
-          
-        case 'step4':
-          formData.idFront = document.getElementById('idFront')?.files[0];
-          formData.idBack = document.getElementById('idBack')?.files[0];
-          console.log('Saved step 4 data:', formData);
-          break;
-          
-        case 'step5':
-          if (hasSignature && signatureCanvas) {
-            formData.signature = signatureCanvas.toDataURL();
-          }
-          console.log('Saved step 5 data:', formData);
-          break;
-      }
-      console.log('Complete formData:', formData);
-    }
-
-    function updatePreview() {
-      console.log('Updating preview with formData:', formData);
-      
-      const fullName = `${formData.first_name} ${formData.middle_initial ? formData.middle_initial + ' ' : ''}${formData.last_name}`;
-      const previewName = document.getElementById('preview-name');
-      if (previewName) {
-        previewName.textContent = fullName;
-      }
-      const previewBarangay = document.getElementById('preview-barangay');
-        if (previewBarangay) {
-          previewBarangay.textContent = formData.barangay || 'Not provided';
-        }
-      
-      const previewEmail = document.getElementById('preview-email');
-      if (previewEmail) {
-        previewEmail.textContent = formData.email || 'Not provided';
-      }
-
-      const previewPositionType = document.getElementById('preview-position-type');
-      if (previewPositionType) {
-        previewPositionType.textContent = positionType === 'appointive' ? 'Appointive Position' : 'Elective Position';
-      }
-
-      const appointivePreview = document.getElementById('preview-appointive');
-      const electivePreview = document.getElementById('preview-elective');
-      
-      if (positionType === 'appointive') {
-        appointivePreview.style.display = 'block';
-        electivePreview.style.display = 'none';
-        
-        document.getElementById('preview-appointing-authority').textContent = formData.appointing_authority || 'Not provided';
-        document.getElementById('preview-appointment-period').textContent = 
-          `${formData.appointment_from || ''} to ${formData.appointment_to || ''}`;
-        document.getElementById('preview-years-service').textContent = formData.years_in_service || 'Not provided';
-      } else if (positionType === 'elective') {
-        appointivePreview.style.display = 'none';
-        electivePreview.style.display = 'block';
-        
-        document.getElementById('preview-position-held').textContent = formData.position_held || 'Not provided';
-        document.getElementById('preview-election-period').textContent = 
-          `${formData.election_from || ''} to ${formData.election_to || ''}`;
-        document.getElementById('preview-term-completed').textContent = 
-          formData.completed_term === 'yes' ? 'Yes' : `No (${formData.incomplete_reason || 'No reason provided'})`;
-      }
-
-      const certifierText = {
-        'punong_barangay': 'Punong Barangay',
-        'dilg_municipality': 'DILG - Municipality',
-        'dilg_provincial': 'DILG - Provincial',
-        'dilg_regional': 'DILG - Regional'
+      const stepMap = {
+        'step1': 'selection',
+        'step2': 'step1',
+        'step3': 'step2',
+        'step4': 'step3',
+        'step5': 'step4',
+        'step6': 'step5'
       };
       
-      const previewCertifier = document.getElementById('preview-certifier');
-      if (previewCertifier) {
-        previewCertifier.textContent = certifierText[formData.certifier] || 'Not selected';
-      }
-
-      if (formData.signature) {
-        const previewSignature = document.getElementById('preview-signature');
-        if (previewSignature) {
-          previewSignature.innerHTML = `<img src="${formData.signature}" alt="Signature" class="file-preview" style="max-height: 60px;">`;
-        }
+      if (stepMap[currentStep]) {
+        showStep(stepMap[currentStep]);
       }
     }
 
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    }
-// COUNTING
-function calculateDetailedDifference(fromDate, toDate) {
-  if (!fromDate || !toDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
+   function finishProcess() {
+  console.log('Finish process started');
   
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
+  // Populate preview first
+  const lastName = document.getElementById('last_name').value;
+  const firstName = document.getElementById('first_name').value;
+  const middleInitial = document.getElementById('middle_initial').value;
+  const fullName = `${firstName} ${middleInitial ? middleInitial + '.' : ''} ${lastName}`;
   
-  // Calculate total days
-  const timeDiff = to.getTime() - from.getTime();
-  const totalDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  // Store data in formData
+  formData.lastName = lastName;
+  formData.firstName = firstName;
+  formData.middleInitial = middleInitial;
+  formData.barangay = document.getElementById('barangay').value;
+  formData.email = document.getElementById('email').value;
   
-  // Calculate years, months, days
-  let years = to.getFullYear() - from.getFullYear();
-  let months = to.getMonth() - from.getMonth();
-  let days = to.getDate() - from.getDate();
+  // Update preview displays
+  document.getElementById('preview-name').textContent = fullName;
+  document.getElementById('preview-email').textContent = formData.email;
+  document.getElementById('preview-position-type').textContent = positionType === 'appointive' ? 'Appointive Position' : 'Elective Position';
+  document.getElementById('preview-barangay').textContent = formData.barangay;
   
-  // Adjust for negative days
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(to.getFullYear(), to.getMonth(), 0);
-    days += prevMonth.getDate();
+  if (positionType === 'appointive') {
+    document.getElementById('preview-appointive').style.display = 'block';
+    document.getElementById('preview-elective').style.display = 'none';
+    document.getElementById('preview-appointing-authority').textContent = document.getElementById('appointing_authority').value;
+    document.getElementById('preview-appointment-period').textContent = 
+      `${document.getElementById('appointment_from').value} to ${document.getElementById('appointment_to').value}`;
+    document.getElementById('preview-years-service').textContent = document.getElementById('years_in_service').value;
+  } else {
+    document.getElementById('preview-appointive').style.display = 'none';
+    document.getElementById('preview-elective').style.display = 'block';
+    document.getElementById('preview-position-held').textContent = document.getElementById('position_held').value;
+    document.getElementById('preview-election-period').textContent = 
+      `${document.getElementById('election_from').value} to ${document.getElementById('election_to').value}`;
+    const termCompleted = document.querySelector('input[name="completed_term"]:checked')?.value;
+    document.getElementById('preview-term-completed').textContent = termCompleted === 'yes' ? 'Yes' : 'No';
   }
   
-  // Adjust for negative months
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
+  const certifier = document.querySelector('input[name="certifier"]:checked');
+  const certifierLabels = {
+    'punong_barangay': 'Punong Barangay',
+    'dilg_municipality': 'DILG - Municipality',
+    'dilg_provincial': 'DILG - Provincial',
+    'dilg_regional': 'DILG - Regional'
+  };
+  document.getElementById('preview-certifier').textContent = certifierLabels[certifier.value];
   
-  return { years, months, days, totalDays };
-}
-
-function formatDifference(diff) {
-  const parts = [];
-  if (diff.years > 0) parts.push(`${diff.years} year${diff.years !== 1 ? 's' : ''}`);
-  if (diff.months > 0) parts.push(`${diff.months} month${diff.months !== 1 ? 's' : ''}`);
-  if (diff.days > 0) parts.push(`${diff.days} day${diff.days !== 1 ? 's' : ''}`);
-  
-  return parts.length > 0 ? parts.join(', ') : '0 days';
-}
-
-// Calculate decimal years for service
-function calculateDecimalYears(fromDate, toDate) {
-  if (!fromDate || !toDate) return '0.0';
-  
-  const diff = calculateDetailedDifference(fromDate, toDate);
-  const decimalYears = diff.years + (diff.months / 12) + (diff.days / 365);
-  
-  return decimalYears.toFixed(1);
-}
-
-
-
-
-
-
-    function finishProcess() {
-      console.log('Finish process started');
-      
-      saveStepData();
-      
-      const submitData = new FormData();
-      submitData.append('last_name', formData.last_name || '');
-      submitData.append('first_name', formData.first_name || '');
-      submitData.append('middle_initial', formData.middle_initial || '');
-      submitData.append('barangay', formData.barangay || ''); // NEW
-      submitData.append('email', formData.email || '');
-      submitData.append('position_type', positionType || '');
+  // 🔥 NOW SUBMIT TO BACKEND (This was missing!)
+  const submitData = new FormData();
+  submitData.append('last_name', formData.lastName || '');
+  submitData.append('first_name', formData.firstName || '');
+  submitData.append('middle_initial', formData.middleInitial || '');
+  submitData.append('barangay', formData.barangay || '');
+  submitData.append('email', formData.email || '');
+  submitData.append('position_type', positionType || '');
 
   if (positionType === 'appointive') {
-    submitData.append('appointing_authority', formData.appointing_authority || '');
-    submitData.append('appointment_from', formData.appointment_from || '');
-    submitData.append('appointment_to', formData.appointment_to || '');
-    submitData.append('years_in_service', formData.years_in_service || '');
-    submitData.append('appointing_punong_barangay', formData.appointing_punong_barangay || '');
-    submitData.append('pb_date_elected', formData.pb_date_elected || '');
-    submitData.append('pb_years_service', formData.pb_years_service || '');
+    submitData.append('appointing_authority', document.getElementById('appointing_authority').value || '');
+    submitData.append('appointment_from', document.getElementById('appointment_from').value || '');
+    submitData.append('appointment_to', document.getElementById('appointment_to').value || '');
+    submitData.append('years_in_service', document.getElementById('years_in_service').value || '');
+    submitData.append('appointing_punong_barangay', document.getElementById('appointing_punong_barangay').value || '');
+    submitData.append('pb_date_elected', document.getElementById('pb_date_elected').value || '');
+    submitData.append('pb_years_service', document.getElementById('pb_years_service').value || '');
   }
   
-  // In finishProcess() function around line 1440
-if (positionType === 'elective') {
-  submitData.append('position_held', formData.position_held || '');
-  submitData.append('election_from', formData.election_from || '');
-  submitData.append('election_to', formData.election_to || '');
-  submitData.append('term_office', formData.term_office || '');
-  submitData.append('completed_term', formData.completed_term || '');
-  submitData.append('incomplete_reason', formData.incomplete_reason || '');
-  
-  // 🔥 ADD: Submit days_not_served from the hidden field
-  const daysNotServedValue = document.getElementById('days_not_served_value')?.value || '0';
-  submitData.append('days_not_served', daysNotServedValue);
-}
-  
-  submitData.append('certifier', formData.certifier || '');
-  
-  if (formData.idFront) {
-    submitData.append('id_front', formData.idFront);
-  }
-  if (formData.idBack) {
-    submitData.append('id_back', formData.idBack);
+  if (positionType === 'elective') {
+    submitData.append('position_held', document.getElementById('position_held').value || '');
+    submitData.append('election_from', document.getElementById('election_from').value || '');
+    submitData.append('election_to', document.getElementById('election_to').value || '');
+    submitData.append('term_office', document.getElementById('term_office').value || '');
+    const completedTerm = document.querySelector('input[name="completed_term"]:checked');
+    submitData.append('completed_term', completedTerm ? completedTerm.value : '');
+    submitData.append('incomplete_reason', document.getElementById('incomplete_reason_text')?.value || '');
+    
+    // Add days_not_served
+    const daysNotServedValue = document.getElementById('days_not_served_value')?.value || '0';
+    submitData.append('days_not_served', daysNotServedValue);
   }
   
+  submitData.append('certifier', certifier.value || '');
+  
+  // Add files
+  const idFront = document.getElementById('idFront').files[0];
+  const idBack = document.getElementById('idBack').files[0];
+  
+  if (idFront) submitData.append('id_front', idFront);
+  if (idBack) submitData.append('id_back', idBack);
+  
+  // Disable submit button
   const finishBtn = document.querySelector('#step6 .next-btn');
   if (finishBtn) {
     finishBtn.textContent = 'Submitting...';
     finishBtn.disabled = true;
   }
   
+  // Convert signature canvas to blob and submit
   if (signatureCanvas && hasSignature) {
     signatureCanvas.toBlob(function(blob) {
       if (blob) {
@@ -1763,6 +2819,7 @@ if (positionType === 'elective') {
         return;
       }
       
+      // 🔥 THE CRITICAL PART - Submit to Django backend
       fetch('/submit_eligibility_request/', {
         method: 'POST',
         body: submitData,
@@ -1780,29 +2837,28 @@ if (positionType === 'elective') {
       .then(data => {
         console.log('Response data:', data);
         if (data.success) {
+          // Show success page
           showStep('success');
           
-          // Show certificate button for BOTH types now
+          // Show certificate button
           document.getElementById('view-certificate-btn').style.display = 'block';
           
-          for (let i = 1; i <= 5; i++) {
-            const breadcrumb = document.getElementById(`step${i}-breadcrumb`);
-            if (breadcrumb) {
-              breadcrumb.classList.remove('active');
-              breadcrumb.classList.add('completed');
-            }
+          // Populate certificate data
+          if (positionType === 'appointive') {
+            populateCertificate();
+          } else {
+            populateElectiveCertificate();
           }
-
-          setTimeout(() => {
-            showPopup();
-          }, 1000);
+          
+          // Use new alert modal
+          showAlert('success', 'Success!', 'Application submitted successfully! Check your email for confirmation.');
         } else {
-          alert('Error submitting application: ' + (data.error || 'Please try again.'));
+          showAlert('error', 'Submission Failed', data.error || 'Please try again.');
         }
       })
       .catch(error => {
         console.error('Fetch error:', error);
-        alert('Error submitting application. Please check your connection and try again.');
+        showAlert('error', 'Connection Error', 'Please check your connection and try again.');
       })
       .finally(() => {
         if (finishBtn) {
@@ -1820,435 +2876,601 @@ if (positionType === 'elective') {
   }
 }
 
-    function showPopup() {
-      const popup = document.getElementById('popup-overlay');
-      if (popup) {
-        popup.classList.add('active');
-        document.body.style.overflow = 'hidden';
+// Helper function to get CSRF token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+    function populateCertificate(fullName) {
+      document.getElementById('cert-full-name').textContent = fullName;
+      document.getElementById('cert-full-name-2').textContent = fullName;
+      document.getElementById('cert-barangay').textContent = document.getElementById('barangay').value;
+      document.getElementById('cert-appointment-date').textContent = document.getElementById('appointment_from').value;
+      document.getElementById('cert-date-from').textContent = document.getElementById('appointment_from').value;
+      document.getElementById('cert-date-to').textContent = document.getElementById('appointment_to').value;
+      document.getElementById('cert-years-served').textContent = document.getElementById('years_in_service').value;
+      document.getElementById('cert-pb-name').textContent = document.getElementById('appointing_punong_barangay').value;
+      document.getElementById('cert-pb-date').textContent = document.getElementById('pb_date_elected').value;
+      document.getElementById('cert-pb-years').textContent = document.getElementById('pb_years_service').value;
+      
+      const today = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('cert-date').textContent = today.toLocaleDateString('en-US', options);
+    }
+
+    function populateElectiveCertificate(fullName) {
+      document.getElementById('cert-elec-full-name').textContent = fullName;
+      document.getElementById('cert-elec-full-name-2').textContent = fullName;
+      document.getElementById('cert-elec-barangay').textContent = document.getElementById('barangay').value;
+      document.getElementById('cert-elec-position').textContent = document.getElementById('position_held').value;
+      document.getElementById('cert-elec-election-date').textContent = document.getElementById('election_from').value;
+      document.getElementById('cert-elec-term').textContent = document.getElementById('term_office').value;
+      document.getElementById('cert-elec-date-from').textContent = document.getElementById('election_from').value;
+      document.getElementById('cert-elec-date-to').textContent = document.getElementById('election_to').value;
+      
+      const termCompleted = document.querySelector('input[name="completed_term"]:checked')?.value;
+      if (termCompleted === 'yes') {
+        document.getElementById('cert-elec-yes-check').textContent = '✓';
+        document.getElementById('cert-elec-no-check').textContent = '';
+      } else {
+        document.getElementById('cert-elec-yes-check').textContent = '';
+        document.getElementById('cert-elec-no-check').textContent = '✓';
+      }
+      
+      const today = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('cert-elec-date').textContent = today.toLocaleDateString('en-US', options);
+    }
+
+    function showCertificate() {
+      if (positionType === 'appointive') {
+        showStep('certificate');
+      } else {
+        showStep('certificate-elective');
       }
     }
 
-    function closePopup() {
-      const popup = document.getElementById('popup-overlay');
-      if (popup) {
-        popup.classList.remove('active');
-        document.body.style.overflow = '';
-      }
+    function backToSuccess() {
+      showStep('success');
+    }
+
+    function printCertificate() {
+      window.print();
+    }
+
+    function downloadCertificate() {
+      const element = document.querySelector('.certificate-paper');
+      const opt = {
+        margin: 10,
+        filename: 'eligibility-certificate.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
     }
 
     function restartProcess() {
-      console.log('Restart process');
-  
-      closePopup();
-      
-      currentStep = 'intro';
       positionType = null;
       formData = {};
       hasSignature = false;
-
-
-      const textInputs = ['last_name', 'first_name', 'middle_initial', 'barangay', 'email', 
-                      'appointing_authority', 'appointment_from', 'appointment_to', 
-                      'years_in_service', 'appointing_punong_barangay', 'pb_date_elected', 
-                      'pb_years_service', 'position_held', 'election_from', 'election_to', 
-                      'term_office', 'incomplete_reason_text', 'idFront', 'idBack'];
-  
-  textInputs.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) element.value = '';
-  });
-      document.querySelectorAll('input[name="certifier"]').forEach(radio => radio.checked = false);
-      document.querySelectorAll('input[name="completed_term"]').forEach(radio => radio.checked = false);
-      document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
-      
-      const previews = ['frontPreview', 'backPreview'];
-      previews.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.innerHTML = '';
+      document.querySelectorAll('input').forEach(input => {
+        if (input.type === 'radio' || input.type === 'checkbox') {
+          input.checked = false;
+        } else {
+          input.value = '';
+        }
       });
-      
-      const incompleteReason = document.getElementById('incomplete-reason');
-      if (incompleteReason) {
-        incompleteReason.style.display = 'none';
+      if (signatureCanvas) {
+        clearSignature();
       }
-      
-      clearSignature();
-
       showStep('intro');
-      updateStepValidation();
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Around line 1730 in civil_service_certification.html
-// Update the showCertificate function to properly show incomplete term info
+    function closePopup() {
+      document.getElementById('popup-overlay').classList.remove('active');
+    }
+  
+
+
+
+    // Calculate years between two dates
+    function calculateYears(fromDate, toDate) {
+      if (!fromDate || !toDate) return 0;
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const diffTime = Math.abs(to - from);
+      const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+      return Math.round(diffYears * 10) / 10; // Round to 1 decimal
+    }
+
+    // Setup auto-calculation for appointive years
+    function setupAppointiveCalculations() {
+      const appointmentFrom = document.getElementById('appointment_from');
+      const appointmentTo = document.getElementById('appointment_to');
+      const yearsInService = document.getElementById('years_in_service');
+      const pbDateElected = document.getElementById('pb_date_elected');
+      const pbYearsService = document.getElementById('pb_years_service');
+      
+      if (appointmentFrom && appointmentTo && yearsInService) {
+        const calculateAppointmentYears = () => {
+          if (appointmentFrom.value && appointmentTo.value) {
+            const years = calculateYears(appointmentFrom.value, appointmentTo.value);
+            yearsInService.value = years;
+            updateStepValidation();
+          }
+        };
+        
+        appointmentFrom.addEventListener('change', calculateAppointmentYears);
+        appointmentTo.addEventListener('change', calculateAppointmentYears);
+      }
+      
+      if (pbDateElected && pbYearsService) {
+        pbDateElected.addEventListener('change', () => {
+          if (pbDateElected.value) {
+            const today = new Date().toISOString().split('T')[0];
+            const years = calculateYears(pbDateElected.value, today);
+            pbYearsService.value = years;
+            updateStepValidation();
+          }
+        });
+      }
+    }
+
+    // Setup auto-calculation for elective term
+    function setupElectiveCalculations() {
+      const electionFrom = document.getElementById('election_from');
+      const electionTo = document.getElementById('election_to');
+      const termOffice = document.getElementById('term_office');
+      
+      if (electionFrom && electionTo && termOffice) {
+        const calculateTerm = () => {
+          if (electionFrom.value && electionTo.value) {
+            const fromDate = new Date(electionFrom.value);
+            const toDate = new Date(electionTo.value);
+            const fromFormatted = fromDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const toFormatted = toDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            termOffice.value = `${fromFormatted} - ${toFormatted}`;
+            updateStepValidation();
+          }
+        };
+        
+        electionFrom.addEventListener('change', calculateTerm);
+        electionTo.addEventListener('change', calculateTerm);
+      }
+    }
+
+    function showStep(stepId) {
+      document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('active');
+      });
+      
+      const targetStep = document.getElementById(stepId);
+      if (targetStep) {
+        targetStep.classList.add('active');
+      }
+      
+      currentStep = stepId;
+      
+      const breadcrumb = document.getElementById('breadcrumb-nav');
+      if (breadcrumb) {
+        if (stepId === 'intro' || stepId === 'selection' || stepId === 'success' || stepId === 'certificate' || stepId === 'certificate-elective') {
+          breadcrumb.style.display = 'none';
+        } else {
+          breadcrumb.style.display = 'flex';
+          updateBreadcrumb();
+        }
+      }
+      
+      // Initialize calculations when showing step2
+      if (stepId === 'step2') {
+        setTimeout(() => {
+          if (positionType === 'appointive') {
+            setupAppointiveCalculations();
+          } else if (positionType === 'elective') {
+            setupElectiveCalculations();
+          }
+        }, 100);
+      }
+    }
+
+    function updateBreadcrumb() {
+      const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+      steps.forEach((step, index) => {
+        const breadcrumbItem = document.getElementById(`${step}-breadcrumb`);
+        if (breadcrumbItem) {
+          if (step === currentStep) {
+            breadcrumbItem.classList.add('active');
+          } else {
+            breadcrumbItem.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    function showIntroPage() {
+      showStep('intro');
+    }
+
+    function showSelectionPage() {
+      showStep('selection');
+    }
+
+    function selectPositionType(type) {
+      positionType = type;
+      formData.positionType = type;
+      nextStep();
+    }
+
+    function nextStep() {
+      if (currentStep === 'intro') {
+        showStep('selection');
+      } else if (currentStep === 'selection') {
+        if (positionType) {
+          showStep('step1');
+        }
+      } else if (currentStep === 'step1') {
+        // Store step 1 data
+        formData.lastName = document.getElementById('last_name').value.trim();
+        formData.firstName = document.getElementById('first_name').value.trim();
+        formData.middleInitial = document.getElementById('middle_initial').value.trim();
+        formData.barangay = document.getElementById('barangay').value.trim();
+        formData.email = document.getElementById('email').value.trim();
+        
+        showStep('step2');
+        
+        // Show appropriate fields
+        if (positionType === 'appointive') {
+          document.getElementById('appointive-fields').style.display = 'block';
+          document.getElementById('elective-fields').style.display = 'none';
+        } else {
+          document.getElementById('appointive-fields').style.display = 'none';
+          document.getElementById('elective-fields').style.display = 'block';
+        }
+      } else if (currentStep === 'step2') {
+        // Store step 2 data
+        if (positionType === 'appointive') {
+          formData.appointingAuthority = document.getElementById('appointing_authority').value.trim();
+          formData.appointmentFrom = document.getElementById('appointment_from').value;
+          formData.appointmentTo = document.getElementById('appointment_to').value;
+          formData.yearsInService = document.getElementById('years_in_service').value;
+          formData.appointingPunongBarangay = document.getElementById('appointing_punong_barangay').value.trim();
+          formData.pbDateElected = document.getElementById('pb_date_elected').value;
+          formData.pbYearsService = document.getElementById('pb_years_service').value;
+        } else {
+          formData.positionHeld = document.getElementById('position_held').value;
+          formData.electionFrom = document.getElementById('election_from').value;
+          formData.electionTo = document.getElementById('election_to').value;
+          formData.termOffice = document.getElementById('term_office').value.trim();
+          const completedTerm = document.querySelector('input[name="completed_term"]:checked');
+          formData.completedTerm = completedTerm ? completedTerm.value : '';
+          if (formData.completedTerm === 'no') {
+            formData.incompleteReason = document.getElementById('incomplete_reason_text').value.trim();
+          }
+        }
+        showStep('step3');
+      } else if (currentStep === 'step3') {
+        const certifier = document.querySelector('input[name="certifier"]:checked');
+        formData.certifier = certifier ? certifier.value : '';
+        showStep('step4');
+      } else if (currentStep === 'step4') {
+        formData.idFront = document.getElementById('idFront').files[0];
+        formData.idBack = document.getElementById('idBack').files[0];
+        showStep('step5');
+      } else if (currentStep === 'step5') {
+        formData.signature = signatureCanvas.toDataURL();
+        showPreview();
+        showStep('step6');
+      }
+    }
+
+    function prevStep() {
+      if (currentStep === 'step1') {
+        showStep('selection');
+      } else if (currentStep === 'step2') {
+        showStep('step1');
+      } else if (currentStep === 'step3') {
+        showStep('step2');
+      } else if (currentStep === 'step4') {
+        showStep('step3');
+      } else if (currentStep === 'step5') {
+        showStep('step4');
+      } else if (currentStep === 'step6') {
+        showStep('step5');
+      }
+    }
+
+    function showPreview() {
+      // Full name
+      const fullName = `${formData.firstName} ${formData.middleInitial ? formData.middleInitial + '.' : ''} ${formData.lastName}`;
+      document.getElementById('preview-name').textContent = fullName;
+      
+      // Email
+      document.getElementById('preview-email').textContent = formData.email;
+      
+      // Position type
+      document.getElementById('preview-position-type').textContent = positionType.charAt(0).toUpperCase() + positionType.slice(1);
+      
+      // Barangay
+      document.getElementById('preview-barangay').textContent = formData.barangay;
+      
+      if (positionType === 'appointive') {
+        document.getElementById('preview-appointive').style.display = 'block';
+        document.getElementById('preview-elective').style.display = 'none';
+        
+        document.getElementById('preview-appointing-authority').textContent = formData.appointingAuthority;
+        document.getElementById('preview-appointment-period').textContent = `${formData.appointmentFrom} to ${formData.appointmentTo}`;
+        document.getElementById('preview-years-service').textContent = `${formData.yearsInService} years`;
+      } else {
+        document.getElementById('preview-appointive').style.display = 'none';
+        document.getElementById('preview-elective').style.display = 'block';
+        
+        document.getElementById('preview-position-held').textContent = formData.positionHeld;
+        document.getElementById('preview-election-period').textContent = `${formData.electionFrom} to ${formData.electionTo}`;
+        document.getElementById('preview-term-completed').textContent = formData.completedTerm === 'yes' ? 'Yes' : `No - ${formData.incompleteReason || 'Not specified'}`;
+      }
+      
+      // Certifier
+      const certifierLabels = {
+        'punong_barangay': 'Punong Barangay',
+        'dilg_municipality': 'DILG - Municipality',
+        'dilg_provincial': 'DILG - Provincial',
+        'dilg_regional': 'DILG - Regional'
+      };
+      document.getElementById('preview-certifier').textContent = certifierLabels[formData.certifier] || formData.certifier;
+    }
+
+    
 
     function showCertificate() {
-  console.log('=== DEBUG showCertificate ===');
-  console.log('formData:', formData);
-  console.log('positionType:', positionType);
-  
-  const fullName = `${formData.first_name} ${formData.middle_initial ? formData.middle_initial + '. ' : ''}${formData.last_name}`;
-  
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
-  };
-  
-  const today = new Date();
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
-  const certDate = `${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`;
-  
-  const container = document.querySelector('.container');
-  if (container) {
-    container.style.maxWidth = '100%';
-    container.style.width = '100%';
-    container.style.padding = '20px';
-  }
-  
-  if (positionType === 'appointive') {
-    console.log('Showing APPOINTIVE certificate');
-    
-    // ✅ ADD ALL THIS CODE for appointive certificate
-    const nameEl = document.getElementById('cert-full-name');
-    const barangayEl = document.getElementById('cert-barangay');
-    
-    if (nameEl) nameEl.textContent = fullName;
-    if (document.getElementById('cert-full-name-2')) {
+      if (positionType === 'appointive') {
+        populateAppointiveCertificate();
+        showStep('certificate');
+      } else if (positionType === 'elective') {
+        populateElectiveCertificate();
+        showStep('certificate-elective');
+      }
+    }
+
+    function populateAppointiveCertificate() {
+      const fullName = `${formData.firstName} ${formData.middleInitial ? formData.middleInitial + '. ' : ''}${formData.lastName}`;
+      document.getElementById('cert-full-name').textContent = fullName;
       document.getElementById('cert-full-name-2').textContent = fullName;
+      document.getElementById('cert-barangay').textContent = formData.barangay;
+      document.getElementById('cert-appointment-date').textContent = new Date(formData.appointmentFrom).toLocaleDateString();
+      document.getElementById('cert-date-from').textContent = new Date(formData.appointmentFrom).toLocaleDateString();
+      document.getElementById('cert-date-to').textContent = new Date(formData.appointmentTo).toLocaleDateString();
+      document.getElementById('cert-years-served').textContent = formData.yearsInService;
+      document.getElementById('cert-pb-name').textContent = formData.appointingPunongBarangay;
+      document.getElementById('cert-pb-date').textContent = new Date(formData.pbDateElected).toLocaleDateString();
+      document.getElementById('cert-pb-years').textContent = formData.pbYearsService;
+      document.getElementById('cert-date').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
-    if (barangayEl) barangayEl.textContent = formData.barangay || 'Not specified';
-    
-    if (document.getElementById('cert-appointment-date')) {
-      document.getElementById('cert-appointment-date').textContent = formatDate(formData.appointment_from);
-    }
-    if (document.getElementById('cert-date-from')) {
-      document.getElementById('cert-date-from').textContent = formatDate(formData.appointment_from);
-    }
-    if (document.getElementById('cert-date-to')) {
-      document.getElementById('cert-date-to').textContent = formatDate(formData.appointment_to);
-    }
-    if (document.getElementById('cert-years-served')) {
-      document.getElementById('cert-years-served').textContent = formData.years_in_service ? `${formData.years_in_service} yrs` : '0 yrs';
-    }
-    if (document.getElementById('cert-pb-name')) {
-      document.getElementById('cert-pb-name').textContent = formData.appointing_punong_barangay || 'N/A';
-    }
-    if (document.getElementById('cert-pb-date')) {
-      document.getElementById('cert-pb-date').textContent = formatDate(formData.pb_date_elected);
-    }
-    if (document.getElementById('cert-pb-years')) {
-      document.getElementById('cert-pb-years').textContent = formData.pb_years_service ? `${formData.pb_years_service} yrs` : '0 yrs';
-    }
-    if (document.getElementById('cert-date')) {
-      document.getElementById('cert-date').textContent = certDate;
-    }
-    
-    console.log('✓ Populated appointive certificate fields');
-    console.log('About to call showStep("certificate")');
-    
-    // ✅ SHOW THE CERTIFICATE
-    showStep('certificate');
-    
-    const certificateDiv = document.getElementById('certificate');
-    if (certificateDiv) {
-      certificateDiv.classList.add('active');
-      certificateDiv.style.display = 'block';
-      console.log('✓ Certificate div shown');
-    } else {
-      console.log('❌ Certificate div not found!');
-    }
-    
-  } else if (positionType === 'elective') {
-    console.log('Showing ELECTIVE certificate');
-    
-    const nameEl = document.getElementById('cert-elec-full-name');
-    const barangayEl = document.getElementById('cert-elec-barangay');
-    
-    if (nameEl) nameEl.textContent = fullName;
-    if (document.getElementById('cert-elec-full-name-2')) {
+
+    function populateElectiveCertificate() {
+      const fullName = `${formData.firstName} ${formData.middleInitial ? formData.middleInitial + '. ' : ''}${formData.lastName}`;
+      
+      document.getElementById('cert-elec-full-name').textContent = fullName;
       document.getElementById('cert-elec-full-name-2').textContent = fullName;
-    }
-    if (barangayEl) barangayEl.textContent = formData.barangay || 'Not specified';
-    
-    if (document.getElementById('cert-elec-position')) {
-      document.getElementById('cert-elec-position').textContent = formData.position_held;
-    }
-    if (document.getElementById('cert-elec-election-date')) {
-      document.getElementById('cert-elec-election-date').textContent = formatDate(formData.election_from);
-    }
-    if (document.getElementById('cert-elec-term')) {
-      document.getElementById('cert-elec-term').textContent = formData.term_office;
-    }
-    if (document.getElementById('cert-elec-date-from')) {
-      document.getElementById('cert-elec-date-from').textContent = formatDate(formData.election_from);
-    }
-    if (document.getElementById('cert-elec-date-to')) {
-      document.getElementById('cert-elec-date-to').textContent = formatDate(formData.election_to);
-    }
-    if (document.getElementById('cert-elec-date')) {
-      document.getElementById('cert-elec-date').textContent = certDate;
-    }
-    
-    const yesCheck = document.getElementById('cert-elec-yes-check');
-    const noCheck = document.getElementById('cert-elec-no-check');
-    const reasonSection = document.getElementById('cert-elec-reason-section');
-    const incompleteDays = document.getElementById('cert-elec-incomplete-days');
-    const reasonText = document.getElementById('cert-elec-reason-text');
-    
-    console.log('Completed term:', formData.completed_term);
-    console.log('Incomplete reason:', formData.incomplete_reason);
-    
-    if (formData.completed_term === 'yes') {
-      if (yesCheck) yesCheck.textContent = '√';
-      if (noCheck) noCheck.textContent = '';
-      if (reasonSection) reasonSection.style.display = 'none';
+      document.getElementById('cert-elec-barangay').textContent = formData.barangay;
+      document.getElementById('cert-elec-position').textContent = formData.positionHeld;
+      document.getElementById('cert-elec-election-date').textContent = formData.electionFrom;
+      document.getElementById('cert-elec-term').textContent = formData.termOffice;
+      document.getElementById('cert-elec-date-from').textContent = formData.electionFrom;
+      document.getElementById('cert-elec-date-to').textContent = formData.electionTo;
       
-      console.log('✓ Term completed - showing YES checkbox');
-    } else {
-      if (yesCheck) yesCheck.textContent = '';
-      if (noCheck) noCheck.textContent = '√';
-      if (reasonSection) reasonSection.style.display = 'block';
+      const termCompleted = formData.completedTerm;
+      const reasonSection = document.getElementById('cert-elec-reason-section');
+      const reasonText = document.getElementById('cert-elec-reason-text');
       
-      const daysNotServedValue = document.getElementById('days_not_served_value')?.value || '0';
-      console.log('Days not served:', daysNotServedValue);
-      
-      if (incompleteDays) {
-        incompleteDays.textContent = `${daysNotServedValue} days`;
+      if (termCompleted === 'yes') {
+        document.getElementById('cert-elec-yes-check').textContent = '✓';
+        document.getElementById('cert-elec-no-check').textContent = '';
+        // Hide reason section if term was completed
+        if (reasonSection) reasonSection.style.display = 'none';
+      } else {
+        document.getElementById('cert-elec-yes-check').textContent = '';
+        document.getElementById('cert-elec-no-check').textContent = '✓';
+        // Show and populate reason section if term was not completed
+        if (reasonSection && formData.incompleteReason) {
+          reasonSection.style.display = 'block';
+          reasonText.textContent = formData.incompleteReason;
+        }
       }
       
-      if (reasonText) {
-        reasonText.textContent = formData.incomplete_reason || 'Not specified';
-      }
-      
-      console.log('✓ Term incomplete - showing NO checkbox with reason');
+      const today = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('cert-elec-date').textContent = today.toLocaleDateString('en-US', options);
     }
-    
-    showStep('certificate-elective');
-    const certificateDiv = document.getElementById('certificate-elective');
-    if (certificateDiv) {
-      certificateDiv.classList.add('active');
-      certificateDiv.style.display = 'block';
-      console.log('✓ Elective certificate div shown');
-    } else {
-      console.log('❌ Elective certificate div not found!');
-    }
-  }
-  
-  console.log('=== END DEBUG ===');
-}
 
     function backToSuccess() {
-  // Restore container width
-  const container = document.querySelector('.container');
-  if (container) {
-    container.style.maxWidth = '1200px';
-    container.style.width = 'auto';
-    container.style.padding = '20px';
-  }
-  
-  // Remove active class from BOTH certificates
-  const appointiveCert = document.getElementById('certificate');
-  if (appointiveCert) {
-    appointiveCert.classList.remove('active');
-  }
-  
-  const electiveCert = document.getElementById('certificate-elective');
-  if (electiveCert) {
-    electiveCert.classList.remove('active');
-  }
-  
-  showStep('success');
-}    
+      showStep('success');
+    }
+
+    function restartProcess() {
+      positionType = null;
+      formData = {};
+      hasSignature = false;
+      
+      // Reset all forms
+      document.querySelectorAll('form').forEach(form => form.reset());
+      
+      // Clear signature
+      if (signatureCtx) {
+        signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      }
+      
+      // Clear image previews
+      document.getElementById('frontPreview').innerHTML = '';
+      document.getElementById('backPreview').innerHTML = '';
+      
+      showStep('intro');
+    }
+
+    function previewImage(input, previewId) {
+      const preview = document.getElementById(previewId);
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Signature functions
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = signatureCanvas.getBoundingClientRect();
+      signatureCtx.beginPath();
+      signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+      document.getElementById('placeholder').style.display = 'none';
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = signatureCanvas.getBoundingClientRect();
+      signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      signatureCtx.strokeStyle = '#000';
+      signatureCtx.lineWidth = 2;
+      signatureCtx.lineCap = 'round';
+      signatureCtx.stroke();
+    }
+
+    function stopDrawing() {
+      if (isDrawing) {
+        isDrawing = false;
+        hasSignature = true;
+        document.getElementById('statusDot').style.backgroundColor = '#10b981';
+        document.getElementById('statusText').textContent = 'Signature captured';
+        updateStepValidation();
+      }
+    }
+
+    function handleTouch(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      signatureCanvas.dispatchEvent(mouseEvent);
+    }
+
+    function clearSignature() {
+      signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      hasSignature = false;
+      document.getElementById('placeholder').style.display = 'flex';
+      document.getElementById('statusDot').style.backgroundColor = '#e5e7eb';
+      document.getElementById('statusText').textContent = 'No signature drawn';
+      updateStepValidation();
+    }
 
     function printCertificate() {
-  // Get the active certificate
-  const appointiveCert = document.getElementById('certificate');
-  const electiveCert = document.getElementById('certificate-elective');
-  
-  let activeCert = null;
-  if (appointiveCert && appointiveCert.classList.contains('active')) {
-    activeCert = appointiveCert;
-  } else if (electiveCert && electiveCert.classList.contains('active')) {
-    activeCert = electiveCert;
-  }
-  
-  if (!activeCert) {
-    alert('No certificate to print. Please view the certificate first.');
-    return;
-  }
-  
-  // Hide all action buttons temporarily
-  const actionButtons = activeCert.querySelectorAll('.certificate-actions');
-  actionButtons.forEach(btn => {
-    btn.style.display = 'none';
-  });
-  
-  // Small delay to ensure buttons are hidden before print
-  setTimeout(() => {
-    window.print();
-    
-    // Restore buttons after print dialog closes
-    setTimeout(() => {
-      actionButtons.forEach(btn => {
-        btn.style.display = 'flex';
-      });
-    }, 500);
-  }, 100);
-}
+      window.print();
+    }
 
     function downloadCertificate() {
-  // Check if html2pdf library is loaded
-  if (typeof html2pdf === 'undefined') {
-    alert('To download as PDF:\n\n1. Click "Print Certificate" button\n2. In the print dialog, select "Save as PDF"\n3. Choose your location and save');
-    printCertificate();
-    return;
-  }
-  
-  // Get the active certificate
-  const appointiveCert = document.getElementById('certificate');
-  const electiveCert = document.getElementById('certificate-elective');
-  
-  let activeCert = null;
-  let certType = '';
-  
-  if (appointiveCert && appointiveCert.classList.contains('active')) {
-    activeCert = appointiveCert;
-    certType = 'Appointive';
-  } else if (electiveCert && electiveCert.classList.contains('active')) {
-    activeCert = electiveCert;
-    certType = 'Elective';
-  }
-  
-  if (!activeCert) {
-    alert('No certificate to download. Please view the certificate first.');
-    return;
-  }
-  
-  // Get the certificate paper element
-  const certContent = activeCert.querySelector('.certificate-paper');
-  
-  if (!certContent) {
-    alert('Certificate content not found.');
-    return;
-  }
-  
-  // Hide action buttons
-  const actionButtons = activeCert.querySelectorAll('.certificate-actions');
-  actionButtons.forEach(btn => {
-    btn.style.display = 'none';
-  });
-  
-  // Show loading message
-  const downloadBtn = activeCert.querySelector('.cert-btn-download');
-  const originalText = downloadBtn ? downloadBtn.innerHTML : '';
-  if (downloadBtn) {
-    downloadBtn.innerHTML = `
-      <svg class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25"></circle>
-        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path>
-      </svg>
-      Generating PDF...
-    `;
-    downloadBtn.disabled = true;
-  }
-  
-  // Generate filename
-  const fullName = (formData.first_name || 'User') + '_' + (formData.last_name || 'Certificate');
-  const safeFilename = fullName.replace(/[^a-zA-Z0-9_]/g, '_');
-  const filename = `${certType}_Certificate_${safeFilename}.pdf`;
-  
-  // FIXED PDF OPTIONS - Minimal margins, no top space
-  const opt = {
-    margin: [5, 5, 5, 5], // MINIMAL margins (5mm all sides)
-    filename: filename,
-    image: { 
-      type: 'jpeg', 
-      quality: 0.98 
-    },
-    html2canvas: { 
-      scale: 2.5,            // Higher quality
-      useCORS: true,
-      logging: false,
-      letterRendering: true,
-      scrollY: 0,
-      scrollX: 0,
-      y: 0,                  // Start from top
-      windowWidth: 794,      // A4 width in pixels at 96 DPI
-      windowHeight: 1123,    // A4 height in pixels at 96 DPI
-      backgroundColor: '#ffffff'
-    },
-    jsPDF: { 
-      unit: 'mm', 
-      format: 'a4',
-      orientation: 'portrait',
-      compress: true,
-      putOnlyUsedFonts: true
-    },
-    pagebreak: { 
-      mode: ['avoid-all', 'css'],
-      before: [],
-      after: [],
-      avoid: [
-        '.certificate-paper',
-        '.certificate-border', 
-        '.certificate-table', 
-        '.certificate-header', 
-        '.certificate-title-section', 
-        '.certificate-body', 
-        '.signature-section',
-        '.table-wrapper',
-        'table',
-        'tbody',
-        'thead'
-      ]
+      const element = document.querySelector('.certificate-paper');
+      const opt = {
+        margin: 0.5,
+        filename: `eligibility-certificate-${formData.lastName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
     }
-  };
-  
-  // Generate and download PDF
-  html2pdf()
-    .set(opt)
-    .from(certContent)
-    .save()
-    .then(() => {
-      // Restore buttons
-      actionButtons.forEach(btn => {
-        btn.style.display = 'flex';
-      });
-      
-      // Restore button text
-      if (downloadBtn) {
-        downloadBtn.innerHTML = originalText;
-        downloadBtn.disabled = false;
-      }
-      
-      console.log('PDF downloaded successfully!');
-    })
-    .catch(err => {
-      console.error('PDF generation error:', err);
-      
-      // Restore buttons
-      actionButtons.forEach(btn => {
-        btn.style.display = 'flex';
-      });
-      
-      if (downloadBtn) {
-        downloadBtn.innerHTML = originalText;
-        downloadBtn.disabled = false;
-      }
-      
-      // Fallback to print method
-      alert('PDF generation failed. Using print-to-PDF method instead.\n\nPlease select "Save as PDF" in the print dialog.');
-      printCertificate();
-    });
-}
+
+    function closePopup() {
+      document.getElementById('popup-overlay').style.display = 'none';
+    }
 
   </script>
+  <!-- Alert Modal -->
+<div id="alertModal" class="modal-overlay alert-overlay">
+  <div class="modal-content alert-modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="alertIcon"></div>
+      <h3 class="modal-title" id="alertTitle"></h3>
+    </div>
+    <div class="modal-body">
+      <p class="modal-message" id="alertMessage"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="modal-btn modal-btn-primary" onclick="closeAlertModal()">
+        Got it!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal-overlay">
+  <div class="modal-content profile-modal">
+    <div class="modal-header">
+      <button type="button" class="close-btn" onclick="closeProfileModal()">×</button>
+      <div class="profile-avatar-large" id="profileModalAvatar">U</div>
+      <h2 class="profile-name-large" id="profileModalName">User Name</h2>
+      <p class="profile-email-large" id="profileModalEmail">user@email.com</p>
+    </div>
+    <div class="modal-body">
+      <div class="profile-info-group">
+        <div class="profile-info-label">Username</div>
+        <div class="profile-info-value" id="profileModalUsername">username</div>
+      </div>
+      
+      <div class="profile-info-group">
+        <div class="profile-info-label">Role</div>
+        <div class="profile-info-value" id="profileModalRole">User</div>
+      </div>
+      
+      <div class="profile-info-group">
+        <div class="profile-info-label">Barangay</div>
+        <div class="profile-info-value" id="profileModalBarangay">Not assigned</div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <p class="stat-value" id="statLoginCount">0</p>
+          <p class="stat-label">Logins</p>
+        </div>
+        <div class="stat-item">
+          <p class="stat-value" id="statRequests">0</p>
+          <p class="stat-label">Requests</p>
+        </div>
+        <div class="stat-item">
+          <p class="stat-value" id="statSince">2024</p>
+          <p class="stat-label">Member Since</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-edit" onclick="window.location.href='/settings/'">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        Edit Profile
+      </button>
+      <button type="button" class="btn-logout" onclick="confirmLogout()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
-      

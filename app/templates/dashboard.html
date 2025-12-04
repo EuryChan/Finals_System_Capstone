@@ -75,35 +75,7 @@
       letter-spacing: 1px;
     }
 
-    .nav-menu {
-      list-style: none;
-      padding: 0 12px;
-    }
-
-    .nav-menu li {
-      margin-bottom: 4px;
-    }
-
-    .nav-menu a {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      color: rgba(11, 26, 80, 0.8);
-      text-decoration: none;
-      border-radius: 8px;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .nav-menu a:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .nav-menu a.active {
-      background: var(--bg-tertiary);
-    }
-
+   
     /* Main Content Area */
     .main-content {
       flex: 1;
@@ -403,7 +375,299 @@
     .notification.error { 
       border-left: 4px solid var(--danger);
       color: var(--danger);
-    }
+    }/* Notification Bell Styles - IMPROVED */
+.notification-bell-wrapper {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.notification-bell-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #6c757d;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.notification-bell-btn:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.notification-bell-btn svg {
+  width: 24px;  /* Increased from 20px */
+  height: 24px;
+  stroke-width: 2.5; /* Made thicker */
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 12px;
+  min-width: 22px;
+  height: 22px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  display: none;
+  line-height: 16px;
+  border: 2px solid white; /* Added white border */
+}
+
+.notification-badge.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Ring animation when new notification arrives */
+@keyframes ring {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-15deg); }
+  30% { transform: rotate(15deg); }
+  40% { transform: rotate(-15deg); }
+  50% { transform: rotate(0deg); }
+}
+
+.notification-bell-btn.has-new {
+  animation: ring 0.5s ease;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 58px;
+  right: 0;
+  width: 420px;
+  max-height: 600px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.15);
+  border: 1px solid #dee2e6;
+  display: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.notification-dropdown.show {
+  display: flex;
+  flex-direction: column;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 20px;
+  border-bottom: 2px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.notification-header h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #212529;
+  margin: 0;
+}
+
+.mark-all-read-btn {
+  font-size: 0.8125rem;
+  color: #007bff;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.mark-all-read-btn:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  max-height: 480px;
+}
+
+.notification-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  gap: 12px;
+}
+
+.notification-item:hover {
+  background: #f8f9fa;
+}
+
+.notification-item.unread {
+  background: #f0f7ff;
+  border-left: 3px solid #007bff;
+}
+
+.notification-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.3rem;
+}
+
+.notification-icon.new_submission {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.notification-icon.new_requirement {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.notification-icon.completed {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.notification-icon.info {
+  background: #f3e5f5;
+  color: #9c27b0;
+}
+
+.notification-icon.announcement {
+  background: #fff9c4;
+  color: #f9a825;
+}
+
+.notification-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.notification-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-message {
+  font-size: 0.8125rem;
+  color: #6c757d;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #868e96;
+}
+
+.no-notifications {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.no-notifications-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.notification-footer {
+  padding: 12px 20px;
+  text-align: center;
+  border-top: 2px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.view-all-link {
+  color: #007bff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.view-all-link:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+/* Loading state */
+.notification-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.notification-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e9ecef;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
     /* Responsive */
     @media (max-width: 1600px) {
@@ -445,11 +709,23 @@
   <div class="dashboard-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+      <a href="{% url 'landing_menu' %}">
+        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+      </a>
       <div class="menu-title">Navigation</div>
       <ul class="nav-menu">
         <li><a href="{% url 'dashboard' %}" class="active"> Dashboard</a></li>
         <li><a href="{% url 'application_request' %}"> Application Request</a></li>
+        <li>
+          <a href="{% url 'pending_users' %}" style="position: relative;">
+             User Approvals
+            {% if pending_count > 0 %}
+            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+              {{ pending_count }}
+            </span>
+            {% endif %}
+          </a>
+        </li>
         <li><a href="{% url 'employees_profile' %}"> Employees Profile</a></li>
         <li><a href="{% url 'folder' %}"> Folders</a></li>
         <li><a href="{% url 'settings' %}"> Settings</a></li>
@@ -458,21 +734,46 @@
 
     <!-- Main Content -->
     <div class="main-content">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-top">
-          <h1>
-            Analytics Dashboard
-            <span class="live-indicator">
-              <span class="live-dot"></span>
-              LIVE
-            </span>
-          </h1>
-        </div>
-        <p>
-          Year <span id="currentYear">2025</span> • Last updated: <span id="lastUpdated">Loading...</span>
-        </p>
+      <div class="header-top">
+  <h1>
+    Analytics Dashboard
+    <span class="live-indicator">
+      <span class="live-dot"></span>
+      LIVE
+    </span>
+  </h1>
+  
+  <!-- 🔔 NOTIFICATION BELL - COMPLETE -->
+  <div class="notification-bell-wrapper">
+    <button class="notification-bell-btn" onclick="toggleNotifications()" aria-label="Notifications">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <!-- ⚠️ THIS WAS MISSING! -->
+      <span class="notification-badge" id="notificationBadge">0</span>
+    </button>
+    
+    <!-- Notification Dropdown -->
+    <div class="notification-dropdown" id="notificationDropdown">
+      <div class="notification-header">
+        <h4>Notifications</h4>
+        <button class="mark-all-read-btn" onclick="markAllAsRead(event)">Mark all as read</button>
       </div>
+      
+      <ul class="notification-list" id="notificationList">
+        <div class="notification-loading">
+          <div class="notification-spinner"></div>
+          <p>Loading notifications...</p>
+        </div>
+      </ul>
+      
+      <div class="notification-footer">
+        <a href="#" class="view-all-link">View All Notifications</a>
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Stats Cards -->
       <div class="stats-grid">
@@ -917,7 +1218,252 @@
       document.addEventListener('DOMContentLoaded', initializeDashboard);
     } else {
       initializeDashboard();
+    }// ============================================
+// NOTIFICATION SYSTEM - FIXED
+// ============================================
+let notificationsData = [];
+let unreadCount = 0;
+
+// Icon mapping for notification types
+const notificationIcons = {
+  'new_submission': '📋',
+  'new_requirement': '📄',
+  'completed': '✅',
+  'info': 'ℹ️',
+  'announcement': '📢',
+  'overdue': '⚠️',
+  'reminder': '🔔'
+};
+
+function toggleNotifications() {
+  const dropdown = document.getElementById('notificationDropdown');
+  if (!dropdown) {
+    console.error('❌ Notification dropdown not found!');
+    return;
+  }
+  
+  const isShowing = dropdown.classList.contains('show');
+  
+  if (isShowing) {
+    dropdown.classList.remove('show');
+  } else {
+    dropdown.classList.add('show');
+    fetchNotifications();
+  }
+}
+
+// Close dropdown when clicking outside - WITH NULL CHECKS
+document.addEventListener('click', function(event) {
+  const wrapper = document.querySelector('.notification-bell-wrapper');
+  const dropdown = document.getElementById('notificationDropdown');
+  
+  if (!wrapper || !dropdown) return; // ✅ SAFETY CHECK
+  
+  if (!wrapper.contains(event.target)) {
+    dropdown.classList.remove('show');
+  }
+});
+
+async function fetchNotifications() {
+  console.log('🔄 Fetching notifications...');
+  
+  try {
+    const response = await fetch('/api/notifications/', {
+      headers: { 
+        'X-CSRFToken': csrftoken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('📡 Response status:', response.status);
+    
+    const data = await response.json();
+    console.log('📦 Notifications data:', data);
+    
+    if (data.success) {
+      notificationsData = data.notifications || [];
+      unreadCount = data.unread_count || 0;
+      
+      console.log(`✅ Loaded ${notificationsData.length} notifications (${unreadCount} unread)`);
+      
+      updateNotificationUI();
+    } else {
+      console.error('❌ API returned success: false', data);
+      showNotificationError();
     }
+  } catch (error) {
+    console.error('❌ Error fetching notifications:', error);
+    showNotificationError();
+  }
+}
+
+function updateNotificationUI() {
+  const badge = document.getElementById('notificationBadge');
+  const list = document.getElementById('notificationList');
+  
+  // ✅ NULL CHECKS
+  if (!badge || !list) {
+    console.error('❌ Notification elements not found!');
+    console.log('Badge exists:', !!badge);
+    console.log('List exists:', !!list);
+    return;
+  }
+  
+  console.log('🎨 Updating UI - Unread:', unreadCount, 'Total:', notificationsData.length);
+  
+  // Update badge
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+  
+  // Update list
+  if (notificationsData.length === 0) {
+    list.innerHTML = `
+      <div class="no-notifications">
+        <div class="no-notifications-icon">🔔</div>
+        <p>No notifications yet</p>
+      </div>
+    `;
+    return;
+  }
+  
+  list.innerHTML = notificationsData.map(notif => {
+    const icon = notificationIcons[notif.type] || '📌';
+    const unreadClass = notif.is_read ? '' : 'unread';
+    
+    return `
+      <li class="notification-item ${unreadClass}" onclick="handleNotificationClick(${notif.id}, '${notif.type}')">
+        <div class="notification-icon ${notif.type}">${icon}</div>
+        <div class="notification-content">
+          <div class="notification-title">${escapeHtml(notif.title)}</div>
+          <div class="notification-message">${escapeHtml(notif.message)}</div>
+          <div class="notification-time">${notif.time_ago}</div>
+        </div>
+      </li>
+    `;
+  }).join('');
+}
+
+function showNotificationError() {
+  const list = document.getElementById('notificationList');
+  if (!list) return;
+  
+  list.innerHTML = `
+    <div class="no-notifications">
+      <div class="no-notifications-icon">⚠️</div>
+      <p>Failed to load notifications</p>
+      <button onclick="fetchNotifications()" style="margin-top: 12px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Retry
+      </button>
+    </div>
+  `;
+}
+
+async function handleNotificationClick(notifId, notifType) {
+  try {
+    // Mark as read
+    await fetch(`/api/notifications/${notifId}/read/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken }
+    });
+    
+    const notif = notificationsData.find(n => n.id === notifId);
+    if (notif && !notif.is_read) {
+      notif.is_read = true;
+      unreadCount--;
+      updateNotificationUI();
+    }
+    
+    // ✅ SIMPLE CHECK - Look for keywords in title/message
+    const fullText = (notif.title + ' ' + notif.message).toLowerCase();
+    
+    if (fullText.includes('certificate application') || 
+        fullText.includes('eligibility')) {
+      // Certificate-related → Application Request page
+      window.location.href = "/dilg/application-requests/";
+    } else if (fullText.includes('requirement') || 
+               fullText.includes('submission')) {
+      // Requirements-related → Review Submissions page
+      window.location.href = "/dilg/submissions/";
+    } else {
+      // Default fallback
+      console.log('Notification clicked, staying on page');
+    }
+  } catch (error) {
+    console.error('❌ Error:', error);
+  }
+}
+
+async function markAllAsRead(event) {
+  event.stopPropagation();
+  console.log('📖 Marking all as read...');
+  
+  try {
+    const response = await fetch('/api/notifications/mark-all-read/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken }
+    });
+    
+    const data = await response.json();
+    console.log('✅ Mark all response:', data);
+    
+    if (data.success) {
+      notificationsData.forEach(n => n.is_read = true);
+      unreadCount = 0;
+      updateNotificationUI();
+      showNotification('✅ All notifications marked as read', 'success');
+    }
+  } catch (error) {
+    console.error('❌ Error marking all as read:', error);
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================
+// INITIALIZE NOTIFICATIONS
+// ============================================
+function initializeNotifications() {
+  console.log('🚀 Initializing notification system...');
+  
+  // Check if elements exist
+  const badge = document.getElementById('notificationBadge');
+  const dropdown = document.getElementById('notificationDropdown');
+  const list = document.getElementById('notificationList');
+  
+  console.log('Element check:');
+  console.log('  Badge:', !!badge);
+  console.log('  Dropdown:', !!dropdown);
+  console.log('  List:', !!list);
+  
+  if (!badge || !dropdown || !list) {
+    console.error('❌ Missing notification elements! Check HTML.');
+    return;
+  }
+  
+  console.log('✅ All notification elements found');
+  
+  // Fetch notifications
+  fetchNotifications();
+  
+  // Refresh every 30 seconds
+  setInterval(fetchNotifications, 30000);
+  console.log('✅ Auto-refresh enabled (30s interval)');
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeNotifications);
+} else {
+  initializeNotifications();
+}
   </script>
 </body>
 </html>
