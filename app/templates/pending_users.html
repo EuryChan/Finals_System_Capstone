@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="{% static 'CSS/dashboard.css' %}">
     <title>User Approvals - DILG</title>
     <style>
         :root {
@@ -22,6 +23,8 @@
             --success-hover: #218838;
             --warning: #ffc107;
             --danger: #dc3545;
+            --gradient-start: #f5f6fa;
+            --gradient-end: #0b1a50;
         }
 
         * {
@@ -43,11 +46,11 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar */
         .sidebar {
             width: 260px;
-            background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-            color: #0b1a50;
+            background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+            color: var(--gradient-end);
             border-right: 1px solid var(--border-color);
             position: fixed;
             left: 0;
@@ -65,21 +68,65 @@
         }
 
         .menu-title {
-      padding: 16px 24px;
-      font-weight: 600;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
+            padding: 16px 24px;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-        /* Main Content Area */
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-menu li {
+            margin: 5px 0;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #1d1d1d;
+            display: block;
+            padding: 12px 20px;
+            margin: 0 10px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-menu a:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .nav-menu a.active {
+            background: var(--gradient-end);
+            color: white;
+        }
+
+        .nav-badge {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: 260px;
             padding: 32px 40px;
-            background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-            color: #0b1a50;
+            background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
             min-height: 100vh;
         }
 
@@ -118,70 +165,6 @@
             font-size: 0.875rem;
         }
 
-        /* Stats Card */
-        .stats-card {
-            background: var(--bg-primary);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            border-left: 4px solid var(--warning);
-            margin-bottom: 32px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stats-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: var(--warning);
-            opacity: 0.05;
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .stat-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .stat-icon {
-            width: 56px;
-            height: 56px;
-            background: var(--warning);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .stat-info h3 {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .stat-info .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
         /* Section Cards */
         .section-card {
             background: var(--bg-primary);
@@ -218,6 +201,9 @@
             margin-bottom: 24px;
             padding-bottom: 16px;
             border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .section-title {
@@ -305,6 +291,10 @@
 
         .role-badge.role-focal-person {
             background: #17a2b8;
+        }
+
+        .role-badge.role-barangay-official {
+            background: #007bff;
         }
 
         /* Action Buttons */
@@ -421,30 +411,7 @@
             font-size: 0.9375rem;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 200px;
-            }
-            .main-content {
-                margin-left: 200px;
-                padding: 20px;
-            }
-            .user-info {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .action-buttons {
-                width: 100%;
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Custom Confirmation Dialog */
+        /* Confirmation Dialog */
         .confirm-overlay {
             display: none;
             position: fixed;
@@ -638,41 +605,29 @@
             background: #c82333;
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
-  
-  .nav-menu {
-    list-style: none;
-    padding: 0;
-    width: 100%;
-  }
-  
-  .nav-menu li {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 10px;
-    text-align: center;
-    margin: 5px 0;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  /* Hover effect for all items */
-  .nav-menu a:hover {
-      background: #f3f4f6;
-      color: #1f2937;
-    }
 
-    .nav-menu a.active {
-      background: #0b1a50;
-      color: white;
-    }
-
-  .nav-menu li a {
-    text-decoration: none;
-    color: #1d1d1d;
-    display: block;
-    padding: 10px;
-    border-radius: 10px;
-    transition: background-color 0.3s, color 0.3s;
-  }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 20px;
+            }
+            .user-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -687,12 +642,10 @@
                 <li><a href="{% url 'dashboard' %}"> Dashboard</a></li>
                 <li><a href="{% url 'application_request' %}"> Application Request</a></li>
                 <li>
-                    <a href="{% url 'pending_users' %}" class="active" style="position: relative;">
+                    <a href="{% url 'pending_users' %}" class="active">
                          User Approvals
                         {% if pending_count > 0 %}
-                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-                            {{ pending_count }}
-                        </span>
+                        <span class="nav-badge">{{ pending_count }}</span>
                         {% endif %}
                     </a>
                 </li>
@@ -710,7 +663,7 @@
                      User Approvals
                     {% if pending_count > 0 %}
                     <span class="header-badge">
-                        {{ pending_count }} PENDING
+                        ⏱ {{ pending_count }} PENDING
                     </span>
                     {% endif %}
                 </h1>
@@ -776,15 +729,13 @@
             {% if approved_users %}
             <div class="section-card">
                 <div class="section-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 class="section-title">
-                            ✓ Recently Approved
-                        </h2>
-                        <button class="btn btn-view" onclick="toggleApprovedView()">
-                            <span id="viewBtnIcon">👁️</span>
-                            <span id="viewBtnText">View All</span>
-                        </button>
-                    </div>
+                    <h2 class="section-title">
+                        ✓ Recently Approved
+                    </h2>
+                    <button class="btn btn-view" onclick="toggleApprovedView()">
+                        <span id="viewBtnIcon">👁️</span>
+                        <span id="viewBtnText">View All</span>
+                    </button>
                 </div>
 
                 <div id="approvedUsersList" style="display: none;">
@@ -848,8 +799,7 @@
             </div>
         </div>
     </div>
-
-    <script>
+     <script>
         let pendingUrl = '';
 
         function showConfirmDialog(event, action, username, role) {
@@ -942,99 +892,5 @@
             }
         }
     </script>
-=======
-    <title>Pending User Approvals</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'CSS/pending_users.css' %}">
-</head>
-<body>
-
-<div class="pending-users-container">
-    <!-- Page Header -->
-    <div class="page-header">
-        <h1><i class="fas fa-user-clock"></i> Pending User Approvals</h1>
-        <div class="stats-badge">
-            <i class="fas fa-users"></i> {{ pending_count }} user{{ pending_count|pluralize }} waiting for approval
-        </div>
-    </div>
-
-    <!-- Pending Users Section -->
-    <div class="users-section">
-        <h2 class="section-title">
-            <i class="fas fa-clock"></i> Awaiting Approval
-        </h2>
-
-        {% if pending_users %}
-            {% for profile in pending_users %}
-            <div class="user-card">
-                <div class="user-info">
-                    <div class="user-details">
-                        <div class="user-name">
-                            <i class="fas fa-user"></i> {{ profile.user.username }}
-                        </div>
-                        <div class="user-meta">
-                            <i class="fas fa-envelope"></i> {{ profile.user.email }}
-                        </div>
-                        <div class="user-meta">
-                            <i class="fas fa-calendar"></i> Registered: {{ profile.submitted_at|date:"F d, Y - g:i A" }}
-                        </div>
-                        <span class="role-badge role-{{ profile.role|slugify }}">
-                            <i class="fas fa-briefcase"></i> {{ profile.get_role_display }}
-                        </span>
-                    </div>
-
-                    <div class="action-buttons">
-                        <a href="{% url 'approve_user' profile.user.id %}" 
-                           class="btn btn-approve"
-                           onclick="return confirm('Approve {{ profile.user.username }}?')">
-                            <i class="fas fa-check"></i> Approve
-                        </a>
-                        <a href="{% url 'reject_user' profile.user.id %}" 
-                           class="btn btn-reject"
-                           onclick="return confirm('Reject and delete {{ profile.user.username }}? This cannot be undone!')">
-                            <i class="fas fa-times"></i> Reject
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <i class="fas fa-check-circle"></i>
-                <h3>No Pending Approvals</h3>
-                <p>All user registrations have been processed.</p>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Recently Approved Section -->
-    {% if approved_users %}
-    <div class="users-section">
-        <h2 class="section-title">
-            <i class="fas fa-check-circle"></i> Recently Approved
-        </h2>
-
-        {% for profile in approved_users %}
-        <div class="approved-user-card">
-            <div class="approved-info">
-                <div>
-                    <span class="approved-name">{{ profile.user.username }}</span>
-                    <span class="role-badge role-{{ profile.role|slugify }}">
-                        {{ profile.get_role_display }}
-                    </span>
-                </div>
-                <div class="approved-by">
-                    <i class="fas fa-check"></i> Approved by {{ profile.approved_by.username }} 
-                    on {{ profile.approved_at|date:"M d, Y" }}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    </body>
 </html>

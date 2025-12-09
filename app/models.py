@@ -255,7 +255,7 @@ class UserProfile(models.Model):
     # NEW: Approval fields
     is_approved = models.BooleanField(default=False)
     submitted_at = models.DateTimeField(auto_now_add=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
+
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_profiles')
 
     # Approval fields
@@ -386,24 +386,6 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
-    def get_redirect_url(self):
-        """Return the correct redirect path based on role"""
-        mapping = {
-            'barangay official': 'requirements_monitoring',
-            'municipal officer': 'requirements_monitoring',
-            'dilg staff': 'landing_menu',
-        }
-        return mapping.get(self.role.lower(), 'dashboard')
-    
-    # 🆕 ADD THIS - Permission checking method
-    def can_access_barangay(self, barangay):
-        """Check if user has permission to access this barangay's data"""
-        if self.role == 'dilg staff':
-            return True  # DILG staff sees all barangays
-        if self.role == 'municipal officer':
-            return True  # Municipal officers see all barangays
-        # Barangay officials only see their assigned barangay
-        return self.barangay == barangay if self.barangay else False
 
 class EligibilityRequest(models.Model):
     CERTIFIER_CHOICES = [

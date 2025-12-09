@@ -5,7 +5,92 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DILG Landing Page</title>
-  <link rel="stylesheet" href="{% static 'CSS/landing_menu.css' %}">
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      background-image: url("{% static 'Pictures/background.png' %}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Overlay for contrast */
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 40px 60px;
+      border-radius: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .dilg-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      background-color: white;
+      border-radius: 50%;
+      border: 3px solid white;
+    }
+
+    /* Menu Buttons */
+    .menu {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      position: relative;
+      z-index: 100;
+    }
+
+    .menu-item {
+      color: white;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      z-index: 100;
+      pointer-events: auto;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(255, 204, 0, 0.9);
+      color: black;
+    }.hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
   <div class="hero-section">
@@ -17,7 +102,7 @@
       <div class="menu">
         <a href="/dashboard/" class="menu-item">Dashboard</a>
         <a href="/civil_service_certification/" class="menu-item">Eligibility Certification</a>
-        <a href="/requirements_monitoring/" class = "menu-item">Monitoring Task</a>
+        <a href="/requirements_monitoring/" class="menu-item">Monitoring Task</a>
       </div>
       
     </div>

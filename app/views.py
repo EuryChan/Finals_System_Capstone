@@ -705,48 +705,76 @@ def update_account(request):
                 'message': str(e)
             })
     
+  
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+
 @login_required
+@require_http_methods(["POST"])
 def change_password(request):
-    """Change user password"""
-    if request.method == 'POST':
-        try:
-            user = request.user
-            current_password = request.POST.get('currentPassword', '')
-            new_password = request.POST.get('newPassword', '')
-            
-            # Check if current password is correct
-            if not user.check_password(current_password):
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Current password is incorrect'
-                })
-            
-            # Validate new password length
-            if len(new_password) < 8:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Password must be at least 8 characters'
-                })
-            
-            # Set new password
-            user.set_password(new_password)
-            user.save()
-            
-            # Keep user logged in after password change
-            update_session_auth_hash(request, user)
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Password changed successfully'
-            })
-        except Exception as e:
+    try:
+
+        current_password = request.POST.get('currentPassword', '')
+        new_password = request.POST.get('newPassword', '')
+        confirm_password = request.POST.get('confirmPassword', '')
+        
+        print(f"🔐 Password Change Request")
+        print(f"   User: {request.user.username}")
+        print(f"   Current password provided: {'Yes' if current_password else 'No'}")
+        print(f"   New password length: {len(new_password)}")
+        print(f"   Confirm password length: {len(confirm_password)}")
+
+        if not all([current_password, new_password, confirm_password]):
             return JsonResponse({
                 'success': False,
-                'message': str(e)
-            })
+                'message': 'All fields are required'
+            }, status=400)
+        
+        if new_password != confirm_password:
+            return JsonResponse({
+                'success': False,
+                'message': 'New passwords do not match'
+            }, status=400)
+        
+
+        if len(new_password) < 8:
+            return JsonResponse({
+                'success': False,
+                'message': 'Password must be at least 8 characters long'
+            }, status=400)
+        
+
+        user = request.user
+        if not user.check_password(current_password):
+            print(f"   ❌ Current password is incorrect")
+            return JsonResponse({
+                'success': False,
+                'message': 'Current password is incorrect'
+            }, status=400)
+        
+        print(f"    Current password verified")
+        user.set_password(new_password)
+        user.save()      
+        print(f"    New password saved to database")
+        update_session_auth_hash(request, user)
+        
+        print(f"    Session updated - user remains logged in")
+        print(f" Password changed successfully for user: {user.username}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Password changed successfully'
+        })
+        
+    except Exception as e:
+        print(f" Error changing password: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while changing password'
+        }, status=500)
     
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 @login_required
 def get_notification_preferences(request):
@@ -1427,15 +1455,37 @@ def certifications_data(request):
             'success': False,
             'error': str(e)
         }, status=500)
-
 @login_required
 @require_http_methods(["GET"])
 def barangays_data(request):
     """
     API: Get top performing barangays by compliance rate
     Returns: labels (names), compliance rates, detailed stats
+    
+    ✅ FIXED: Now checks if ANY submissions exist before calculating
     """
     try:
+        print(f"\n{'='*70}")
+        print(f"📊 BARANGAYS DATA API - START")
+        print(f"{'='*70}")
+        
+        # ✅ CRITICAL FIX: Check if ANY RequirementSubmissions exist
+        total_submissions_in_db = RequirementSubmission.objects.count()
+        print(f"Total RequirementSubmissions in database: {total_submissions_in_db}")
+        
+        if total_submissions_in_db == 0:
+            print(f"⚠️ NO SUBMISSIONS FOUND - Returning empty data")
+            print(f"{'='*70}\n")
+            return JsonResponse({
+                'success': True,
+                'barangays': {
+                    'labels': [],
+                    'data': [],
+                    'details': []
+                },
+                'message': 'No submission data available yet'
+            })
+        
         barangay_stats = []
         
         for barangay in Barangay.objects.all():
@@ -1443,28 +1493,39 @@ def barangays_data(request):
                 barangay=barangay
             ).count()
             
+            print(f"\n🏘️ {barangay.name}: {total_submissions} total submissions")
+            
+            # ✅ FIXED: Skip barangays with NO submissions
+            if total_submissions == 0:
+                print(f"   ⏭️ Skipping - no submissions")
+                continue
+            
             # Only include barangays with submissions
-            if total_submissions > 0:
-                approved = RequirementSubmission.objects.filter(
-                    barangay=barangay,
-                    status='approved'
-                ).count()
-                
-                accomplished = RequirementSubmission.objects.filter(
-                    barangay=barangay,
-                    status='accomplished'
-                ).count()
-                
-                completed = approved + accomplished
-                compliance_rate = round((completed / total_submissions) * 100, 1)
-                
-                barangay_stats.append({
-                    'name': barangay.name,
-                    'total': total_submissions,
-                    'approved': approved,
-                    'accomplished': accomplished,
-                    'compliance_rate': compliance_rate
-                })
+            approved = RequirementSubmission.objects.filter(
+                barangay=barangay,
+                status='approved'
+            ).count()
+            
+            accomplished = RequirementSubmission.objects.filter(
+                barangay=barangay,
+                status='accomplished'
+            ).count()
+            
+            # Compliance = completed tasks / total submissions
+            completed = approved + accomplished
+            compliance_rate = round((completed / total_submissions) * 100, 1)
+            
+            print(f"   Approved: {approved}")
+            print(f"   Accomplished: {accomplished}")
+            print(f"   Compliance Rate: {compliance_rate}%")
+            
+            barangay_stats.append({
+                'name': barangay.name,
+                'total': total_submissions,
+                'approved': approved,
+                'accomplished': accomplished,
+                'compliance_rate': compliance_rate
+            })
         
         # Sort by compliance rate and take top 10
         top_barangays = sorted(
@@ -1472,6 +1533,12 @@ def barangays_data(request):
             key=lambda x: (x['compliance_rate'], x['accomplished']),
             reverse=True
         )[:10]
+        
+        print(f"\n📈 Top {len(top_barangays)} performing barangays:")
+        for i, b in enumerate(top_barangays, 1):
+            print(f"   {i}. {b['name']}: {b['compliance_rate']}%")
+        
+        print(f"{'='*70}\n")
         
         return JsonResponse({
             'success': True,

@@ -719,7 +719,6 @@
         <li>
           <a href="{% url 'pending_users' %}" style="position: relative;">
              User Approvals
-            👥 User Approvals
             {% if pending_count > 0 %}
             <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
               {{ pending_count }}
@@ -1464,6 +1463,110 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeNotifications);
 } else {
   initializeNotifications();
+}// 🔥 FORCE CLEAR BARANGAY CHART DATA
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Clearing barangay chart data...');
+    
+    // Find the barangay chart canvas
+    const barangayChartCanvas = document.getElementById('barangayChart');
+    
+    if (barangayChartCanvas) {
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(barangayChartCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+            console.log('✅ Destroyed existing chart');
+        }
+        
+        // Create new empty chart
+        window.barangayChart = new Chart(barangayChartCanvas, {
+            type: 'bar',
+            data: {
+                labels: [], // ← EMPTY
+                datasets: [{
+                    label: 'Compliance Rate (%)',
+                    data: [], // ← EMPTY
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Compliance: ' + context.parsed.x.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        console.log('✅ Created empty barangay chart');
+    }
+    
+    // NOW load data from API
+    loadBarangayData();
+});
+// Function to load barangay data
+function loadBarangayData() {
+    console.log('📡 Fetching barangay data from API...');
+    
+    fetch('/api/analytics/barangays/')
+        .then(response => response.json())
+        .then(data => {
+            console.log('📊 API Response:', data);
+            
+            if (data.success && data.barangays) {
+                const labels = data.barangays.labels || [];
+                const chartData = data.barangays.data || [];
+                
+                console.log('Labels:', labels);
+                console.log('Data:', chartData);
+                
+                // Update chart
+                if (window.barangayChart) {
+                    window.barangayChart.data.labels = labels;
+                    window.barangayChart.data.datasets[0].data = chartData;
+                    window.barangayChart.update();
+                    
+                    if (labels.length === 0) {
+                        console.log('⚠️ No barangay data available');
+                    } else {
+                        console.log(`✅ Chart updated with ${labels.length} barangays`);
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error loading barangay data:', error);
+        });
+}// Also clear on refresh button click
+const refreshButton = document.querySelector('[onclick*="refreshAnalytics"]');
+if (refreshButton) {
+    refreshButton.addEventListener('click', function() {
+        console.log('🔄 Refresh clicked - reloading barangay data');
+        loadBarangayData();
+    });
 }
   </script>
 </body>
