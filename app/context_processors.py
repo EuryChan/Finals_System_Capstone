@@ -58,3 +58,47 @@ def user_role(request):
             print(f"⚠️ Error in context processor: {e}")
             
     return context
+
+
+# app/context_processors.py
+
+def notification_counts(request):
+    """
+    Add notification counts to all templates for sidebar badges
+    """
+    from django.contrib.auth.models import User
+    from .models import EligibilityRequest, Notification
+    
+    counts = {
+        'pending_users_count': 0,
+        'pending_applications_count': 0,
+        'unread_notifications_count': 0,
+        'user_approvals_count': 0,  # Total needing approval
+    }
+    
+    if request.user.is_authenticated:
+        try:
+            # Count pending user approvals (users waiting for admin approval)
+            counts['pending_users_count'] = User.objects.filter(
+                userprofile__is_approved=False
+            ).count()
+            
+            # Count pending applications (non-archived)
+            counts['pending_applications_count'] = EligibilityRequest.objects.filter(
+                status='pending',
+                archived=False
+            ).count()
+            
+            # Count unread notifications for current user
+            counts['unread_notifications_count'] = Notification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count()
+            
+            # Total items needing approval (for User Approvals page)
+            counts['user_approvals_count'] = counts['pending_users_count']
+            
+        except Exception as e:
+            print(f"⚠️ Error calculating notification counts: {e}")
+    
+    return counts

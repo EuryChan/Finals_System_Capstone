@@ -1,60 +1,549 @@
-{% load static %}
+  {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sign Up - SmartFilex</title>
-  <link rel="stylesheet" href="{% static 'CSS/signup_page.css' %}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SmartFilex - Sign Up</title>
+    <link rel="stylesheet" href="{% static 'CSS/signup_page.css' %}" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  background-image: url("{% static 'Pictures/background.png' %}");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  height: 100vh;
+  overflow-y: hidden; /* Prevent vertical scrolling */
+}
+
+/* Dark overlay for better content visibility */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+}
+
+.signup-container {
+  display: flex;
+  height: 100vh;
+  animation: fadeIn 0.8s ease-out;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Left Section */
+.left-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.left-section img {
+  width: 320px;  /* Changed from 200px to 320px - Much bigger! */
+  height: auto;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+  animation: fadeInScale 0.8s ease-out 0.3s backwards;
+  z-index: 2;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.left-section img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.6));
+}
+
+/* Right Section */
+.right-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Form Box */
+.form-box {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 25px 35px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.8s ease-out 0.2s backwards;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+}
+
+.form-box h2 {
+  text-align: center;
+  margin-bottom: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  font-size: 24px;
+  animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 12px;
+  animation: fadeIn 0.6s ease-out backwards;
+}
+
+.form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-group:nth-child(2) { animation-delay: 0.15s; }
+.form-group:nth-child(3) { animation-delay: 0.2s; }
+.form-group:nth-child(4) { animation-delay: 0.25s; }
+.form-group:nth-child(5) { animation-delay: 0.3s; }
+.form-group:nth-child(6) { animation-delay: 0.35s; }
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #2c3e50;
+  font-size: 13px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #004085;
+  box-shadow: 0 0 0 3px rgba(0, 64, 133, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group input:hover,
+.form-group select:hover {
+  border-color: #7a8a99;
+}
+
+/* Submit Button */
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: #004085;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.6s ease-out 0.4s backwards;
+}
+
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-submit:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-submit:hover {
+  background-color: #002e5a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 64, 133, 0.3);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 64, 133, 0.2);
+}
+
+/* Login Link */
+.login-link {
+  text-align: center;
+  margin-top: 12px;
+  animation: fadeIn 0.6s ease-out 0.5s backwards;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.login-link a {
+  text-decoration: none;
+  color: #004085;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+  color: #002e5a;
+  text-decoration: underline;
+}
+
+/* Focus states for accessibility */
+.btn-submit:focus {
+  outline: 3px solid rgba(0, 64, 133, 0.5);
+  outline-offset: 2px;
+}
+
+/* Back Button */
+.back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  color: #2c3e50;
+  padding: 12px 20px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  animation: slideInFromLeft 0.6s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateX(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.back-button i {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.back-button:hover i {
+  transform: translateX(-3px);
+}
+
+/* Scrollbar styling for form-box */
+.form-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.form-box::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.form-box::-webkit-scrollbar-thumb {
+  background: rgba(0, 64, 133, 0.3);
+  border-radius: 10px;
+}
+
+.form-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 64, 133, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .signup-container {
+    flex-direction: column;
+  }
+
+  body {
+    background-attachment: scroll;
+    overflow-y: auto;
+  }
+
+  .left-section {
+    min-height: 30vh;
+    padding: 20px;
+  }
+
+  .left-section img {
+    width: 200px;  /* Changed from 150px to 200px */
+  }
+
+  .right-section {
+    padding: 20px;
+    min-height: 70vh;
+  }
+
+  .form-box {
+    padding: 25px 30px;
+    max-height: none;
+  }
+
+  .form-box h2 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  .left-section {
+    min-height: 25vh;
+  }
+
+  .left-section img {
+    width: 160px;  /* Changed from 120px to 160px */
+  }
+
+  .form-box {
+    padding: 25px;
+  }
+
+  .form-box h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .back-button {
+    top: 15px;
+    left: 15px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-section {
+    min-height: 20vh;
+  }
+
+  .left-section img {
+    width: 130px;  /* Changed from 100px to 130px */
+  }
+
+  .form-box {
+    padding: 20px;
+  }
+
+  .form-box h2 {
+    font-size: 18px;
+  }
+
+  .form-group label {
+    font-size: 12px;
+  }
+
+  .btn-submit {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .login-link {
+    font-size: 13px;
+  }
+
+  .back-button {
+    top: 10px;
+    left: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+    </style>
 </head>
 <body>
-  <div class="signup-container">
-    <div class="left-section">
-      <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo">
-    </div>
+    <!-- Back Button -->
+    <a href="{% url 'landing_page' %}" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
+    </a>
 
-    <div class="right-section">
-      <div class="form-box">
-        <h2>SmartFilex</h2>
-        <form method="POST" action="{% url 'signup_page' %}">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" name="username" id="username" required>
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" name="email" id="email" required>
-          </div>
-
-          <div class="form-group">
-            <label for="role">Role</label>
-            <select name="role" id="role" required>
-              <option value="">Select role</option>
-              <option value="Barangay Official">Barangay Official</option>
-              <option value="Municipal Officer">Municipal Officer</option>
-              <option value="DILG Staff">DILG Staff</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="password1">Password</label>
-            <input type="password" name="password1" id="password1" required>
-          </div>
-
-          <div class="form-group">
-            <label for="password2">Confirm Password</label>
-            <input type="password" name="password2" id="password2" required>
-          </div>
-
-          <button type="submit" class="btn-submit">Signup</button>
-        </form>
-        <div class="login-link">
-          Already have an account? <a href="{% url 'login_page' %}">Login</a>
+    <div class="signup-container">
+        <div class="left-section">
+            <img src="{% static 'Pictures/logo1.png' %}" alt="Logo" />
         </div>
-      </div>
+        <div class="right-section">
+            <form class="form-box" method="POST" action="{% url 'signup_page' %}">
+                {% csrf_token %}
+                
+                <h2>Create Account</h2>
+
+                <!-- Error messages -->
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">Sign Up</button>
+
+                <div class="login-link">
+                    Already have an account? <a href="{% url 'login_page' %}">Login</a>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </body>
 </html>

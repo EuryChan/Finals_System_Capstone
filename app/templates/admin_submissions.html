@@ -2854,11 +2854,7 @@ function renderRequirementsList(requirements) {
         </div>
       </div>
 
-      <div style="margin: 15px 0; padding: 10px; background: #f9fafb; border-radius: 6px; font-size: 13px;">
-        <strong>📊 Submissions:</strong> ${req.total_submissions} total
-        <span style="margin-left: 15px;">✅ ${req.approved_count} approved</span>
-        <span style="margin-left: 15px;">⏳ ${req.pending_count} pending</span>
-      </div>
+      
 
       <div class="actions">
         <button class="btn btn-approve" onclick="openEditRequirementModal(${req.id})" style="background: #3b82f6;">

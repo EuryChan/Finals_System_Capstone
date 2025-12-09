@@ -353,7 +353,7 @@
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
-    .view-btn, .save-btn, .archive-btn, .restore-btn {
+    .view-btn,.view-btns, .save-btn, .archive-btn, .restore-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 6px;
@@ -364,12 +364,22 @@
       margin-right: 8px;
       display: inline-flex;
       align-items: center;
+      vertical-align: middle;
+  line-height: 1;
       gap: 4px;
     }
 
     .view-btn {
-      background: var(--info);
+      background: #138496;
       color: white;
+    }
+    .view-btns {
+      color: white;
+    }
+    .view-btns:hover {
+      background: #138496;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
     }
 
     .view-btn:hover {
@@ -379,7 +389,7 @@
     }
 
     .save-btn {
-      background: var(--success);
+
       color: white;
     }
 
@@ -390,7 +400,7 @@
     }
 
     .archive-btn {
-      background: var(--warning);
+
       color: #212529;
     }
 
@@ -578,41 +588,7 @@
       grid-column: 1 / -1;
     }
 
-    @media (max-width: 1200px) {
-      .stats-container {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 200px;
-      }
-      .main-content {
-        margin-left: 200px;
-        padding: 20px;
-      }
-      .stats-container {
-        grid-template-columns: 1fr;
-      }
-      .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-      }
-      .table-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-      }
-      .table-actions {
-        width: 100%;
-        flex-direction: column;
-      }
-      .search-input {
-        width: 100%;
-      }
-    }/* Custom Confirmation Modal */
+   /* Custom Confirmation Modal */
 .custom-confirm-overlay {
   position: fixed;
   top: 0;
@@ -756,45 +732,813 @@
 
 .custom-prompt-input::placeholder {
   color: #adb5bd;
+}/* Red notification dot */
+.red-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+/* ===========================
+   RESPONSIVE DESIGN - APPLICATION REQUEST PAGE
+   =========================== */
+
+/* Desktop 1366x768 Specific */
+@media (max-width: 1366px) and (min-width: 1200px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .main-content {
+    margin-left: 220px;
+    padding: 24px 28px;
+  }
+  
+  .header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .stats-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 18px;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .table-container {
+    padding: 20px;
+    height: calc(100vh - 420px);
+  }
+  
+  .application-table th,
+  .application-table td {
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+  
+  .public-form-btn,
+  .back-button {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+/* Large Desktop (1200px - 1600px) */
+@media (max-width: 1600px) {
+  .stats-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Medium Desktop (1024px - 1200px) */
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .main-content {
+    margin-left: 240px;
+    padding: 24px;
+  }
+  
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .table-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .application-table {
+    font-size: 0.875rem;
+  }
+  
+  .application-table th,
+  .application-table td {
+    padding: 12px 10px;
+  }
+}
+
+/* Tablet Portrait (768px - 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .main-content {
+    margin-left: 200px;
+    padding: 20px;
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .table-container {
+    height: auto;
+    min-height: 400px;
+  }
+  
+  /* Make table scrollable horizontally on tablets */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .application-table {
+    min-width: 900px;
+  }
+}
+
+/* Mobile & Small Tablet (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Hide sidebar by default */
+  .sidebar {
+    width: 240px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    position: fixed;
+    z-index: 1000;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  }
+  
+  /* Main content full width */
+  .main-content {
+    margin-left: 0;
+    padding: 20px 16px;
+    width: 100%;
+  }
+  
+  /* Header */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .public-form-btn,
+  .back-button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+  
+  /* Stats - Single Column */
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-number {
+    font-size: 2.2rem;
+  }
+  
+  /* Table Container */
+  .table-container {
+    padding: 16px;
+    height: auto;
+    margin-bottom: 20px;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .table-header h2 {
+    font-size: 1.125rem;
+  }
+  
+  /* Table Actions */
+  .table-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .search-input,
+  .filter-select {
+    width: 100%;
+  }
+  
+  /* View Toggle - Horizontal on Mobile */
+  .table-actions > div:first-child {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .view-toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  /* Table - Horizontal Scroll */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+  
+  .application-table {
+    min-width: 800px;
+    font-size: 0.8125rem;
+  }
+  
+  .application-table th,
+  .application-table td {
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+  
+  /* Action Buttons - Smaller on Mobile */
+  .view-btns,
+  .save-btn,
+  .archive-btn,
+  .restore-btn {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Icon images in buttons */
+  .icon-img-large {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  
+  /* Actions column - prevent wrapping */
+  .application-table td:last-child {
+    white-space: nowrap;
+    min-width: 140px;
+  }
+  
+  .status-select {
+    padding: 5px 10px;
+    font-size: 0.8125rem;
+  }
+  
+  /* Modal */
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-header h3 {
+    font-size: 1.125rem;
+  }
+  
+  .documents-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+  }
+  
+  .document-item {
+    padding: 15px;
+  }
+  
+  .document-icon {
+    font-size: 28px;
+  }
+  
+  .document-name {
+    font-size: 0.8125rem;
+  }
+  
+  /* Custom Confirm Dialog */
+  .custom-confirm-dialog {
+    width: 95%;
+    max-width: 380px;
+  }
+  
+  .custom-confirm-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+  
+  .custom-confirm-title {
+    font-size: 1.25rem;
+  }
+  
+  .custom-confirm-message {
+    font-size: 0.9375rem;
+  }
+  
+  .custom-confirm-footer {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .custom-confirm-btn {
+    width: 100%;
+  }
+}
+
+/* Small Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .main-content {
+    padding: 16px 12px;
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .stats-container {
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .table-container {
+    padding: 12px;
+  }
+  
+  .table-header h2 {
+    font-size: 1rem;
+  }
+  
+  .application-table {
+    min-width: 700px;
+    font-size: 0.75rem;
+  }
+  
+  .application-table th,
+  .application-table td {
+    padding: 8px 6px;
+  }
+  
+  .view-btns,
+  .save-btn,
+  .archive-btn,
+  .restore-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    margin-right: 3px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  
+  /* Icon images smaller */
+  .icon-img-large {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Actions column - keep buttons in one line */
+  .application-table td:last-child {
+    white-space: nowrap;
+    min-width: 120px;
+  }
+  
+  .modal-content {
+    width: 96%;
+    margin: 5% auto;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .application-details h4 {
+    font-size: 0.9375rem;
+    margin-top: 20px;
+  }
+  
+  .application-details p {
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
+  
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .custom-confirm-header {
+    padding: 20px 20px 12px;
+  }
+  
+  .custom-confirm-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  .custom-confirm-title {
+    font-size: 1.125rem;
+  }
+  
+  .custom-prompt-input {
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    min-height: 80px;
+  }
+}
+
+/* Very Small Screens (max-width: 360px) */
+@media (max-width: 360px) {
+  .main-content {
+    padding: 12px 8px;
+  }
+  
+  .header h1 {
+    font-size: 1.125rem;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .table-container {
+    padding: 10px;
+  }
+  
+  .application-table {
+    font-size: 0.7rem;
+  }
+  
+  .public-form-btn,
+  .back-button {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile Menu Toggle */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: var(--shadow);
+  }
+  
+  .mobile-menu-toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    position: relative;
+    transition: 0.3s;
+  }
+  
+  .mobile-menu-toggle span::before,
+  .mobile-menu-toggle span::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    transition: 0.3s;
+  }
+  
+  .mobile-menu-toggle span::before {
+    top: -8px;
+  }
+  
+  .mobile-menu-toggle span::after {
+    bottom: -8px;
+  }
+  
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  
+  .sidebar-overlay.active {
+    display: block;
+  }
+  
+  /* Adjust header spacing for mobile menu */
+  .header {
+    margin-top: 50px;
+  }
+}
+
+/* Landscape Phones */
+@media (max-width: 768px) and (orientation: landscape) {
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal-content {
+    max-height: 70vh;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sidebar,
+  .mobile-menu-toggle,
+  .sidebar-overlay,
+  .back-button,
+  .public-form-btn,
+  .archive-btn,
+  .restore-btn,
+  .save-btn {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 0;
+  }
+  
+  .header-actions {
+    display: none;
+  }
+  
+  .table-container {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .application-table {
+    font-size: 10pt;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .stat-card,
+  .table-container,
+  .modal-content {
+    border: 2px solid #000000;
+  }
+  
+  .view-toggle-btn.active {
+    background: #000000;
+    color: #ffffff;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  
+  .sidebar {
+    transition: none;
+  }
+  
+  .modal-content {
+    animation: none;
+  }
+}
+
+/* Fix for sticky table header on mobile */
+@media (max-width: 768px) {
+  .application-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  .view-btns,
+  .save-btn,
+  .archive-btn,
+  .restore-btn,
+  .status-select {
+    min-height: 36px;
+    min-width: 36px;
+  }
+  
+  .close {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+/* Icon images inside buttons */
+.icon-img-large {
+  display: block;
+  object-fit: contain;
+}
+
+/* Actions table cell */
+.application-table td:last-child {
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Additional responsive fix for very small screens */
+@media (max-width: 360px) {
+  .view-btns,
+  .save-btn,
+  .archive-btn,
+  .restore-btn {
+    padding: 3px 6px;
+    margin-right: 2px;
+  }
+  
+  .icon-img-large {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Stack buttons vertically on very narrow screens if needed */
+@media (max-width: 320px) {
+  .application-table td:last-child {
+    white-space: normal;
+  }
+  
+  .view-btns,
+  .save-btn,
+  .archive-btn,
+  .restore-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 4px;
+    margin-right: 0;
+  }
+}
+
+
   </style>
 </head>
 <body>
-  
   <div class="dashboard-container">
     <!-- Sidebar -->
-    <div class="sidebar">
-      <a href="{% url 'landing_menu' %}">
-        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+<div class="sidebar">
+  <a href="{% url 'landing_menu' %}">
+    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+  </a>
+  <div class="menu-title">Navigation</div>
+  <ul class="nav-menu">
+    <li>
+      <a href="{% url 'dashboard' %}">
+         Dashboard
       </a>
-      <div class="menu-title">Navigation</div>
-       <ul class="nav-menu">
-        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li>
-          <a href="{% url 'application_request' %}" class="active" style="position: relative;">
-             Application Request
-            {% if pending_applications_count > 0 %}
-            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-              {{ pending_applications_count }}
-            </span>
-            {% endif %}
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'pending_users' %}" style="position: relative;">
-             User Approvals
-            {% if pending_count > 0 %}
-            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-              {{ pending_count }}
-            </span>
-            {% endif %}
-          </a>
-        </li>
-        <li><a href="{% url 'employees_profile' %}">Employees Profile</a></li>
-        <li><a href="{% url 'folder' %}">Folders</a></li>
-        <li><a href="{% url 'settings' %}">Settings</a></li>
-      </ul>
-    </div>
+    </li>
+    
+    <li>
+      <a href="{% url 'application_request' %}" style="position: relative;" class="active">
+         Application Request
+        {% if pending_applications_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'pending_users' %}" style="position: relative;">
+         User Approvals
+        {% if pending_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'employees_profile' %}">
+         Employees Profile
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'folder' %}" style="position: relative;">
+         Folders
+        {% if monitoring_count > 0 or certification_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'settings' %}">
+         Settings
+      </a>
+    </li>
+  </ul>
+</div>
+
 
     <!-- Main Content -->
     <div class="main-content">
@@ -896,14 +1640,25 @@
                 {% endif %}
               </td>
               <td>
-                <button class="view-btn" onclick="viewApplication({{ request.id }})" title="View Details">👁️ </button>
+                <button class="view-btns" onclick="viewApplication({{ request.id }})" title="View Details">
+                    <img src="{% static 'Pictures/icons/eye.png' %}" class="icon-img-large" alt="View">
+                </button>
+
                 {% if request.archived %}
-                <button class="restore-btn" onclick="restoreApplication({{ request.id }})" title="Restore">↩️ </button>
+                <button class="restore-btn" onclick="restoreApplication({{ request.id }})" title="Restore">
+                    <img src="{% static 'Pictures/icons/restore.png' %}" class="icon-img-large" alt="Restore">
+                </button>
                 {% else %}
-                <button class="save-btn" onclick="saveChanges({{ request.id }})">💾 </button>
-                <button class="archive-btn" onclick="archiveApplication({{ request.id }})" title="Archive">📦 </button>
+                <button class="save-btn" onclick="saveChanges({{ request.id }})" title="Save">
+                    <img src="{% static 'Pictures/icons/check.png' %}" class="icon-img-large" alt="Save">
+                </button>
+
+                <button class="archive-btn" onclick="archiveApplication({{ request.id }})" title="Archive">
+                    <img src="{% static 'Pictures/icons/archived.png' %}" class="icon-img-large" alt="Archive">
+                </button>
                 {% endif %}
-              </td>
+            </td>
+
             </tr>
             {% empty %}
             <tr>
@@ -1055,7 +1810,7 @@
                   <i class="fas fa-id-card document-icon" style="font-size: 32px; color: #1565C0; margin-bottom: 10px;"></i>
                   <span class="document-name" style="font-weight: 500; margin-bottom: 10px;">ID Front</span>
                   <a href="${app.id_front}" target="_blank" class="view-btn" style="text-decoration: none; font-size: 13px;">
-                    👁️ View
+                     View
                   </a>
                 </div>
               `;
@@ -1067,7 +1822,7 @@
                   <i class="fas fa-id-card document-icon" style="font-size: 32px; color: #1565C0; margin-bottom: 10px;"></i>
                   <span class="document-name" style="font-weight: 500; margin-bottom: 10px;">ID Back</span>
                   <a href="${app.id_back}" target="_blank" class="view-btn" style="text-decoration: none; font-size: 13px;">
-                    👁️ View
+                     View
                   </a>
                 </div>
               `;
@@ -1079,7 +1834,7 @@
                   <i class="fas fa-signature document-icon" style="font-size: 32px; color: #1565C0; margin-bottom: 10px;"></i>
                   <span class="document-name" style="font-weight: 500; margin-bottom: 10px;">Signature</span>
                   <a href="${app.signature}" target="_blank" class="view-btn" style="text-decoration: none; font-size: 13px;">
-                    👁️ View
+                     View
                   </a>
                 </div>
               `;

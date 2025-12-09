@@ -80,8 +80,7 @@
       letter-spacing: 1px;
     }
 
-    
-
+  
     /* Main Content */
     .main-content {
       flex: 1;
@@ -787,34 +786,87 @@
         width: 100%;
         justify-content: center;
       }
-    }
+    }/* Red notification dot */
+.red-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
   </style>
 </head>
 <body>
   <div class="dashboard-container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
-      <div class="menu-title">Navigation</div>
-      <ul class="nav-menu">
-        <li><a href="{% url 'dashboard' %}"> Dashboard</a></li>
-        <li><a href="{% url 'application_request' %}"> Application Request</a></li>
-        <li>
-          <a href="{% url 'pending_users' %}" style="position: relative;">
-             User Approvals
-            {% if pending_count > 0 %}
-            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-              {{ pending_count }}
-            </span>
-            {% endif %}
-          </a>
-        </li>
-        <li><a href="{% url 'employees_profile' %}"> Employees Profile</a></li>
-        <li><a href="{% url 'folder' %}"> Folders</a></li>
-        <li><a href="{% url 'settings' %}" class="active"> Settings</a></li>
-      </ul>
-    </div>
-
+ <!-- Sidebar -->
+<div class="sidebar">
+  <a href="{% url 'landing_menu' %}">
+    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+  </a>
+  <div class="menu-title">Navigation</div>
+  <ul class="nav-menu">
+    <li>
+      <a href="{% url 'dashboard' %}">
+         Dashboard
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'application_request' %}" style="position: relative;">
+         Application Request
+        {% if pending_applications_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'pending_users' %}" style="position: relative;">
+         User Approvals
+        {% if pending_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'employees_profile' %}">
+         Employees Profile
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'folder' %}" style="position: relative;">
+         Folders
+        {% if monitoring_count > 0 or certification_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'settings' %}" class="active">
+         Settings
+      </a>
+    </li>
+  </ul>
+</div>
     <!-- Main Content -->
     <div class="main-content">
       <!-- Header -->

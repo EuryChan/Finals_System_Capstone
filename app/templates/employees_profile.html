@@ -711,34 +711,509 @@
         font-size: 1.5rem;
       }
     }
+    /* Red notification dot */
+.red-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 48px;
+  height: 48px;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.mobile-menu-toggle span {
+  width: 24px;
+  height: 3px;
+  background: #0b1a50;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(7px, 7px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Desktop - No Changes Needed */
+@media (min-width: 1200px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* Laptop/Medium Desktop (1024px - 1199px) */
+@media (max-width: 1199px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .main-content {
+    margin-left: 240px;
+    padding: 28px;
+  }
+  
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Tablet Landscape (768px - 1023px) */
+@media (max-width: 1023px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .main-content {
+    margin-left: 220px;
+    padding: 24px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .back-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .action-bar {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .search-container {
+    max-width: 100%;
+  }
+  
+  .action-bar > div:last-child {
+    flex-wrap: wrap;
+  }
+  
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Tablet Portrait & Large Mobile (481px - 767px) */
+@media (max-width: 767px) {
+  /* Show mobile menu toggle */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  /* Hide sidebar by default, show when active */
+  .sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: none;
+  }
+  
+  .sidebar.active {
+    transform: translateX(0);
+    box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+  }
+  
+  /* Full width main content */
+  .main-content {
+    margin-left: 0;
+    padding: 24px 16px;
+    padding-top: 72px; /* Space for mobile menu button */
+  }
+  
+  /* Header adjustments */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* Action bar - stack vertically */
+  .action-bar {
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  /* View toggle and add button container */
+  .action-bar > div:last-child {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  /* View toggle buttons - full width */
+  .action-bar > div:last-child > div:first-child {
+    width: 100%;
+    display: flex;
+  }
+  
+  .view-toggle-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    min-height: 44px; /* Touch target */
+  }
+  
+  .add-button {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    min-height: 44px; /* Touch target */
+  }
+  
+  /* Card grid - 2 columns on tablet */
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  
+  .profile-card {
+    padding: 16px;
+  }
+  
+  .avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  
+  .profile-card h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  
+  .profile-card p {
+    font-size: 0.875rem;
+    margin-bottom: 6px;
+  }
+  
+  .task-badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+  
+  /* Action buttons - improved touch targets */
+  .action-buttons-container {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  
+  .edit-button,
+  .archive-button,
+  .restore-button {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+  
+  /* Modal adjustments */
+  .modal {
+    width: 92%;
+    max-width: 500px;
+    padding: 24px;
+    max-height: 80vh;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .modal-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  
+  /* Notifications */
+  .notification-container {
+    right: 12px;
+    left: 12px;
+    top: 72px;
+  }
+}
+
+/* Small Mobile (320px - 480px) */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px 12px;
+    padding-top: 68px;
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .action-bar {
+    padding: 14px;
+  }
+  
+  /* Single column layout */
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .profile-card {
+    padding: 16px;
+  }
+  
+  .avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    font-size: 22px;
+  }
+  
+  .profile-card h3 {
+    font-size: 0.9375rem;
+  }
+  
+  .profile-card p {
+    font-size: 0.8125rem;
+  }
+  
+  .task-badge {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+  
+  /* Smaller buttons for very small screens */
+  .edit-button,
+  .archive-button {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+  }
+  
+  /* Modal */
+  .modal {
+    width: 94%;
+    padding: 20px;
+  }
+  
+  .modal-form-group input,
+  .modal-form-group select {
+    padding: 10px 14px;
+    font-size: 0.875rem;
+  }
+  
+  /* Search bar */
+  .search-bar {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+  
+  .search-btn {
+    padding: 10px 16px;
+  }
+}
+
+/* Extra Small Screens (max-width: 360px) */
+@media (max-width: 360px) {
+  .main-content {
+    padding: 12px 8px;
+    padding-top: 64px;
+  }
+  
+  .header h1 {
+    font-size: 1.125rem;
+  }
+  
+  .avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  
+  .profile-card h3 {
+    font-size: 0.875rem;
+  }
+  
+  .profile-card p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Landscape orientation fixes */
+@media (max-width: 767px) and (orientation: landscape) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .modal {
+    max-height: 70vh;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase all interactive element sizes */
+  .edit-button,
+  .archive-button,
+  .add-button,
+  .view-toggle-btn,
+  .search-btn,
+  .modal-btn,
+  .back-button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  .close-btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Prevent horizontal scroll */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+  
+  .dashboard-container {
+    overflow-x: hidden;
+  }
+}
+
   </style>
 </head>
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
-    <div class="sidebar">
-      <a href="{% url 'landing_menu' %}">
-        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+<div class="sidebar">
+  <a href="{% url 'landing_menu' %}">
+    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+  </a>
+  <div class="menu-title">Navigation</div>
+  <ul class="nav-menu">
+    <li>
+      <a href="{% url 'dashboard' %}">
+         Dashboard
       </a>
-      <div class="menu-title">Navigation</div>
-      <ul class="nav-menu">
-        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li><a href="{% url 'application_request' %}">Application Request</a></li>
-        <li>
-          <a href="{% url 'pending_users' %}" style="position: relative;">
-             User Approvals
-            {% if pending_count > 0 %}
-            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-              {{ pending_count }}
-            </span>
-            {% endif %}
-          </a>
-        </li>
-        <li><a href="{% url 'employees_profile' %}" class="active">Employees Profile</a></li>
-        <li><a href="{% url 'folder' %}">Folders</a></li>
-        <li><a href="{% url 'settings' %}">Settings</a></li>
-      </ul>
-    </div>
+    </li>
+    
+    <li>
+      <a href="{% url 'application_request' %}" style="position: relative;">
+         Application Request
+        {% if pending_applications_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'pending_users' %}" style="position: relative;">
+         User Approvals
+        {% if pending_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'employees_profile' %}"class="active">
+         Employees Profile
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'folder' %}" style="position: relative;">
+         Folders
+        {% if monitoring_count > 0 or certification_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'settings' %}">
+         Settings
+      </a>
+    </li>
+  </ul>
+</div>
 
     <!-- Main Content -->
     <div class="main-content">

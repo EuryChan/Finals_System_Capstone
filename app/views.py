@@ -240,19 +240,35 @@ def application_request(request):
     # Get all eligibility requests
     requests = EligibilityRequest.objects.all().order_by('-date_submitted')
     
-    # Count pending applications (non-archived)
+     # Count monitoring files
+    monitoring_count = CategorizedFile.objects.filter(
+        category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+        is_archived=False
+    ).count()
+    
+    # Count certification files
+    certification_count = CategorizedFile.objects.filter(
+        category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+        is_archived=False
+    ).count()
+    
+    # Count pending users
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
+    
+    # Count pending applications
     pending_applications_count = EligibilityRequest.objects.filter(
         status='pending',
         archived=False
     ).count()
     
-    # Count pending user approvals (if you need this here too)
-    pending_count = User.objects.filter(is_active=False).count()
-    
     context = {
         'requests': requests,
         'pending_applications_count': pending_applications_count,
         'pending_count': pending_count,  # for User Approvals badge
+        'monitoring_count': monitoring_count,
+        'certification_count': certification_count,
     }
     return render(request, 'application_request.html', context)
 
@@ -313,7 +329,8 @@ def employees_profile(request):
                         'success': False, 
                         'error': 'Employee ID already exists'
                     }, status=400)
-                
+                # Count monitoring files
+
                 # Create employee
                 employee_data = {
                     'name': name,
@@ -338,6 +355,7 @@ def employees_profile(request):
                 
                 # Clear cache
                 cache.delete('employee_stats')
+    
                 
                 return redirect('employees_profile')
                 
@@ -402,6 +420,29 @@ def employees_profile(request):
     # Get department and status choices if they exist
     department_choices = getattr(Employee, 'DEPARTMENT_CHOICES', [])
     status_choices = getattr(Employee, 'STATUS_CHOICES', [])
+
+    monitoring_count = CategorizedFile.objects.filter(
+        category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+        is_archived=False
+    ).count()
+    
+    # Count certification files
+    certification_count = CategorizedFile.objects.filter(
+        category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+        is_archived=False
+    ).count()
+    
+    # Count pending users
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
+    
+    # Count pending applications
+    pending_applications_count = EligibilityRequest.objects.filter(
+        status='pending',
+        archived=False
+    ).count()
+
     
     context = {
         'page_obj': page_obj,
@@ -413,6 +454,11 @@ def employees_profile(request):
         'supervisors': supervisors,
         'department_choices': department_choices,
         'status_choices': status_choices,
+        'monitoring_count': monitoring_count,
+        'certification_count': certification_count,
+        'pending_count': pending_count,
+        'pending_applications_count': pending_applications_count,
+                
     }
     
     return render(request, 'employees_profile.html', context)
@@ -640,8 +686,44 @@ from django.contrib.auth import update_session_auth_hash
 import json
 
 
+# views.py
+
+@login_required
 def settings(request):
-    return render(request, 'settings.html')
+    """Settings page with notification counts for sidebar"""
+    from .models import CategorizedFile
+    
+    # Count monitoring files
+    monitoring_count = CategorizedFile.objects.filter(
+        category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+        is_archived=False
+    ).count()
+    
+    # Count certification files
+    certification_count = CategorizedFile.objects.filter(
+        category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+        is_archived=False
+    ).count()
+    
+    # Count pending users
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
+    
+    # Count pending applications
+    pending_applications_count = EligibilityRequest.objects.filter(
+        status='pending',
+        archived=False
+    ).count()
+    
+    context = {
+        'monitoring_count': monitoring_count,
+        'certification_count': certification_count,
+        'pending_count': pending_count,
+        'pending_applications_count': pending_applications_count,
+    }
+    
+    return render(request, 'settings.html', context)
 
 
 @login_required
@@ -969,6 +1051,29 @@ def pending_users(request):
     pending = UserProfile.objects.filter(
         is_approved=False
     ).select_related('user').order_by('-submitted_at')
+
+     # Count monitoring files
+    monitoring_count = CategorizedFile.objects.filter(
+        category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+        is_archived=False
+    ).count()
+    
+    # Count certification files
+    certification_count = CategorizedFile.objects.filter(
+        category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+        is_archived=False
+    ).count()
+    
+    # Count pending users
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
+    
+    # Count pending applications
+    pending_applications_count = EligibilityRequest.objects.filter(
+        status='pending',
+        archived=False
+    ).count()
     
     # Get recently approved users (last 10)
     approved = UserProfile.objects.filter(
@@ -980,6 +1085,10 @@ def pending_users(request):
         'pending_users': pending,
         'approved_users': approved,
         'pending_count': pending.count(),
+        'monitoring_count': monitoring_count,
+        'certification_count': certification_count,
+        'pending_count': pending_count,
+        'pending_applications_count': pending_applications_count,
     }
     return render(request, 'pending_users.html', context)
 
@@ -1236,6 +1345,7 @@ def dashboard(request):
                 'elective': elective_count,
                 'appointive': appointive_count
             })
+
         
         # ============================================
         # CHART 2: Top Performing Barangays
@@ -1277,7 +1387,26 @@ def dashboard(request):
             key=lambda x: (x['compliance_rate'], x['accomplished']), 
             reverse=True
         )[:10]
+
+        monitoring_count = CategorizedFile.objects.filter(
+            category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+            is_archived=False
+        ).count()
         
+        certification_count = CategorizedFile.objects.filter(
+            category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+            is_archived=False
+        ).count()
+        
+        pending_count = User.objects.filter(
+            userprofile__is_approved=False
+        ).count()
+        
+        pending_applications_count = EligibilityRequest.objects.filter(
+            status='pending',
+            archived=False
+        ).count()
+            
         # ============================================
         # BUILD CONTEXT
         # ============================================
@@ -1293,6 +1422,10 @@ def dashboard(request):
             'processing_rate': processing_rate,
             'avg_processing_days': avg_processing_days,
             'this_month_certs': this_month_certs,
+            'monitoring_count': monitoring_count,
+            'certification_count': certification_count,
+            'pending_count': pending_count,
+            'pending_applications_count': pending_applications_count,
         }
         
         print(f"✅ Dashboard loaded: Employees={total_employees}, "
@@ -7132,20 +7265,23 @@ def folder_view(request):
             is_archived=False
         ).count()
     
-    # Count for monitoring files
+    
+    # Count monitoring files
     monitoring_count = CategorizedFile.objects.filter(
         category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
         is_archived=False
     ).count()
     
-    # Count for certification files - FIXED CATEGORY NAMES
+    # Count certification files
     certification_count = CategorizedFile.objects.filter(
         category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
         is_archived=False
     ).count()
     
-    # Count pending user approvals
-    pending_count = User.objects.filter(is_active=False).count()
+    # Count pending users
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
     
     # Count pending applications
     pending_applications_count = EligibilityRequest.objects.filter(

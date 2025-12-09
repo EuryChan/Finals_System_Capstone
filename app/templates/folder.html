@@ -538,6 +538,30 @@
       color: var(--text-secondary);
     }
 
+    /* Red notification dot */
+.red-dot {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .sidebar {
@@ -646,65 +670,65 @@
     .profile-card:nth-child(4) { animation-delay: 0.4s; }
     .profile-card:nth-child(5) { animation-delay: 0.5s; }
     .profile-card:nth-child(6) { animation-delay: 0.6s; }
+    
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    
+ <div class="dashboard-container">
     <!-- Sidebar -->
-    <div class="sidebar">
-      <a href="{% url 'landing_menu' %}">
-        <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+<div class="sidebar">
+  <a href="{% url 'landing_menu' %}">
+    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+  </a>
+  <div class="menu-title">Navigation</div>
+  <ul class="nav-menu">
+    <li>
+      <a href="{% url 'dashboard' %}">
+         Dashboard
       </a>
-      <div class="menu-title">Navigation</div>
-      <ul class="nav-menu">
-  <li>
-    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
-      Dashboard
-    </a>
-  </li>
-  <li>
-    <a href="{% url 'application_request' %}" {% if request.resolver_match.url_name == 'application_request' %}class="active"{% endif %} style="position: relative;">
-       Application Request
-      {% if pending_applications_count > 0 %}
-      <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-        {{ pending_applications_count }}
-      </span>
-      {% endif %}
-    </a>
-  </li>
-  <li>
-    <a href="{% url 'pending_users' %}" {% if request.resolver_match.url_name == 'pending_users' %}class="active"{% endif %} style="position: relative;">
-       User Approvals
-      {% if pending_count > 0 %}
-      <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-        {{ pending_count }}
-      </span>
-      {% endif %}
-    </a>
-  </li>
-  <li>
-    <a href="{% url 'employees_profile' %}" {% if request.resolver_match.url_name == 'employees_profile' %}class="active"{% endif %}>
-      Employees Profile
-    </a>
-  </li>
-  <li>
-    <a href="{% url 'folder' %}" {% if request.resolver_match.url_name == 'folder' %}class="active"{% endif %} style="position: relative;">
-       Folders
-      {% if monitoring_count > 0 or certification_count > 0 %}
-      <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background: #dc3545; border-radius: 50%;"></span>
-      {% endif %}
-    </a>
-  </li>
-  <li>
-    <a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>
-      Settings
-    </a>
-  </li>
-</ul>
-    </div>
+    </li>
+    
+    <li>
+      <a href="{% url 'application_request' %}" style="position: relative;" >
+         Application Request
+        {% if pending_applications_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'pending_users' %}" style="position: relative;">
+         User Approvals
+        {% if pending_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'employees_profile' %}">
+         Employees Profile
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'folder' %}" style="position: relative;"class="active">
+         Folders
+        {% if monitoring_count > 0 or certification_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'settings' %}">
+         Settings
+      </a>
+    </li>
+  </ul>
+</div>
 
-    <!-- Main Content -->
     <div class="main-content">
       <!-- Header -->
       <div class="header">

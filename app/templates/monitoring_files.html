@@ -949,6 +949,250 @@
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }  /* Upload Modal */
+    .upload-modal {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-content {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .upload-content h3 {
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+      background: var(--bg-secondary);
+    }
+
+    .upload-area:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .upload-area.dragover {
+      border-color: var(--accent-primary);
+      background: rgba(0, 123, 255, 0.1);
+    }
+
+    .upload-area i {
+      font-size: 48px;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+    }
+
+    .upload-area p {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      background: var(--bg-primary);
+    }
+
+    .form-group input[readonly] {
+      background: var(--bg-tertiary);
+      cursor: not-allowed;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .modal-actions button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-upload {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-upload:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-upload:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-cancel {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .btn-cancel:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+      border-left: 4px solid;
+      font-size: 14px;
+    }
+
+    .alert.success {
+      background: rgba(40, 167, 69, 0.1);
+      color: var(--success-hover);
+      border-color: var(--success);
+    }
+
+    .alert.error {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+
+    .alert.active {
+      display: block;
+    }
+
+    .file-preview {
+      display: none;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      margin-top: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    .file-preview.active {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .file-preview-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-preview-info i {
+      color: var(--accent-primary);
+      font-size: 20px;
+    }
+
+    .file-preview-text {
+      flex: 1;
+    }
+
+    .file-preview-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .file-preview-size {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .remove-file {
+      background: #dc3545;
+      color: white;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .remove-file:hover {
+      background: #c82333;
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -1019,15 +1263,12 @@
 
       <div class="action-buttons">
         <div class="buttons-left">
-          <button class="create-button" onclick="openCreateModal()">
-            <i class="fas fa-plus"></i> Create Document
-          </button>
-          <button class="upload-button" onclick="openUploadModal()">
-            <i class="fas fa-upload"></i> Upload Files
+          <button class="create-button" onclick="openUploadModal()">
+            <i class="fas fa-plus"></i> Upload Document
           </button>
         </div>
         <div class="search-container">
-          <input type="text" class="search-bar" placeholder="Search files..." id="globalSearch" onkeyup="searchFiles()">
+          <input type="text" class="search-bar" placeholder="Search barangay..." id="globalSearch" onkeyup="searchBarangays()">
         </div>
       </div>
 
@@ -1085,112 +1326,99 @@
     </div>
   </div>
 
-  <!-- Create Document Modal -->
-  <div class="modal" id="createModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2><i class="fas fa-file-alt"></i> Create New Document</h2>
-        <button class="close-modal" onclick="closeCreateModal()">&times;</button>
-      </div>
-
-      <div class="alert" id="createAlert"></div>
-
-      <div class="modal-body">
-        <form id="createForm" onsubmit="handleCreateSubmit(event)">
-          <div class="form-group">
-            <label>Document Title *</label>
-            <input type="text" id="docTitle" required placeholder="e.g., Weekly Report, Monthly Summary">
-          </div>
-
-          <div class="form-group">
-            <label>Description</label>
-            <textarea id="docDescription" placeholder="Brief description of the document"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Auto-Detected Category</label>
-            <div id="autoCategoryDisplay" class="auto-category-badge">Will be detected from title</div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel" onclick="closeCreateModal()">
-          <i class="fas fa-times"></i> Cancel
-        </button>
-        <button type="submit" form="createForm" class="btn-submit">
-          <i class="fas fa-plus"></i> Create Document
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Upload Files Modal -->
+  <!-- Upload Modal -->
   <div class="modal" id="uploadModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2><i class="fas fa-cloud-upload-alt"></i> Upload Files</h2>
+        <h2><i class="fas fa-cloud-upload-alt"></i> Upload File</h2>
         <button class="close-modal" onclick="closeUploadModal()">&times;</button>
       </div>
 
       <div class="alert" id="uploadAlert"></div>
 
       <div class="modal-body">
-        <form id="uploadForm" onsubmit="handleUploadSubmit(event)">
-          <div class="form-group">
-            <label>Select Files *</label>
-            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-              <i class="fas fa-cloud-upload-alt"></i>
-              <p><strong>Click to upload</strong> or drag and drop</p>
-              <p style="font-size: 12px; color: var(--text-muted);">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB)</p>
+        <div class="upload-zone" id="uploadZone">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p><strong>Click to select file</strong> or drag and drop</p>
+          <p style="font-size: 12px; margin-top: 8px; color: var(--text-muted);">
+            PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB)
+          </p>
+        </div>
+        
+        <input type="file" id="fileInput" class="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+        
+        <div class="file-item" id="filePreview" style="display: none;">
+          <div class="file-item-info">
+            <i class="fas fa-file-alt" id="fileIcon"></i>
+            <div>
+              <div class="file-item-name" id="fileName">No file selected</div>
+              <div class="file-item-size" id="fileSize"></div>
             </div>
-            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onchange="handleFileSelect(event)">
           </div>
-
-          <div class="selected-files" id="selectedFiles"></div>
-        </form>
+          <button type="button" class="remove-file" id="removeFile">×</button>
+        </div>
+        
+        <div class="form-group">
+          <label>Category: <span style="color: #dc3545;">*</span></label>
+          <select id="uploadCategory">
+            <option value="">Select Category</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="semestral">Semestral</option>
+            <option value="annually">Annual</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Title (optional):</label>
+          <input type="text" id="uploadTitle" placeholder="e.g., Weekly Report, Monthly Summary">
+        </div>
+        
+        <div class="form-group">
+          <label>Description (optional):</label>
+          <input type="text" id="uploadDescription" placeholder="Brief description of the document">
+        </div>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-cancel" onclick="closeUploadModal()">
+        <button class="btn-cancel" onclick="closeUploadModal()">
           <i class="fas fa-times"></i> Cancel
         </button>
-        <button type="submit" form="uploadForm" class="btn-submit">
-          <i class="fas fa-upload"></i> Upload Files
+        <button class="btn-submit" id="uploadBtn" disabled>
+          <i class="fas fa-upload"></i> Upload
         </button>
       </div>
     </div>
   </div>
 
   <!-- File Browser Modal -->
-  <div class="modal" id="fileBrowser">
-    <div class="modal-content" style="max-width: 1200px;">
+  <div class="modal file-browser-modal" id="fileBrowser">
+    <div class="modal-content">
       <div class="modal-header">
         <h2 id="browserTitle"><i class="fas fa-folder-open"></i> Files</h2>
         <button class="close-modal" onclick="closeFileBrowser()">&times;</button>
       </div>
 
       <div class="modal-body">
-        <!-- Filters -->
         <div class="file-filters">
           <div>
             <div class="form-group" style="margin: 0;">
               <label style="font-size: 12px; margin-bottom: 5px;">Date From</label>
-              <input type="date" id="filterDateFrom" class="search-bar" style="padding: 8px;">
+              <input type="date" id="filterDateFrom" style="padding: 8px;">
             </div>
             <div class="form-group" style="margin: 0;">
               <label style="font-size: 12px; margin-bottom: 5px;">Date To</label>
-              <input type="date" id="filterDateTo" class="search-bar" style="padding: 8px;">
+              <input type="date" id="filterDateTo" style="padding: 8px;">
             </div>
             <div>
-              <button class="upload-button" onclick="applyFilters()" style="width: 100%; margin: 0;">
+              <button class="create-button" onclick="applyFilters()" style="width: 100%; margin: 0;">
                 <i class="fas fa-filter"></i> Apply Filters
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Files Container -->
         <div id="filesContainer" style="min-height: 300px;">
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
@@ -1222,13 +1450,207 @@
       </div>
     </div>
   </div>
-
   <script>
     const csrfToken = '{{ csrf_token }}';
     let selectedBarangayId = null;
     let selectedBarangayName = null;
     let currentCategory = null;
     let selectedFiles = [];
+
+     // Get DOM elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadCategory = document.getElementById('uploadCategory');
+    const uploadAlert = document.getElementById('uploadAlert');
+
+    // Upload area click
+    uploadArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFileSelect(e.target.files[0]);
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      
+      const file = e.dataTransfer.files[0];
+      handleFileSelect(file);
+    });
+
+    // Handle file selection
+    function handleFileSelect(file) {
+      if (!file) return;
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showAlert('error', '⚠️ File size exceeds 10MB limit');
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'image/jpeg',
+        'image/jpg',
+        'image/png'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        showAlert('error', '⚠️ Invalid file type. Please upload PDF, DOC, DOCX, XLS, XLSX, JPG, or PNG files.');
+        return;
+      }
+
+      selectedFile = file;
+      
+      // Display file info
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+      filePreview.classList.add('active');
+      
+      // Update icon based on file type
+      const icon = filePreview.querySelector('i');
+      if (file.type.includes('pdf')) {
+        icon.className = 'fas fa-file-pdf';
+        icon.style.color = '#dc3545';
+      } else if (file.type.includes('word')) {
+        icon.className = 'fas fa-file-word';
+        icon.style.color = '#007bff';
+      } else if (file.type.includes('excel') || file.type.includes('sheet')) {
+        icon.className = 'fas fa-file-excel';
+        icon.style.color = '#28a745';
+      } else if (file.type.includes('image')) {
+        icon.className = 'fas fa-file-image';
+        icon.style.color = '#ffc107';
+      }
+      
+      validateForm();
+      hideAlert();
+    }
+
+    // Remove file
+    removeFileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedFile = null;
+      fileInput.value = '';
+      filePreview.classList.remove('active');
+      validateForm();
+    });
+
+    // Category change
+    uploadCategory.addEventListener('change', validateForm);
+
+    // Validate form
+    function validateForm() {
+      const isValid = selectedFile && uploadCategory.value;
+      uploadBtn.disabled = !isValid;
+    }
+
+    // Upload button click
+    uploadBtn.addEventListener('click', uploadFile);
+
+    // Upload file
+    function uploadFile() {
+      if (!selectedFile || !uploadCategory.value) {
+        showAlert('error', '⚠️ Please select a file and category');
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('category', uploadCategory.value);
+      formData.append('title', document.getElementById('uploadTitle').value);
+      formData.append('description', document.getElementById('uploadDescription').value);
+
+      // Simulate upload (replace with actual API call)
+      setTimeout(() => {
+        console.log('File uploaded:', {
+          file: selectedFile.name,
+          category: uploadCategory.value,
+          title: document.getElementById('uploadTitle').value,
+          description: document.getElementById('uploadDescription').value
+        });
+
+        showAlert('success', `✓ File "${selectedFile.name}" uploaded successfully to ${uploadCategory.value} category!`);
+        
+        uploadBtn.innerHTML = '<i class="fas fa-check"></i> Uploaded';
+        
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      }, 1500);
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Show alert
+    function showAlert(type, message) {
+      uploadAlert.className = `alert ${type} active`;
+      uploadAlert.textContent = message;
+    }
+
+    // Hide alert
+    function hideAlert() {
+      uploadAlert.className = 'alert';
+      uploadAlert.textContent = '';
+    }
+
+    // Close modal
+    function closeModal() {
+      // Reset form
+      selectedFile = null;
+      fileInput.value = '';
+      filePreview.classList.remove('active');
+      uploadCategory.value = '';
+      document.getElementById('uploadTitle').value = '';
+      document.getElementById('uploadDescription').value = '';
+      hideAlert();
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+      
+      // In actual implementation, this would close the modal
+      console.log('Modal closed');
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
 
     const categoryKeywords = {
       weekly: ['week', 'weekly', 'w/', 'seven days', 'hebdomadal'],
@@ -1805,7 +2227,29 @@
           closeSidebar();
         }
       });
+    });function searchBarangays() {
+  const query = document.getElementById('globalSearch').value.toLowerCase().trim();
+  const barangayItems = document.querySelectorAll('.barangay-list li');
+  
+  barangayItems.forEach(item => {
+    const barangayName = item.textContent.toLowerCase();
+    
+    if (barangayName.includes(query)) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  
+  // If search is empty, show all
+  if (query === '') {
+    barangayItems.forEach(item => {
+      item.style.display = 'block';
     });
+  }
+  
+  console.log('🔍 Searching barangays for:', query);
+}
   </script>
 </body>
 </html>

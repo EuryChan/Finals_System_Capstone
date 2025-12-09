@@ -1,4 +1,13 @@
-asgiref==3.9.1
-Django==5.2.6
+asgiref==3.10.0
+charset-normalizer==3.4.4
+Django==5.2.8
+django-crontab==0.7.1
+et_xmlfile==2.0.0
+openpyxl==3.1.5
+packaging==25.0
+pillow==12.0.0
+PyPDF2==3.0.1
+pytesseract==0.3.13
+reportlab==4.4.4
 sqlparse==0.5.3
 tzdata==2025.2
