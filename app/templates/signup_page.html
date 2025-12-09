@@ -5,7 +5,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SmartFilex - Sign Up</title>
-    <link rel="stylesheet" href="{% static 'CSS/signup_page.css' %}" />
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -13,7 +12,7 @@
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
   overflow-x: hidden;
-  background-image: url("{% static 'Pictures/background.png' %}");
+  background-image: url("{% static 'Pictures/logo3.png' %}");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -479,6 +478,45 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}/* Error Messages */
+.messages {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+  animation: slideInDown 0.4s ease-out;
+}
+
+.messages li {
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.messages li.error {
+  background-color: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.messages li.success {
+  background-color: #efe;
+  color: #3c3;
+  border: 1px solid #cfc;
+}
+
+.messages li.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.messages li.info {
+  background-color: #e7f3ff;
+  color: #004085;
+  border: 1px solid #b8daff;
 }
     </style>
 </head>
@@ -503,7 +541,7 @@ html {
                 {% if messages %}
                     <ul class="messages">
                         {% for message in messages %}
-                            <li>{{ message }}</li>
+                            <li class="{{ message.tags }}">{{ message }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
@@ -519,15 +557,14 @@ html {
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required />
-                </div>
+    <label for="password1">Password</label>
+    <input type="password" id="password1" name="password1" required />
+</div>
 
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required />
-                </div>
-
+<div class="form-group">
+    <label for="password2">Confirm Password</label>
+    <input type="password" id="password2" name="password2" required />
+</div>
                 <div class="form-group">
                     <label for="role">Role</label>
                     <select id="role" name="role" required>

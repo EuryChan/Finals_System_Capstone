@@ -980,51 +980,74 @@ def certification_filess(request):
     return render(request, 'certification_files.html')
 
 
-
 def signup_page(request):
     if request.method == 'POST':
+        # ADD DEBUG PRINTS
+        print("=" * 50)
+        print("🔍 SIGNUP DEBUG")
+        print("=" * 50)
+        
         username = request.POST.get('username')
         email = request.POST.get('email')
         role = request.POST.get('role')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
+        
+        # Print what we received
+        print(f"Username: {username}")
+        print(f"Email: {email}")
+        print(f"Role: {role}")
+        print(f"Password1: {'***' if password1 else None}")
+        print(f"Password2: {'***' if password2 else None}")
+        print(f"All fields filled: {all([username, email, role, password1, password2])}")
+        print("=" * 50)
 
         if not all([username, email, role, password1, password2]):
+            print("❌ FAILED: Missing fields")
             messages.error(request, 'Please fill in all fields.')
             return render(request, 'signup_page.html')
 
         if password1 != password2:
+            print("❌ FAILED: Passwords don't match")
             messages.error(request, 'Passwords do not match.')
             return render(request, 'signup_page.html')
 
         if User.objects.filter(username=username).exists():
+            print("❌ FAILED: Username exists")
             messages.error(request, 'Username already exists.')
             return render(request, 'signup_page.html')
 
         if User.objects.filter(email=email).exists():
+            print("❌ FAILED: Email exists")
             messages.error(request, 'Email already registered.')
             return render(request, 'signup_page.html')
 
         try:
             validate_password(password1)
+            print("✅ Password validation passed")
         except ValidationError as e:
+            print(f"❌ FAILED: Password validation - {e}")
             for error in e:
                 messages.error(request, error)
             return render(request, 'signup_page.html')
 
         # Create the user
+        print("🚀 Creating user...")
         user = User.objects.create_user(username=username, email=email, password=password1)
+        print(f"✅ User created: {user.id}")
 
         # Create or get profile with normalized role (strip spaces)
         UserProfile.objects.get_or_create(
             user=user, 
             defaults={
                 'role': role.strip(),
-                'is_approved': False  # KEY: User needs approval
+                'is_approved': False
             }
         )
+        print("✅ Profile created")
 
         messages.success(request, 'Account created successfully. Please log in.')
+        print("✅ Redirecting to login...")
         return redirect('login_page')
 
     return render(request, 'signup_page.html')
