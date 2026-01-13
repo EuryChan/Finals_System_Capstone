@@ -33,7 +33,7 @@ urlpatterns = [
     path('dilg/application-requests/', views.application_request, name='application_request'),
 
     # Requirements Management APIs
-    path('api/admin/requirements/list/', views.api_requirements_list, name='api_requirements_list'),
+    #path('api/admin/requirements/list/', views.api_requirements_list, name='api_requirements_list'),
     path('api/admin/requirements/<int:requirement_id>/', views.api_requirement_detail, name='api_requirement_detail'),
     path('api/admin/requirements/<int:requirement_id>/update/', views.api_update_requirement, name='api_update_requirement'),
     path('api/admin/requirements/<int:requirement_id>/archive/', views.api_archive_requirement, name='api_archive_requirement'),
@@ -58,7 +58,6 @@ urlpatterns = [
     # ============================================
     path('logout/', auth_views.LogoutView.as_view(next_page='login_page'), name='logout'),
     path('api/user/session/', views.api_user_session, name='api_user_session'),
-    path('api/requirements/list/', views.api_barangay_requirements, name='api_barangay_requirements'),
     path('api/requirements/list/', views.api_requirements_list, name='api_requirements_list'),
     path('api/requirements/submission/<int:submission_id>/', views.api_submission_detail, name='api_submission_detail'),
     path('api/requirements/submission/<int:submission_id>/upload/', views.api_attachment_upload, name='api_attachment_upload'),
@@ -111,6 +110,21 @@ urlpatterns = [
     # ============================================
     # API ENDPOINTS - DILG REQUIREMENT MANAGEMENT
     # ============================================
+    path('api/admin/requirements/list/', 
+         views.requirements_list_api, 
+         name='requirements_list_api'),
+
+     path('api/eligibility-certifications-data/', views.eligibility_certifications_chart_data, name='eligibility_certifications_chart_data'),
+
+    path('api/debug-requirement-issue/', views.debug_requirement_issue, name='debug_requirement_issue'),
+
+    path('api/debug/requirements/', 
+         views.debug_requirements_count, 
+         name='debug_requirements_count'),
+    
+    path('api/admin/requirements/<int:requirement_id>/', 
+         views.requirement_detail_api, 
+         name='requirement_detail_api'),
     path('api/user/settings/', views.user_settings_api, name='user_settings_api'),
     path('api/user/profile/', views.user_profile_api, name='user_profile_api'),
     path('api/requirements/create/', views.api_create_requirement, name='api_create_requirement'),
@@ -168,7 +182,7 @@ urlpatterns = [
      path('api/files/upload/', views.api_upload_file, name='api_upload_file'),
 
 
-     # API endpoints for settings
+    # API endpoints for settings
     # Settings API endpoints
     path('api/update-profile/', views.update_profile, name='update_profile'),
     path('api/update-account/', views.update_account, name='update_account'),
@@ -178,5 +192,39 @@ urlpatterns = [
     path('api/toggle-2fa/', views.toggle_2fa, name='toggle_2fa'),
     path('api/delete-account/', views.delete_account, name='delete_account'),
     path('api/get-user-stats/', views.get_user_stats, name='get_user_stats'),
+
+    # ===== BARANGAY OFFICIALS PROFILE API ENDPOINTS =====
+    path('api/officials/list/', views.list_officials, name='list_officials'),
+    path('api/officials/create/', views.create_official, name='create_official'),
+    path('api/officials/update/<int:official_id>/', views.update_official, name='update_official'),
+    path('api/officials/delete/<int:official_id>/', views.delete_official, name='delete_official'),
+    path('api/officials/<int:official_id>/', views.get_official, name='get_official'),
+    path('api/officials/bulk-create/', views.bulk_create_officials, name='bulk_create_officials'),
+    path('api/officials/<int:official_id>/generate-certificate/', views.generate_official_certificate, name='generate_official_certificate'),
+
+    # ============================================
+    # MISCELLANEOUS
+     path('barangay/dashboard/', views.barangay_dashboard, name='barangay_dashboard'),
+     path('test-email/', views.send_test_email, name='test_email'),
+     path('debug/user-barangay/', views.debug_user_barangay),
+     path('api/requirements/radar-chart/', views.requirements_radar_chart_data, name='requirements_radar_chart'),
+     path('api/eligibility/analytics/', views.api_eligibility_analytics, name='api_eligibility_analytics'),
+     path('api/requirements/trend/', views.api_requirements_trend_data, name='api_requirements_trend_data'),
+
+    path('profile/update/', views.update_profiles, name='update_profile'),
+    path('profile/change-password/', views.change_passwords, name='change_password'),
+    path('api/profile/stats/', views.profile_stats, name='profile_stats'),
+
+    path('terms_conditions/', views.terms_conditions, name='terms_conditions'),
+    path('api/accept-terms/', views.accept_terms, name='accept_terms'),
+    path('api/check-terms/', views.check_terms_acceptance, name='check_terms'),
+
+    # Notification API
+    path('api/notifications/', views.api_notifications, name='api_notifications'),
+    path('api/notifications/<int:notification_id>/read/', views.api_notification_mark_read, name='api_notification_mark_read'),
+    path('api/notifications/mark-all-read/', views.api_notifications_mark_all_read, name='api_notifications_mark_all_read'),
+
+
+  
 
 ]

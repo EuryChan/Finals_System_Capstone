@@ -1,0 +1,880 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - SMARTFILEX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'CSS/barangay_dashboard.css' %}">
+    <style>
+        .terms-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .terms-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 32px;
+            background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
+            border-radius: 16px;
+            color: white;
+        }
+
+        .terms-logo {
+            width: 80px;
+            margin-bottom: 16px;
+            filter: brightness(0) invert(1);
+        }
+
+        .terms-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .terms-header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .terms-header .update-date {
+            font-size: 13px;
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        .terms-content {
+            background: white;
+            border-radius: 16px;
+            padding: 48px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .toc-section {
+            background: #f9fafb;
+            border-left: 4px solid #48484e;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+        }
+
+        .toc-section h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .toc-list li:last-child {
+            border-bottom: none;
+        }
+
+        .toc-list a {
+            color: #48484e;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .toc-list a:hover {
+            color: #1f2937;
+            padding-left: 8px;
+        }
+
+        .terms-section {
+            margin-bottom: 48px;
+            scroll-margin-top: 100px;
+        }
+
+        .terms-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #48484e;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-number {
+            background: #48484e;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .terms-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .terms-section h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .terms-section p {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #4b5563;
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        .terms-section ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .terms-section li {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+
+        .terms-section li strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .highlight-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .warning-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .info-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #065f46;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .acceptance-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+            border: 3px solid #3b82f6;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 48px;
+            text-align: center;
+        }
+
+        .acceptance-box h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 16px;
+        }
+
+        .acceptance-box p {
+            color: #1e3a8a;
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .acceptance-checkbox {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .acceptance-checkbox input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .acceptance-checkbox label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+            cursor: pointer;
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #48484e, #374151);
+            color: white;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-accept:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-accept:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .contact-section {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+
+        .contact-section h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-info {
+            display: grid;
+            gap: 12px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .contact-item i {
+            color: #48484e;
+            margin-top: 4px;
+        }
+
+        .last-updated {
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #48484e;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            background: #374151;
+        }
+
+        @media print {
+            .acceptance-box,
+            .back-to-top {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .terms-content {
+                padding: 24px;
+            }
+
+            .terms-header h1 {
+                font-size: 22px;
+            }
+
+            .terms-section h2 {
+                font-size: 20px;
+            }
+
+            .acceptance-box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+    <!-- Sidebar -->
+<div class="sidebar">
+  <a href="{% url 'landing_menu' %}">
+    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+  </a>
+  <div class="menu-title">Navigation</div>
+  <ul class="nav-menu">
+    <li>
+      <a href="{% url 'dashboard' %}"class="active">
+         Dashboard
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'application_request' %}" style="position: relative;">
+         Application Request
+        {% if pending_applications_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'pending_users' %}" style="position: relative;">
+         User Approvals
+        {% if pending_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'employees_profile' %}">
+         Employees Profile
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'folder' %}" style="position: relative;">
+         Folders
+        {% if monitoring_count > 0 or certification_count > 0 %}
+        <span class="red-dot"></span>
+        {% endif %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'terms_conditions' %}">
+         Terms & Conditions
+      </a>
+    </li>
+    
+    <li>
+      <a href="{% url 'settings' %}">
+         Settings
+      </a>
+    </li>
+  </ul>
+</div>
+
+            <div class="sidebar-profile">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-details">
+                        <p class="profile-name">{{ user.get_full_name|default:user.username }}</p>
+                        {% if assigned_barangay %}
+                        <p class="profile-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ assigned_barangay.name }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="terms-container">
+                <!-- Header -->
+                <div class="terms-header">
+                    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="terms-logo">
+                    <h1>TERMS AND CONDITIONS</h1>
+                    <p class="subtitle">SMARTFILEX - Web-Based Application for Online Issuance of Eligibility Certification for Barangay Officials and Record Management</p>
+                    <p class="subtitle">Department of the Interior and Local Government</p>
+                    <p class="subtitle">Lucena City, Philippines</p>
+                    <p class="update-date">Last Updated: January 9, 2026</p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="terms-content">
+                    <!-- Table of Contents -->
+                    <div class="toc-section">
+                        <h3><i class="fas fa-list"></i> TABLE OF CONTENTS</h3>
+                        <ol class="toc-list">
+                            <li><a href="#section1">Introduction and Acceptance of Terms</a></li>
+                            <li><a href="#section2">Changes to Terms</a></li>
+                            <li><a href="#section3">User Accounts and Access</a></li>
+                            <li><a href="#section4">Permitted Use and User Responsibilities</a></li>
+                            <li><a href="#section5">Data Privacy and Protection</a></li>
+                            <li><a href="#section6">Intellectual Property Rights</a></li>
+                            <li><a href="#section7">Disclaimer of Warranties</a></li>
+                            <li><a href="#section8">Limitation of Liability</a></li>
+                            <li><a href="#section9">Indemnification</a></li>
+                            <li><a href="#section10">Third-Party Services and Links</a></li>
+                            <li><a href="#section11">Governing Law and Jurisdiction</a></li>
+                            <li><a href="#section12">Waiver</a></li>
+                            <li><a href="#section13">Contact Information</a></li>
+                            <li><a href="#section14">Acknowledgment and Acceptance</a></li>
+                        </ol>
+                    </div>
+
+                    <!-- Section 1 -->
+                    <div class="terms-section" id="section1">
+                        <h2><span class="section-number">1</span> INTRODUCTION AND ACCEPTANCE OF TERMS</h2>
+                        <p>Welcome to SMARTFILEX, a web-based application system developed for the Department of the Interior and Local Government (DILG) Lucena City Office. By accessing or using this system, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+                        
+                        <h3>1.1 Purpose of the System</h3>
+                        <p>SMARTFILEX is designed to modernize and simplify the process of issuing eligibility certifications for Barangay Officials, enhance record management capabilities, and improve operational efficiency within the DILG Lucena City Office through digital transformation.</p>
+                        
+                        <h3>1.2 Acceptance and Agreement</h3>
+                        <p>By creating an account, logging in, uploading documents, or otherwise using any feature of SMARTFILEX, you represent and warrant that:</p>
+                        <ul>
+                            <li>You are at least 18 years of age and possess the legal capacity to enter into these Terms.</li>
+                            <li>You are authorized to use this system on behalf of your Barangay or government office.</li>
+                            <li>All information you provide is accurate, current, and complete.</li>
+                        </ul>
+                        
+                        <h3>1.3 Scope of Service</h3>
+                        <div class="warning-box">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Important Notice</h4>
+                            <p>This system is exclusively designed for government officials and employees associated with DILG Lucena City Office and authorized Barangay personnel in Lucena City. Unauthorized access or use is strictly prohibited.</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 2 -->
+                    <div class="terms-section" id="section2">
+                        <h2><span class="section-number">2</span> CHANGES TO TERMS</h2>
+                        <p>DILG Lucena City Office reserves the right to modify, update, or revise these Terms and Conditions at any time to reflect changes in system functionality, legal requirements, or operational needs. All changes will become effective immediately upon posting within the system. Your continued use of SMARTFILEX after any modifications constitutes your acceptance of the revised Terms. Users will be notified of significant changes through system notifications or email announcements.</p>
+                    </div>
+
+                    <!-- Section 3 -->
+                    <div class="terms-section" id="section3">
+                        <h2><span class="section-number">3</span> USER ACCOUNTS AND ACCESS</h2>
+                        
+                        <h3>3.1 Account Registration</h3>
+                        <p>SMARTFILEX provides two distinct user types, each with specific access privileges:</p>
+                        <ul>
+                            <li><strong>DILG Administrator (Super Admin):</strong> Full system control, user management, approval of certification requests, and oversight capabilities.</li>
+                            <li><strong>Barangay User:</strong> Manages barangay activities, submits reports and certification requests for Barangay Officials, monitors barangay-level tasks, and benefits from the simplified certification process.</li>
+                        </ul>
+                        
+                        <h3>3.2 Account Security and Credentials</h3>
+                        <div class="highlight-box">
+                            <h4><i class="fas fa-shield-alt"></i> Security Requirements</h4>
+                            <p>DILG Lucena City Office will provide login credentials to authorized users. Users are responsible for maintaining the confidentiality and security of their assigned credentials. You agree to:</p>
+                        </div>
+                        <ul>
+                            <li>Use only the password provided by DILG Lucena City Office and not change it.</li>
+                            <li>Keep your assigned credentials confidential and secure.</li>
+                            <li>Not share your account credentials with any unauthorized person.</li>
+                            <li>Immediately notify DILG Lucena City Office of any unauthorized access or security breach.</li>
+                            <li>Accept full responsibility for all activities conducted under your account.</li>
+                        </ul>
+                        
+                        <h3>3.3 Account Termination and Suspension</h3>
+                        <p>DILG Lucena City Office reserves the right to suspend or terminate user accounts at any time for violations of these Terms, suspicious activity, prolonged inactivity, or at the discretion of system administrators. Users may request account deactivation by contacting the DILG Administrator.</p>
+                    </div>
+
+                    <!-- Section 4 -->
+                    <div class="terms-section" id="section4">
+                        <h2><span class="section-number">4</span> PERMITTED USE AND USER RESPONSIBILITIES</h2>
+                        
+                        <h3>4.1 Lawful Use Only</h3>
+                        <p>SMARTFILEX must be used exclusively for its intended governmental purposes. You agree to:</p>
+                        <ul>
+                            <li>Use the system only for official government business related to eligibility certification and record management.</li>
+                            <li>Comply with all applicable Philippine laws, regulations, and government policies.</li>
+                            <li>Not use the system for any personal, commercial, or unauthorized purposes.</li>
+                        </ul>
+                        
+                        <h3>4.2 Prohibited Activities</h3>
+                        <div class="warning-box">
+                            <h4><i class="fas fa-ban"></i> Strictly Prohibited</h4>
+                            <p>The following activities are strictly prohibited:</p>
+                        </div>
+                        <ul>
+                            <li>Uploading false, misleading, fraudulent, or inaccurate information.</li>
+                            <li>Attempting to gain unauthorized access to system areas, accounts, or data.</li>
+                            <li>Introducing viruses, malware, or any malicious code that could harm the system.</li>
+                            <li>Reverse engineering, decompiling, or attempting to extract source code from the system.</li>
+                            <li>Interfering with system operations, servers, or network infrastructure.</li>
+                            <li>Using automated tools, bots, or scripts to access or manipulate system functions.</li>
+                            <li>Sharing, distributing, or disclosing confidential system information without authorization.</li>
+                        </ul>
+                        
+                        <h3>4.3 Data Accuracy and Document Upload Responsibilities</h3>
+                        <p>Users who upload documents, personal information, or digital signatures to SMARTFILEX are responsible for:</p>
+                        <ul>
+                            <li>Ensuring all submitted information is accurate, complete, and up-to-date.</li>
+                            <li>Verifying the authenticity and validity of all uploaded documents.</li>
+                            <li>Submitting only documents that are relevant to the certification or record management process.</li>
+                            <li>Understanding that submission of false documents may result in legal consequences under Philippine law.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 5 -->
+                    <div class="terms-section" id="section5">
+                        <h2><span class="section-number">5</span> DATA PRIVACY AND PROTECTION</h2>
+                        
+                        <h3>5.1 Compliance with Data Privacy Act of 2012</h3>
+                        <div class="info-box">
+                            <h4><i class="fas fa-lock"></i> Privacy Commitment</h4>
+                            <p>DILG Lucena City Office is committed to protecting your personal data in accordance with Republic Act No. 10173, also known as the Data Privacy Act of 2012, and all relevant implementing rules and regulations issued by the National Privacy Commission (NPC).</p>
+                        </div>
+                        
+                        <h3>5.2 Collection and Use of Personal Information</h3>
+                        <p>SMARTFILEX collects and processes the following categories of personal information:</p>
+                        <ul>
+                            <li><strong>Identification Information:</strong> Full name, date of birth, government-issued ID numbers, contact details, and official position.</li>
+                            <li><strong>Professional Information:</strong> Employment history, eligibility status, certification records, and barangay assignments.</li>
+                            <li><strong>Digital Signatures and Uploaded Documents:</strong> Scanned copies of official documents, electronic signatures, and supporting files.</li>
+                            <li><strong>System Usage Data:</strong> Login timestamps, IP addresses, activity logs, and system interaction records.</li>
+                        </ul>
+                        <p>This information is collected solely for the purposes of processing eligibility certifications, maintaining accurate government records, monitoring compliance with civil service requirements, and improving system functionality.</p>
+                        
+                        <h3>5.3 Data Storage and Security</h3>
+                        <p>DILG Lucena City Office implements appropriate technical and organizational security measures to protect personal data against unauthorized access, loss, destruction, or alteration. These measures include:</p>
+                        <ul>
+                            <li>Encrypted data transmission and storage protocols.</li>
+                            <li>Role-based access controls limiting data visibility to authorized personnel only.</li>
+                            <li>Regular security audits and vulnerability assessments.</li>
+                            <li>Secure backup and disaster recovery procedures.</li>
+                        </ul>
+                        
+                        <h3>5.4 Data Sharing and Disclosure</h3>
+                        <p>Your personal information will not be shared with third parties except:</p>
+                        <ul>
+                            <li>When required by law or lawful government order.</li>
+                            <li>When necessary to fulfill the legitimate functions of DILG or other government agencies.</li>
+                            <li>With your explicit consent.</li>
+                            <li>To protect the rights, property, or safety of DILG, its personnel, or the public.</li>
+                        </ul>
+                        
+                        <h3>5.5 User Rights Under the Data Privacy Act</h3>
+                        <p>As a data subject, you have the following rights:</p>
+                        <ul>
+                            <li><strong>Right to Be Informed:</strong> You have the right to know how your personal data is being collected, processed, and stored.</li>
+                            <li><strong>Right to Access:</strong> You may request access to your personal data held within the system.</li>
+                            <li><strong>Right to Correction:</strong> You may request correction of inaccurate or incomplete personal data.</li>
+                            <li><strong>Right to Object:</strong> You may object to the processing of your personal data in certain circumstances.</li>
+                            <li><strong>Right to Erasure or Blocking:</strong> You may request deletion or blocking of personal data under specific conditions, subject to legal retention requirements.</li>
+                            <li><strong>Right to Damages:</strong> You may claim compensation for damages sustained due to inaccurate, incomplete, or unlawful processing of your personal data.</li>
+                        </ul>
+                        <p>To exercise these rights, please contact the DILG Lucena City Office Data Protection Officer at dilg4a.lucenacity@gmail.com.</p>
+                        
+                        <h3>5.6 Data Retention</h3>
+                        <p>Personal data will be retained only for as long as necessary to fulfill the purposes for which it was collected, or as required by law. Once the retention period expires and there is no legal obligation to retain the data, it will be securely disposed of or anonymized.</p>
+                    </div>
+
+                    <!-- Section 6 -->
+                    <div class="terms-section" id="section6">
+                        <h2><span class="section-number">6</span> INTELLECTUAL PROPERTY RIGHTS</h2>
+                        
+                        <h3>6.1 User-Generated Content</h3>
+                        <p>By uploading documents, entering data, or submitting any content to SMARTFILEX, you grant DILG Lucena City Office a non-exclusive, royalty-free, perpetual license to use, store, reproduce, and process such content for the purposes of system operation, record management, and government functions. You retain ownership of your original content but acknowledge that DILG requires this license to provide services effectively.</p>
+                        
+                        <h3>6.2 Restrictions on Use</h3>
+                        <div class="warning-box">
+                            <h4><i class="fas fa-copyright"></i> Prohibited Actions</h4>
+                            <p>Users are expressly prohibited from:</p>
+                        </div>
+                        <ul>
+                            <li>Copying, reproducing, or duplicating any part of the SMARTFILEX system for any purpose.</li>
+                            <li>Modifying, adapting, translating, or creating derivative works based on the system.</li>
+                            <li>Selling, renting, leasing, or sublicensing access to the system.</li>
+                            <li>Removing, altering, or obscuring any proprietary notices, labels, or marks on the system.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 7 -->
+                    <div class="terms-section" id="section7">
+                        <h2><span class="section-number">7</span> DISCLAIMER OF WARRANTIES</h2>
+                        <p>SMARTFILEX is provided on an "as is" and "as available" basis without warranties of any kind, whether express or implied. To the fullest extent permitted by law, DILG Lucena City Office disclaims all warranties, including but not limited to:</p>
+                        <ul>
+                            <li>Implied warranties of merchantability, fitness for a particular purpose, or non-infringement.</li>
+                            <li>Guarantees that the system will be uninterrupted, secure, or free from errors, bugs, or viruses.</li>
+                            <li>Warranties regarding the accuracy, reliability, or completeness of information obtained through the system.</li>
+                            <li>Warranties that defects will be corrected or that the system meets your specific requirements.</li>
+                        </ul>
+                        <p>DILG Lucena City Office does not warrant that the system will always function without delays, failures, or technical issues. Users assume all risks associated with system use.</p>
+                    </div>
+
+                    <!-- Section 8 -->
+                    <div class="terms-section" id="section8">
+                        <h2><span class="section-number">8</span> LIMITATION OF LIABILITY</h2>
+                        <p>To the maximum extent permitted by Philippine law, DILG Lucena City Office, its officers, employees, agents, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from or related to:</p>
+                        <ul>
+                            <li>Your access to or use of SMARTFILEX, or inability to access or use the system.</li>
+                            <li>Any unauthorized access, alteration, or loss of your data or documents.</li>
+                            <li>Errors, omissions, interruptions, delays, or failures in system performance.</li>
+                            <li>Loss of business, revenue, profits, data, or goodwill resulting from system use.</li>
+                            <li>Any third-party claims arising from your use of the system.</li>
+                        </ul>
+                        <p>This limitation applies even if DILG Lucena City Office has been advised of the possibility of such damages. Some jurisdictions do not allow the exclusion of certain warranties or limitations of liability, so some of the above exclusions may not apply to you.</p>
+                    </div>
+
+                    <!-- Section 9 -->
+                    <div class="terms-section" id="section9">
+                        <h2><span class="section-number">9</span> INDEMNIFICATION</h2>
+                        <p>You agree to indemnify, defend, and hold harmless DILG Lucena City Office, its officers, employees, and representatives from and against any claims, liabilities, damages, losses, costs, or expenses (including reasonable legal fees) arising from:</p>
+                        <ul>
+                            <li>Your violation of these Terms and Conditions.</li>
+                            <li>Your misuse of the system or unauthorized access to restricted areas.</li>
+                            <li>Your submission of false, fraudulent, or misleading information.</li>
+                            <li>Any breach of applicable laws, regulations, or third-party rights.</li>
+                            <li>Any claims brought by third parties resulting from your actions or omissions while using SMARTFILEX.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 10 -->
+                    <div class="terms-section" id="section10">
+                        <h2><span class="section-number">10</span> THIRD-PARTY SERVICES AND LINKS</h2>
+                        <p>SMARTFILEX may contain links to third-party websites, applications, or services for informational purposes. DILG Lucena City Office does not endorse, control, or assume responsibility for the content, privacy policies, or practices of any third-party sites. You acknowledge and agree that DILG Lucena City Office shall not be liable for any damage or loss caused by your use of or reliance on any third-party content or services.</p>
+                    </div>
+
+                    <!-- Section 11 -->
+                    <div class="terms-section" id="section11">
+                        <h2><span class="section-number">11</span> GOVERNING LAW AND JURISDICTION</h2>
+                        <div class="info-box">
+                            <h4><i class="fas fa-gavel"></i> Legal Framework</h4>
+                            <p>These Terms and Conditions shall be governed by and construed in accordance with the laws of the Republic of the Philippines. Any disputes arising from or related to these Terms or the use of SMARTFILEX shall be subject to the exclusive jurisdiction of the courts of Lucena City, Quezon Province, Philippines.</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 12 -->
+                    <div class="terms-section" id="section12">
+                        <h2><span class="section-number">12</span> WAIVER</h2>
+                        <p>The failure of DILG Lucena City Office to enforce any right or provision of these Terms shall not constitute a waiver of such right or provision. Any waiver must be in writing and signed by an authorized representative of DILG Lucena City Office.</p>
+                    </div>
+
+                    <!-- Section 13 -->
+                    <div class="terms-section" id="section13">
+                        <h2><span class="section-number">13</span> CONTACT INFORMATION</h2>
+                        <div class="contact-section">
+                            <h3><i class="fas fa-envelope"></i> Get in Touch</h3>
+                            <p>If you have any questions, concerns, or requests regarding these Terms and Conditions or the operation of SMARTFILEX, please contact us:</p>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <i class="fas fa-building"></i>
+                                    <div>
+                                        <strong>Department of the Interior and Local Government</strong><br>
+                                        DILG Lucena City Office<br>
+                                        3rd Floor, Lucena City Government Complex<br>
+                                        Barangay Mayao Kanluran, Lucena City<br>
+                                        Quezon Province, Philippines
+                                    </div>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <div><strong>Email:</strong> dilg4a.lucenacity@gmail.com</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 14 -->
+                    <div class="terms-section" id="section14">
+                        <h2><span class="section-number">14</span> ACKNOWLEDGMENT AND ACCEPTANCE</h2>
+                        <div class="highlight-box">
+                            <h4><i class="fas fa-check-circle"></i> Final Agreement</h4>
+                            <p>By accessing, registering for, or using SMARTFILEX, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions in their entirety. If you do not agree with any part of these Terms, you must immediately discontinue use of the system and refrain from accessing it in the future.</p>
+                        </div>
+                        <p><em>These Terms and Conditions are effective as of January 9, 2026, and will remain in effect until modified or replaced by DILG Lucena City Office.</em></p>
+                    </div>
+
+                    <!-- Acceptance Box -->
+                    <div class="acceptance-box">
+                        <h3><i class="fas fa-handshake"></i> Accept Terms and Conditions</h3>
+                        <p>Please read all sections carefully before accepting. By checking the box below and clicking "I Accept", you confirm that you have read, understood, and agree to abide by all terms stated above.</p>
+                        
+                        <div class="acceptance-checkbox">
+                            <input type="checkbox" id="acceptTerms" onchange="toggleAcceptButton()">
+                            <label for="acceptTerms">I have read and agree to the Terms and Conditions</label>
+                        </div>
+                        
+                        <button class="btn-accept" id="acceptButton" disabled onclick="acceptTerms()">
+                            <i class="fas fa-check"></i>
+                            I Accept Terms and Conditions
+                        </button>
+                    </div>
+
+                    <!-- Last Updated -->
+                    <div class="last-updated">
+                        <p><strong>Last Updated:</strong> January 9, 2026</p>
+                        <p style="margin-top: 8px;">--- End of Terms and Conditions ---</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Back to Top Button -->
+    <div class="back-to-top" id="backToTop" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <script>
+        // Toggle accept button based on checkbox
+        function toggleAcceptButton() {
+            const checkbox = document.getElementById('acceptTerms');
+            const button = document.getElementById('acceptButton');
+            button.disabled = !checkbox.checked;
+        }
+
+        // Accept terms function
+        function acceptTerms() {
+            // Send acceptance to backend
+            fetch('/api/accept-terms/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    accepted: true,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Terms and Conditions accepted successfully!');
+                    window.location.href = '{% url "barangay_dashboard" %}';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+
+        // Smooth scroll to section
+        document.querySelectorAll('.toc-list a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                targetSection.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Back to top button visibility
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        // Scroll to top function
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

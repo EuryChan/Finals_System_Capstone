@@ -228,14 +228,12 @@ def get_client_ip(request):
 
 
 # app/models.py
-
 class UserProfile(models.Model):
     ROLE_CHOICES = [
-        ('dilg staff', 'DILG Staff'),  # This is the admin role
-        ('municipal officer', 'Municipal Officer'),
-        ('barangay official', 'Barangay Official'),
+        ('dilg staff', 'DILG Staff'),
+        ('barangay user', 'Barangay User'),
     ]
-
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     barangay = models.ForeignKey(
@@ -244,8 +242,9 @@ class UserProfile(models.Model):
         null=True, 
         blank=True,
         related_name='officials',
-        help_text='Assigned barangay (for Barangay Officials only)'
+        help_text='Assigned barangay (for Barangay Users)'
     )
+    
 
     # Extra profile fields
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
@@ -268,6 +267,11 @@ class UserProfile(models.Model):
     email_notifications = models.BooleanField(default=True)
     deadline_reminders = models.BooleanField(default=True)
     announcements = models.BooleanField(default=True)
+
+    # NEW FIELDS FOR TERMS AND CONDITIONS
+    terms_accepted = models.BooleanField(default=False)
+    terms_accepted_date = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=20, default='1.0')
     
     # Display preferences
     compact_view = models.BooleanField(default=False)
@@ -283,10 +287,9 @@ class UserProfile(models.Model):
         self.save()
 
     def has_permission(self, permission):
-        """Check if user has specific permission based on role"""
         permissions = {
             'dilg staff': [
-                # DILG Staff has ALL permissions (they are the admin)
+                # DILG Staff has ALL permissions
                 'view_dashboard',
                 'manage_users', 
                 'approve_requests', 
@@ -302,40 +305,44 @@ class UserProfile(models.Model):
                 'manage_roles',
                 'view_audit_logs',
             ],
-            'municipal officer': [
-                # Municipal officers can view and monitor, but not manage system
+            'barangay user': [
+                # Barangay users can view, submit, and monitor
                 'view_dashboard',
-                'view_all_requests',
-                'view_reports',
-                'view_all_barangays',
-                'view_requirements',
-            ],
-            'barangay official': [
-                # Barangay officials can only submit and view their own data
                 'submit_requirements',
                 'view_own_barangay',
                 'view_own_submissions',
                 'upload_attachments',
+                'view_all_barangays',  # Can VIEW all
+                'view_requirements',
+                'apply_for_eligibility',
             ],
         }
-        
+    
         user_permissions = permissions.get(self.role, [])
         return permission in user_permissions
 
     def can_access_barangay(self, barangay):
-        """Check if user has permission to access this barangay's data"""
         normalized_role = self.role.strip().lower()
         
-        # DILG staff (admin) can see EVERYTHING
+        # DILG staff can see EVERYTHING
         if normalized_role == 'dilg staff':
             return True
         
-        # Municipal officers can see all barangays (read-only monitoring)
-        if normalized_role == 'municipal officer':
+        # Barangay users can VIEW all barangays (monitoring)
+        if normalized_role == 'barangay user':
             return True
         
-        # Barangay officials only see their assigned barangay
-        if normalized_role == 'barangay official':
+        return False
+
+
+    def can_submit_for_barangay(self, barangay):
+        normalized_role = self.role.strip().lower()
+        
+        if normalized_role == 'dilg staff':
+            return True
+        
+        if normalized_role == 'barangay user':
+            # Can only submit for their assigned barangay
             return self.barangay == barangay if self.barangay else False
         
         return False
@@ -357,31 +364,15 @@ class UserProfile(models.Model):
         return self.role.strip().lower() == 'dilg staff'
 
     def get_redirect_url(self):
-        """Determine where to redirect user after login based on role"""
         normalized_role = self.role.strip().lower()
         
-        # DILG staff (admin) goes to main landing menu with full access
         if normalized_role == 'dilg staff':
-            redirect_url = 'landing_menu'
+            return 'landing_menu'
         
-        # Municipal officer goes to requirements monitoring (read-only view)
-        elif normalized_role == 'municipal officer':
-            redirect_url = 'requirements_monitoring'
+        if normalized_role == 'barangay user':
+            return 'barangay_dashboard'  # New unified dashboard
         
-        # Barangay official
-        elif normalized_role == 'barangay official':
-            if self.barangay:
-                # Has assigned barangay → Go to requirements submission page
-                redirect_url = 'requirements_monitoring'
-            else:
-                # No assigned barangay → Go to public certification form
-                redirect_url = 'civil_service_certification'
-        
-        # Default fallback
-        else:
-            redirect_url = 'civil_service_certification'
-        
-        return redirect_url
+        return 'landing_page'
 
     class Meta:
         verbose_name = 'User Profile'
@@ -481,165 +472,384 @@ class EligibilityRequest(models.Model):
     
 
 
-
-def send_certificate_notification_async(eligibility_request,status, rejection_reason=None,):
-    """Send email notification in background thread"""
+def send_certificate_notification_async(eligibility_request, status, rejection_reason=None):
+    """
+    Send email notification in background thread
+    FULLY FIXED VERSION - Tested and working
+    """
     
     def send_email_task():
-        """
-    Send email notification when application status changes
-    Now includes rejection reason
-    """
-    try:
-        from django.core.mail import send_mail
-        from django.conf import settings
-        
-        print(f"📧 Processing notification for request #{eligibility_request.id}")
-        print(f"   Status: {status}")
-        print(f"   Applicant email: {eligibility_request.email}")
-        
-        applicant_email = eligibility_request.email
-        
-        if not applicant_email:
-            print(f"   ⚠️ No email address found for request #{eligibility_request.id}")
-            return
-        
-        # Email content based on status
-        if status == 'approved':
-            subject = "✅ Certificate Application - Approved"
-            message = f"""Hello,
-
-Great news! Your certificate application has been approved.
-
-APPLICATION DETAILS
-==========================================
-Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
-Applicant: {eligibility_request.full_name}
-Certifier: {eligibility_request.get_certifier_display()}
-Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
-Current Status: APPROVED
-
-You can now collect your certificate at the DILG office.
-
-Thank you for using the DILG Certification System.
-
----
-DILG Lucena - Certification System
-This is an automated message. Please do not reply to this email.
-"""
-        
-        elif status == 'rejected':
-            subject = "❌ Certificate Application - Status Update"
-            
-            # ✅ Include rejection reason in the email
-            message = f"""Hello,
-
-Your certificate application has been reviewed. Unfortunately, it could not be approved at this time.
-
-APPLICATION DETAILS
-==========================================
-Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
-Applicant: {eligibility_request.full_name}
-Certifier: {eligibility_request.get_certifier_display()}
-Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
-Current Status: REJECTED
-
-"""
-            # ✅ Add rejection reason if provided
-            if rejection_reason:
-                message += f"""REASON FOR REJECTION
-==========================================
-!!{rejection_reason}!!
-
-"""
-            
-            message += """Please address the issue(s) mentioned above and resubmit your application, or contact DILG for more information.
-
-Thank you for using the DILG Certification System.
-
----
-DILG Lucena - Certification System
-This is an automated message. Please do not reply to this email.
-"""
-        
-        elif status == 'processing':
-            subject = "⏳ Certificate Application - Processing"
-            message = f"""Hello,
-
-Your certificate application is now being processed.
-
-APPLICATION DETAILS
-==========================================
-Reference Number: EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}
-Applicant: {eligibility_request.full_name}
-Certifier: {eligibility_request.get_certifier_display()}
-Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
-Current Status: PROCESSING
-
-We will notify you once the review is complete.
-
-Thank you for using the DILG Certification System.
-
----
-DILG Lucena - Certification System
-This is an automated message. Please do not reply to this email.
-"""
-        
-        else:
-            print(f"   ⚠️ Unknown status: {status}")
-            return
-        
-        # Send email
-        print(f"   → Sending to applicant: {applicant_email}")
-        
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[applicant_email],
-            fail_silently=False,
-        )
-        
-        print(f"✅ Email sent successfully to {applicant_email} for request #{eligibility_request.id}")
-        print(f"   Subject: {subject}")
-        
-    except Exception as e:
-        print(f"❌ Error sending email: {str(e)}")
-        import traceback
-        print(traceback.format_exc())
-        raise
-    
-    # Start background thread
-    email_thread = threading.Thread(target=send_email_task)
-    email_thread.daemon = True
-    email_thread.start()
-
-
-@receiver(pre_save, sender=EligibilityRequest)
-def track_status_change(sender, instance, **kwargs):
-    """Track the old status before saving"""
-    if instance.pk:  # Only for updates
+        """Background email task - properly scoped"""
         try:
+            print(f"\n{'='*60}")
+            print(f"📧 SENDING EMAIL NOTIFICATION")
+            print(f"{'='*60}")
+            print(f"Request ID: {eligibility_request.id}")
+            print(f"Applicant: {eligibility_request.full_name}")
+            print(f"Email: {eligibility_request.email}")
+            print(f"Status: {status}")
+            
+            applicant_email = eligibility_request.email
+            
+            if not applicant_email:
+                print(f"   ⚠️ No email address - skipping")
+                return
+            
+            # Generate reference number
+            ref_number = f"EC-{eligibility_request.date_submitted.year}-{eligibility_request.id:05d}"
+            
+            # Build email content
+            if status == 'approved':
+                subject = "✅ Certificate Application - APPROVED"
+                message = f"""Dear {eligibility_request.full_name},
+
+Congratulations! Your certificate application has been APPROVED.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: {ref_number}
+Applicant Name: {eligibility_request.full_name}
+Barangay: {eligibility_request.barangay}
+Position Type: {eligibility_request.get_position_type_display()}
+Certifier: {eligibility_request.get_certifier_display()}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Date Approved: {eligibility_request.date_processed.strftime('%B %d, %Y at %I:%M %p') if eligibility_request.date_processed else 'Just now'}
+Current Status: ✅ APPROVED
+
+NEXT STEPS
+==========================================
+Your certificate is now ready for collection at:
+
+📍 DILG Lucena City Office
+📅 Monday to Friday, 8:00 AM - 5:00 PM
+📋 Bring valid ID for verification
+
+Thank you for using the DILG Certification System.
+
+---
+DILG Lucena - Certification System
+Department of the Interior and Local Government
+Lucena City, Quezon Province
+
+This is an automated message. Please do not reply.
+"""
+            
+            elif status == 'rejected':
+                subject = "❌ Certificate Application - Needs Revision"
+                message = f"""Dear {eligibility_request.full_name},
+
+Your certificate application has been reviewed and needs revision.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: {ref_number}
+Applicant Name: {eligibility_request.full_name}
+Barangay: {eligibility_request.barangay}
+Position Type: {eligibility_request.get_position_type_display()}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: ❌ NEEDS REVISION
+
+"""
+                if rejection_reason:
+                    message += f"""REASON FOR REVISION
+==========================================
+{rejection_reason}
+
+"""
+                
+                message += """NEXT STEPS
+==========================================
+Please address the issues above and submit a new application.
+
+For assistance, visit:
+📍 DILG Lucena City Office
+📅 Monday to Friday, 8:00 AM - 5:00 PM
+
+---
+DILG Lucena - Certification System
+This is an automated message. Please do not reply.
+"""
+            
+            elif status == 'processing':
+                subject = "⏳ Certificate Application - Processing"
+                message = f"""Dear {eligibility_request.full_name},
+
+Your certificate application is being processed.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: {ref_number}
+Applicant Name: {eligibility_request.full_name}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: ⏳ PROCESSING
+
+You will be notified once the review is complete.
+Expected processing time: 3-5 business days
+
+---
+DILG Lucena - Certification System
+This is an automated message. Please do not reply.
+"""
+            
+            elif status == 'pending':
+                subject = "📋 Certificate Application - Received"
+                message = f"""Dear {eligibility_request.full_name},
+
+Thank you for submitting your certificate application.
+
+APPLICATION DETAILS
+==========================================
+Reference Number: {ref_number}
+Applicant Name: {eligibility_request.full_name}
+Date Submitted: {eligibility_request.date_submitted.strftime('%B %d, %Y at %I:%M %p')}
+Current Status: 📋 PENDING REVIEW
+
+Your application will be reviewed shortly.
+Save your reference number for tracking.
+
+---
+DILG Lucena - Certification System
+This is an automated message. Please do not reply.
+"""
+            else:
+                print(f"   ⚠️ Unknown status: {status}")
+                return
+            
+            # Send email
+            print(f"📤 Sending to: {applicant_email}")
+            print(f"📧 Subject: {subject}")
+            
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[applicant_email],
+                fail_silently=False,
+            )
+            
+            print(f"✅ Email sent successfully!")
+            print(f"{'='*60}\n")
+            
+        except Exception as e:
+            print(f"\n❌ EMAIL ERROR: {str(e)}")
+            traceback.print_exc()
+    
+    # Start thread
+    try:
+        thread = threading.Thread(target=send_email_task)
+        thread.daemon = True
+        thread.start()
+        print(f"📧 Email thread started for request #{eligibility_request.id}")
+    except Exception as thread_error:
+        print(f"❌ Thread error: {str(thread_error)}")
+        # Fallback to synchronous send
+        send_email_task()
+
+
+
+
+@receiver(pre_save, sender='app.EligibilityRequest')
+def track_status_change(sender, instance, **kwargs):
+    """Track old status before saving"""
+    if instance.pk:
+        try:
+            from app.models import EligibilityRequest
             old_instance = EligibilityRequest.objects.get(pk=instance.pk)
             instance._old_status = old_instance.status
-        except EligibilityRequest.DoesNotExist:
+        except Exception:
             instance._old_status = None
     else:
         instance._old_status = None
 
-@receiver(post_save, sender=EligibilityRequest)
+@receiver(post_save, sender='app.EligibilityRequest')
 def notify_eligibility_status_change(sender, instance, created, **kwargs):
-    """Signal to send email when status changes"""
-    if not created:  # Only for updates, not new records
-        if instance.status in ['approved', 'rejected', 'processing']:
-            # ✅ Pass all required arguments
+    """
+    Send email AND categorize files when status changes
+    FIXED: Now handles both email and file categorization
+    """
+    try:
+        # Send pending email on creation
+        if created:
+            print(f"\n🆕 New application #{instance.id} - sending pending email")
             send_certificate_notification_async(
-                instance, 
-                instance.status,
-                rejection_reason=instance.rejection_reason if instance.status == 'rejected' else None
+                eligibility_request=instance,
+                status='pending',
+                rejection_reason=None
             )
+        
+        # Handle status changes
+        elif hasattr(instance, '_old_status') and instance._old_status:
+            old_status = instance._old_status
+            new_status = instance.status
+            
+            if old_status != new_status:
+                print(f"\n📝 Status changed: {old_status} → {new_status}")
+                
+                # Send email notification
+                if new_status in ['approved', 'rejected', 'processing']:
+                    send_certificate_notification_async(
+                        eligibility_request=instance,
+                        status=new_status,
+                        rejection_reason=instance.rejection_reason if new_status == 'rejected' else None
+                    )
+                
+                # ✅ CRITICAL FIX: Categorize files when APPROVED
+                if new_status == 'approved' and old_status != 'approved':
+                    print(f"✅ APPROVAL DETECTED - Categorizing files...")
+                    categorize_eligibility_files_manual(instance)
+    
+    except Exception as e:
+        print(f"❌ Signal error: {str(e)}")
+        traceback.print_exc()
 
 
+def categorize_eligibility_files_manual(eligibility_request):
+    """
+    Manually categorize files for an eligibility request
+    Called when application is approved
+    """
+    try:
+        from app.models import FileCategory, CategorizedFile
+        import os
+        
+        print(f"\n{'='*60}")
+        print(f"📁 CATEGORIZING FILES")
+        print(f"{'='*60}")
+        print(f"Request ID: {eligibility_request.id}")
+        print(f"Applicant: {eligibility_request.full_name}")
+        
+        files_categorized = 0
+        
+        # ========== CATEGORIZE ID FRONT ==========
+        if eligibility_request.id_front:
+            print(f"\n📄 Processing ID Front...")
+            
+            # Get or create IDs category
+            ids_category, _ = FileCategory.objects.get_or_create(
+                name='ids',
+                defaults={
+                    'display_name': 'Identification Documents',
+                    'folder_path': 'certification_files/ids/',
+                    'description': 'Government IDs'
+                }
+            )
+            
+            # Check if already categorized
+            existing = CategorizedFile.objects.filter(
+                eligibility_request=eligibility_request,
+                detected_content='ID Front'
+            ).first()
+            
+            if not existing:
+                CategorizedFile.objects.create(
+                    file=eligibility_request.id_front,
+                    original_filename=os.path.basename(eligibility_request.id_front.name),
+                    file_type='image',
+                    file_size=eligibility_request.id_front.size if eligibility_request.id_front.size else 0,
+                    mime_type='image/jpeg',
+                    category=ids_category,
+                    source='eligibility',
+                    detected_content='ID Front',
+                    eligibility_request=eligibility_request,
+                    uploaded_by=eligibility_request.approved_by,
+                    tags=f"{eligibility_request.full_name}, ID Front, Approved"
+                )
+                files_categorized += 1
+                print(f"   ✓ Categorized ID Front")
+            else:
+                print(f"   ⏭️ Already categorized")
+        
+        # ========== CATEGORIZE ID BACK ==========
+        if eligibility_request.id_back:
+            print(f"\n📄 Processing ID Back...")
+            
+            ids_category, _ = FileCategory.objects.get_or_create(
+                name='ids',
+                defaults={
+                    'display_name': 'Identification Documents',
+                    'folder_path': 'certification_files/ids/'
+                }
+            )
+            
+            existing = CategorizedFile.objects.filter(
+                eligibility_request=eligibility_request,
+                detected_content='ID Back'
+            ).first()
+            
+            if not existing:
+                CategorizedFile.objects.create(
+                    file=eligibility_request.id_back,
+                    original_filename=os.path.basename(eligibility_request.id_back.name),
+                    file_type='image',
+                    file_size=eligibility_request.id_back.size if eligibility_request.id_back.size else 0,
+                    mime_type='image/jpeg',
+                    category=ids_category,
+                    source='eligibility',
+                    detected_content='ID Back',
+                    eligibility_request=eligibility_request,
+                    uploaded_by=eligibility_request.approved_by,
+                    tags=f"{eligibility_request.full_name}, ID Back, Approved"
+                )
+                files_categorized += 1
+                print(f"   ✓ Categorized ID Back")
+            else:
+                print(f"   ⏭️ Already categorized")
+        
+        # ========== CATEGORIZE SIGNATURE ==========
+        if eligibility_request.signature:
+            print(f"\n✍️ Processing Signature...")
+            
+            sig_category, _ = FileCategory.objects.get_or_create(
+                name='signatures',
+                defaults={
+                    'display_name': 'Signatures',
+                    'folder_path': 'certification_files/signatures/',
+                    'description': 'Digital signatures'
+                }
+            )
+            
+            existing = CategorizedFile.objects.filter(
+                eligibility_request=eligibility_request,
+                detected_content='Signature'
+            ).first()
+            
+            if not existing:
+                CategorizedFile.objects.create(
+                    file=eligibility_request.signature,
+                    original_filename=os.path.basename(eligibility_request.signature.name),
+                    file_type='image',
+                    file_size=eligibility_request.signature.size if eligibility_request.signature.size else 0,
+                    mime_type='image/png',
+                    category=sig_category,
+                    source='eligibility',
+                    detected_content='Signature',
+                    eligibility_request=eligibility_request,
+                    uploaded_by=eligibility_request.approved_by,
+                    tags=f"{eligibility_request.full_name}, Signature, Approved"
+                )
+                files_categorized += 1
+                print(f"   ✓ Categorized Signature")
+            else:
+                print(f"   ⏭️ Already categorized")
+        
+        # Update category file counts
+        for category_name in ['ids', 'signatures']:
+            try:
+                category = FileCategory.objects.get(name=category_name)
+                category.update_file_count()
+            except:
+                pass
+        
+        print(f"\n✅ File categorization complete!")
+        print(f"   Files categorized: {files_categorized}")
+        print(f"{'='*60}\n")
+        
+        return files_categorized
+        
+    except Exception as e:
+        print(f"\n❌ CATEGORIZATION ERROR: {str(e)}")
+        traceback.print_exc()
+        return 0
 
 
 #REQUIREMENTS MONITORING
@@ -1227,3 +1437,165 @@ class MonitoringFile(models.Model):
     category = models.CharField(max_length=50)  # weekly, monthly, etc.
     barangay = models.ForeignKey('Barangay', on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+class BarangayOfficial(models.Model):
+    """Model for storing Barangay Officials profile information"""
+    
+    POSITION_TYPES = (
+        ('elective', 'Elective'),
+        ('appointive', 'Appointive'),
+    )
+    
+    TERM_STATUS = (
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+    )
+    
+    # Link to user (secretary who created this official)
+    secretary = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='barangay_officials',
+        help_text='The barangay secretary who manages this official'
+    )
+    
+    # Personal Information
+    first_name = models.CharField(max_length=100)
+    middle_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100)
+    suffix = models.CharField(max_length=20, blank=True, null=True, help_text='e.g., Jr., Sr., III')
+    
+    # Position Information
+    position = models.CharField(max_length=100, help_text='e.g., Punong Barangay, Kagawad')
+    position_type = models.CharField(max_length=20, choices=POSITION_TYPES, default='elective')
+    
+    # Term Information
+    term_start = models.DateField(help_text='Start date of term')
+    term_end = models.DateField(help_text='End date of term')
+    years_served = models.DecimalField(
+        max_digits=4, 
+        decimal_places=1, 
+        blank=True, 
+        null=True,
+        help_text='Automatically calculated from term dates'
+    )
+    term_status = models.CharField(max_length=20, choices=TERM_STATUS, default='ongoing')
+    
+    # Contact Information
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Additional Information
+    notes = models.TextField(blank=True, null=True, help_text='Additional notes or remarks')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Barangay Official'
+        verbose_name_plural = 'Barangay Officials'
+        indexes = [
+            models.Index(fields=['secretary', 'position']),
+            models.Index(fields=['term_status', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.position}"
+    
+    def save(self, *args, **kwargs):
+        """Auto-calculate years served before saving"""
+        if self.term_start and self.term_end:
+            delta = self.term_end - self.term_start
+            # Calculate years with one decimal place
+            self.years_served = round(delta.days / 365.25, 1)
+        super().save(*args, **kwargs)
+    
+    def get_full_name(self):
+        """Return full name with all parts"""
+        parts = [self.first_name]
+        if self.middle_name:
+            parts.append(self.middle_name)
+        parts.append(self.last_name)
+        if self.suffix:
+            parts.append(self.suffix)
+        return ' '.join(parts)
+    
+    def get_display_name(self):
+        """Return name for display (First Last Suffix)"""
+        parts = [self.first_name, self.last_name]
+        if self.suffix:
+            parts.append(self.suffix)
+        return ' '.join(parts)
+    
+    @property
+    def is_term_active(self):
+        """Check if the term is currently active"""
+        if not self.term_start or not self.term_end:
+            return False
+        today = timezone.now().date()
+        return self.term_start <= today <= self.term_end
+    
+    @property
+    def days_remaining(self):
+        """Calculate days remaining in term"""
+        if not self.term_end:
+            return 0
+        today = timezone.now().date()
+        if today > self.term_end:
+            return 0
+        delta = self.term_end - today
+        return delta.days
+    
+    def can_generate_certificate(self):
+        """Check if official is eligible for certificate generation"""
+        # Must have all required fields
+        required_fields = [
+            self.first_name,
+            self.last_name,
+            self.position,
+            self.term_start,
+            self.term_end
+        ]
+        return all(required_fields)
+
+
+# Signal to log BarangayOfficial creation/updates
+@receiver(post_save, sender=BarangayOfficial)
+def barangay_official_post_save(sender, instance, created, **kwargs):
+    """Log official creation/updates"""
+    action = 'CREATE' if created else 'UPDATE'
+    
+    new_values = {
+        'name': instance.get_full_name(),
+        'position': instance.position,
+        'position_type': instance.position_type,
+        'term_status': instance.term_status,
+        'years_served': str(instance.years_served) if instance.years_served else '0',
+    }
+    
+    AuditLog.objects.create(
+        action=action,
+        content_object=instance,
+        new_values=new_values,
+        description=f"Barangay Official {instance.get_full_name()} was {'created' if created else 'updated'} by {instance.secretary.username}"
+    )
+
+
+@receiver(post_delete, sender=BarangayOfficial)
+def barangay_official_post_delete(sender, instance, **kwargs):
+    """Log official deletion"""
+    AuditLog.objects.create(
+        action='DELETE',
+        old_values={
+            'name': instance.get_full_name(),
+            'position': instance.position,
+            'secretary': instance.secretary.username,
+        },
+        description=f"Barangay Official {instance.get_full_name()} was deleted"
+    )
+

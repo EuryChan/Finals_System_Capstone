@@ -22,7 +22,7 @@ import openpyxl
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, Sum  
-from .models import EligibilityRequest, Barangay, Requirement, RequirementSubmission, RequirementAttachment, Notification, Announcement, FileCategory, MonitoringFile
+from .models import EligibilityRequest, Barangay, Requirement, RequirementSubmission, RequirementAttachment, Notification, Announcement, FileCategory, MonitoringFile, BarangayOfficial
 from django.views.decorators.http import require_POST
 import os
 from datetime import date
@@ -1783,15 +1783,17 @@ from .models import send_certificate_notification_async
 @require_http_methods(["POST"])
 def submit_eligibility_request(request):
     """
-    Handle form submission with SMART DOCUMENT CATEGORIZATION
-    Files are automatically sorted based on content analysis
+    FIXED: Handle eligibility form submission
+    Email is sent ONLY after successful database save
     """
     try:
-        print("\n" + "="*80)
-        print("🆕 NEW ELIGIBILITY REQUEST SUBMISSION")
-        print("="*80)
+        print(f"\n{'='*80}")
+        print(f"📋 NEW ELIGIBILITY REQUEST SUBMISSION")
+        print(f"{'='*80}")
         
-        # Extract and validate form data
+        # ============================================
+        # STEP 1: EXTRACT AND VALIDATE FORM DATA
+        # ============================================
         last_name = request.POST.get('last_name', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         middle_initial = request.POST.get('middle_initial', '').strip()
@@ -1805,7 +1807,7 @@ def submit_eligibility_request(request):
         print(f"🏘️ Barangay: {barangay}")
         print(f"💼 Position Type: {position_type}")
         
-        # Validation
+        # Basic validation
         if not all([last_name, first_name, email, barangay, position_type, certifier]):
             return JsonResponse({
                 'success': False,
@@ -1813,6 +1815,7 @@ def submit_eligibility_request(request):
             }, status=400)
         
         # Validate certifier choice
+        from app.models import EligibilityRequest
         valid_certifiers = [choice[0] for choice in EligibilityRequest.CERTIFIER_CHOICES]
         if certifier not in valid_certifiers:
             return JsonResponse({
@@ -1831,10 +1834,12 @@ def submit_eligibility_request(request):
                 'error': 'All files (ID front, ID back, signature) are required'
             }, status=400)
         
-        print(f"📎 Files received: ID Front ({id_front.size} bytes), ID Back ({id_back.size} bytes), Signature ({signature.size} bytes)")
+        print(f"📎 Files received: ID Front, ID Back, Signature")
         
-        # Create eligibility request
-        eligibility_request = EligibilityRequest.objects.create(
+        # ============================================
+        # STEP 2: CREATE ELIGIBILITY REQUEST OBJECT
+        # ============================================
+        eligibility_request = EligibilityRequest(
             first_name=first_name,
             last_name=last_name,
             middle_initial=middle_initial if middle_initial else None,
@@ -1846,15 +1851,56 @@ def submit_eligibility_request(request):
             date_submitted=timezone.now()
         )
         
-        # Save position-specific data
+        # ============================================
+        # STEP 3: ADD POSITION-SPECIFIC DATA
+        # ============================================
         if position_type == 'appointive':
+            # ✅ CRITICAL FIX: Clean years fields to remove " yrs" suffix
+            years_in_service_raw = request.POST.get('years_in_service', '').strip()
+            pb_years_service_raw = request.POST.get('pb_years_service', '').strip()
+            
+            # Remove " yrs" suffix if present
+            years_in_service_clean = years_in_service_raw.replace(' yrs', '').replace('yrs', '').strip()
+            pb_years_service_clean = pb_years_service_raw.replace(' yrs', '').replace('yrs', '').strip()
+            
+            print(f"🔧 Years cleaning:")
+            print(f"   Raw: '{years_in_service_raw}' → Clean: '{years_in_service_clean}'")
+            print(f"   Raw: '{pb_years_service_raw}' → Clean: '{pb_years_service_clean}'")
+            
+           # NEW CODE (CORRECT):
+            from decimal import Decimal, InvalidOperation  # ← Add this import
+
+            try:
+                if years_in_service_clean:
+                    # ✅ Use Decimal, not float!
+                    years_in_service = Decimal(years_in_service_clean).quantize(Decimal('0.1'))
+                else:
+                    years_in_service = None
+                    
+                if pb_years_service_clean:
+                    # ✅ Use Decimal, not float!
+                    pb_years_service = Decimal(pb_years_service_clean).quantize(Decimal('0.1'))
+                else:
+                    pb_years_service = None
+                    
+                print(f"   ✅ Converted to Decimal: years_in_service={years_in_service}, pb_years_service={pb_years_service}")
+                print(f"   ✅ Types: {type(years_in_service)}, {type(pb_years_service)}")
+                
+            except (ValueError, InvalidOperation) as e:
+                print(f"   ❌ Conversion error: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid years format. Please use numbers only (e.g., 0.1, 2.5, 10.0)'
+                }, status=400)
+            
             eligibility_request.appointing_authority = request.POST.get('appointing_authority', '')
             eligibility_request.appointment_from = request.POST.get('appointment_from')
             eligibility_request.appointment_to = request.POST.get('appointment_to')
-            eligibility_request.years_in_service = request.POST.get('years_in_service')
+            eligibility_request.years_in_service = years_in_service
             eligibility_request.appointing_punong_barangay = request.POST.get('appointing_punong_barangay', '')
             eligibility_request.pb_date_elected = request.POST.get('pb_date_elected')
-            eligibility_request.pb_years_service = request.POST.get('pb_years_service')
+            eligibility_request.pb_years_service = pb_years_service
+            
         elif position_type == 'elective':
             eligibility_request.position_held = request.POST.get('position_held', '')
             eligibility_request.election_from = request.POST.get('election_from')
@@ -1862,145 +1908,131 @@ def submit_eligibility_request(request):
             eligibility_request.term_office = request.POST.get('term_office', '')
             eligibility_request.completed_term = request.POST.get('completed_term', '')
             eligibility_request.incomplete_reason = request.POST.get('incomplete_reason', '')
-            eligibility_request.days_not_served = int(request.POST.get('days_not_served', 0))
         
-        eligibility_request.save()
-         # ✅ ADD THIS - Create notification for DILG staff
-        from django.contrib.auth.models import User
+        # ============================================
+        # STEP 4: PROCESS AND SAVE FILES
+        # ============================================
+        from app.views import save_categorized_eligibility_file, process_signature_image
         
-        dilg_staff = User.objects.filter(
-            userprofile__role='dilg staff'
-        ).distinct()
-        
-        print(f"\n🔔 Creating notifications for {dilg_staff.count()} DILG staff")
-        
-        for staff in dilg_staff:
-            notification = Notification.objects.create(
-                user=staff,
-                title=f"📋 New Certificate Application",
-                message=f"{eligibility_request.full_name} from {eligibility_request.barangay} submitted a new certificate application.",
-                notification_type='new_submission',
-                is_read=False,  # ← IMPORTANT!
-                created_at=timezone.now()
-            )
-            print(f"   ✓ Notification created for {staff.username} - ID: {notification.id}, is_read: {notification.is_read}")
-        
-        
-        print(f"✅ Created EligibilityRequest ID: {eligibility_request.id}")
-        
-        # 🔥 SMART CATEGORIZATION - Process each file with proper category creation
-        files_processed = []
-        
-        # ✅ ENSURE CATEGORIES EXIST
-        from .models import FileCategory
-        
-        ids_category, _ = FileCategory.objects.get_or_create(
-            name='ids',
-            defaults={
-                'display_name': 'Government IDs',
-                'folder_path': 'certification_files/ids/'
-            }
-        )
-        
-        signatures_category, _ = FileCategory.objects.get_or_create(
-            name='signatures',
-            defaults={
-                'display_name': 'Signatures',
-                'folder_path': 'certification_files/signatures/'
-            }
-        )
+        print(f"\n📁 Processing files...")
         
         # Process ID Front
-        print(f"\n📄 Processing ID Front...")
         id_front_path = save_categorized_eligibility_file(
             file=id_front,
             category='ids',
             user_name=f"{first_name}_{last_name}",
             file_type='id_front',
-            request_id=eligibility_request.id
+            request_id=None  # Will update after save
         )
-        files_processed.append({
-            'name': 'ID Front',
-            'category': 'ids',
-            'path': id_front_path
-        })
         
         # Process ID Back
-        print(f"\n📄 Processing ID Back...")
         id_back_path = save_categorized_eligibility_file(
             file=id_back,
             category='ids',
             user_name=f"{first_name}_{last_name}",
             file_type='id_back',
-            request_id=eligibility_request.id
+            request_id=None
         )
-        files_processed.append({
-            'name': 'ID Back',
-            'category': 'ids',
-            'path': id_back_path
-        })
         
-        # 🔥 Process Signature WITH white background correction
-        print(f"\n✍️ Processing Signature...")
+        # Process Signature (with white background fix)
         processed_signature = process_signature_image(signature)
-        
         signature_path = save_categorized_eligibility_file(
             file=processed_signature,
             category='signatures',
             user_name=f"{first_name}_{last_name}",
             file_type='signature',
-            request_id=eligibility_request.id
+            request_id=None
         )
-        files_processed.append({
-            'name': 'Signature',
-            'category': 'signatures',
-            'path': signature_path
-        })
         
-        # Store file paths in eligibility request
         eligibility_request.id_front = id_front_path
         eligibility_request.id_back = id_back_path
         eligibility_request.signature = signature_path
-        eligibility_request.save()
+        
+        print(f"✅ Files processed successfully")
+        
+        # ============================================
+        # STEP 5: VALIDATE MODEL (BEFORE SAVING)
+        # ============================================
+        print(f"\n🔍 Validating model...")
+        try:
+            eligibility_request.full_clean()  # ✅ CRITICAL: Validate BEFORE save
+            print(f"✅ Validation passed")
+        except ValidationError as ve:
+            print(f"❌ Validation failed: {ve}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Validation failed: {str(ve)}'
+            }, status=400)
+        
+        # ============================================
+        # STEP 6: SAVE TO DATABASE
+        # ============================================
+        print(f"\n💾 Saving to database...")
+        try:
+            eligibility_request.save()
+            print(f"✅ Saved to database - ID: {eligibility_request.id}")
+        except Exception as save_error:
+            print(f"❌ Database save failed: {save_error}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Database error: {str(save_error)}'
+            }, status=400)
+        
+        # ============================================
+        # STEP 7: SEND EMAIL (ONLY AFTER SUCCESSFUL SAVE)
+        # ============================================
+        print(f"\n📧 Sending confirmation email...")
+        email_sent = False
+        try:
+            send_mail(
+                subject=f'Eligibility Certificate Request - {position_type.title()}',
+                message=f'''Dear {first_name} {last_name},
+
+Your eligibility certificate request has been successfully submitted.
+
+Request Details:
+- Request ID: EC-{timezone.now().year}-{eligibility_request.id:05d}
+- Position Type: {position_type.title()}
+- Barangay: {barangay}
+- Certifier: {certifier}
+- Submitted: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}
+
+We will process your request and send the certificate to this email address once completed.
+
+Thank you,
+DILG Lucena - Barangay Certification System
+''',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            email_sent = True
+            print(f"✅ Confirmation email sent to {email}")
+            
+        except Exception as email_error:
+            # ✅ Email failure should NOT fail the entire request
+            print(f"⚠️ Email sending failed: {str(email_error)}")
+            print(f"   But request was saved successfully!")
+            # Don't return error - request was saved successfully
+        
+        # ============================================
+        # STEP 8: RETURN SUCCESS
+        # ============================================
+        reference_number = f"EC-{timezone.now().year}-{eligibility_request.id:05d}"
         
         print(f"\n{'='*80}")
         print(f"✅ SUBMISSION COMPLETE")
-        print(f"📊 Files Categorized:")
-        for file_info in files_processed:
-            print(f"   - {file_info['name']} → {file_info['category']}")
+        print(f"   Request ID: {eligibility_request.id}")
+        print(f"   Reference: {reference_number}")
+        print(f"   Email sent: {'Yes' if email_sent else 'No (but saved successfully)'}")
         print(f"{'='*80}\n")
-
-        # 🔥 SEND EMAIL NOTIFICATION
-        print(f"\n{'='*80}")
-        print(f"📧 EMAIL NOTIFICATION SECTION")
-        print(f"{'='*80}")
-        print(f"Request ID: {eligibility_request.id}")
-        print(f"Request Email: {eligibility_request.email}")
-        print(f"{'='*80}")
-
-        try:
-            print("🔄 Calling send_certificate_notification_async...")
-            send_certificate_notification_async(eligibility_request)
-            print("✅ Email notification sent successfully")
-        except Exception as email_error:
-            print(f"❌ Email error: {str(email_error)}")
-            import traceback
-            print(traceback.format_exc())
-
-        print(f"{'='*80}\n")
-                
-        # Generate reference number
-        reference_number = f"EC-{timezone.now().year}-{eligibility_request.id:05d}"
         
         return JsonResponse({
             'success': True,
-            'message': 'Application submitted successfully! Check your email for confirmation.',
+            'message': 'Application submitted successfully!' + (' Check your email for confirmation.' if email_sent else ''),
             'id_number': reference_number,
             'request_id': eligibility_request.id,
-            'files_categorized': [
-                {'name': f['name'], 'category': f['category']}
-                for f in files_processed
-            ]
+            'email_sent': email_sent
         })
         
     except Exception as e:
@@ -2008,7 +2040,6 @@ def submit_eligibility_request(request):
         print(f"❌ SUBMISSION ERROR")
         print(f"{'='*80}")
         print(f"Error: {str(e)}")
-        import traceback
         print(traceback.format_exc())
         print(f"{'='*80}\n")
         
@@ -2193,9 +2224,11 @@ def categorize_by_filename(filename):
         return 'elective_certificates'
     else:
         return 'ids'
+    
 def save_categorized_eligibility_file(file, category, user_name, file_type, request_id):
     """
     Save file to storage AND create CategorizedFile database entry
+    FIXED: Prevents duplicates by checking if file already exists
     """
     from django.core.files.storage import default_storage
     from django.core.files.base import ContentFile
@@ -2220,7 +2253,17 @@ def save_categorized_eligibility_file(file, category, user_name, file_type, requ
     path = default_storage.save(file_path, ContentFile(file.read()))
     print(f"    ✓ Saved to: {path}")
     
-    # ✅ Create/get FileCategory
+    # ✅ FIX: Check if CategorizedFile already exists for this file
+    existing_file = CategorizedFile.objects.filter(
+        file=path,
+        original_filename=filename
+    ).first()
+    
+    if existing_file:
+        print(f"    ⚠️ File already exists in database (ID: {existing_file.id}), skipping duplicate")
+        return path
+    
+    # Create/get FileCategory
     file_category, _ = FileCategory.objects.get_or_create(
         name=category,
         defaults={
@@ -2229,13 +2272,13 @@ def save_categorized_eligibility_file(file, category, user_name, file_type, requ
         }
     )
     
-    # ✅ Get the eligibility request
+    # Get the eligibility request
     try:
-        eligibility_request = EligibilityRequest.objects.get(id=request_id)
+        eligibility_request = EligibilityRequest.objects.get(id=request_id) if request_id else None
     except EligibilityRequest.DoesNotExist:
         eligibility_request = None
     
-    # ✅ Create CategorizedFile entry
+    # Create CategorizedFile entry (only if doesn't exist)
     categorized = CategorizedFile.objects.create(
         file=path,
         original_filename=filename,
@@ -2252,7 +2295,7 @@ def save_categorized_eligibility_file(file, category, user_name, file_type, requ
     # Update category file count
     file_category.update_file_count()
     
-    print(f"    ✓ Created CategorizedFile ID: {categorized.id}")
+    print(f"    ✓ Created NEW CategorizedFile ID: {categorized.id}")
     
     return path
 
@@ -3867,23 +3910,17 @@ def requirements_monitoring(request):
         messages.warning(request, '⚠️ DILG Admin should use the Admin Submissions page.')
         return redirect('admin_submissions_page')
     
-    if user_profile.role not in ['barangay official', 'municipal officer']:
-        messages.error(request, '🚫 Access Denied: This page is only for Barangay Officials.')
+    if user_profile.role != 'barangay user':
+        messages.error(request, '🚫 Access Denied')
         return redirect('dashboard')
     
-    # 🆕 FILTER BARANGAYS - Only show user's assigned barangay
-    if user_profile.barangay:
-        barangays = Barangay.objects.filter(id=user_profile.barangay.id)
-    else:
-        barangays = Barangay.objects.none()
-        messages.error(request, '⚠️ You are not assigned to any barangay. Contact admin.')
-    
+    barangays = Barangay.objects.all().order_by('name')
     context = {
         'barangays': barangays,
         'user_role': user_profile.role,
         'page_title': 'Submit Requirements',
         'is_submitter': True,
-        'assigned_barangay': user_profile.barangay,  # 🆕 Pass assigned barangay
+        'can_submit': user_profile.barangay is not None,
     }
     return render(request, 'requirements_monitoring.html', context)
 
@@ -4118,78 +4155,569 @@ def api_barangay_requirements(request):
 @login_required
 @require_http_methods(["GET"])
 def api_requirements_list(request):
-    """For DILG admin to manage all requirements"""
     try:
         user_profile = request.user.userprofile
-        if user_profile.role != 'dilg staff':  # ✅ Check for DILG staff
-            return JsonResponse({
-                'success': False,
-                'error': 'Unauthorized - Admin only'
-            }, status=403)
         
         # Get filter parameters
-        period = request.GET.get('period', '')
-        priority = request.GET.get('priority', '')
-        status = request.GET.get('status', 'active')
-        sort = request.GET.get('sort', '-created_at')
+        period = request.GET.get('period', 'weekly')
+        week = request.GET.get('week', 1)  # This is used for ALL periods as subdivision
+        search = request.GET.get('search', '').strip()
         
-        # Base query
-        requirements = Requirement.objects.all()
+        print(f"📋 Requirements list request:")
+        print(f"   User: {request.user.username}")
+        print(f"   Role: {user_profile.role}")
+        print(f"   Period: {period}, Week/Subdivision: {week}")
         
-        # Apply filters
-        if period:
-            requirements = requirements.filter(period=period)
-        
-        if priority:
-            requirements = requirements.filter(priority=priority)
-        
-        if status == 'active':
-            requirements = requirements.filter(is_active=True)
-        elif status == 'archived':
-            requirements = requirements.filter(is_active=False)
-        
-        # Apply sorting
-        requirements = requirements.order_by(sort)
-        
-        # Format data
-        requirements_data = []
-        for req in requirements:
-            # Get submission statistics
-            total_submissions = RequirementSubmission.objects.filter(requirement=req).count()
-            approved_count = RequirementSubmission.objects.filter(requirement=req, status='approved').count()
-            pending_count = RequirementSubmission.objects.filter(requirement=req, status='pending').count()
+        # ============================================
+        # BARANGAY USER - Show their barangay only
+        # ============================================
+        if 'barangay' in user_profile.role.lower():
+            barangay = user_profile.barangay
             
-            requirements_data.append({
-                'id': req.id,
-                'title': req.title,
-                'description': req.description,
-                'period': req.period,
-                'period_display': req.get_period_display(),
-                'priority': req.priority,
-                'due_date': req.due_date.strftime('%B %d, %Y') if req.due_date else 'N/A',
-                'is_active': req.is_active,
-                'created_by': req.created_by.get_full_name() if req.created_by else 'System',
-                'created_at': req.created_at.strftime('%B %d, %Y'),
-                'total_submissions': total_submissions,
-                'approved_count': approved_count,
-                'pending_count': pending_count,
+            if not barangay:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No barangay assigned to your account'
+                }, status=400)
+            
+            print(f"   Barangay: {barangay.name}")
+
+            submissions = RequirementSubmission.objects.filter(
+                barangay=barangay,
+                requirement__period=period,
+                requirement__is_active=True
+            ).select_related('requirement', 'barangay')
+            
+            if period == 'weekly':
+                submissions = submissions.filter(week_number=int(week))
+                print(f"   After weekly filter (week {week}): {submissions.count()}")
+            elif period == 'annually':
+                # ✅ FIX: Annually should ALWAYS show week_number=1
+                submissions = submissions.filter(week_number=1)
+                print(f"   After annually filter (week_number=1): {submissions.count()}")
+            elif period in ['monthly', 'quarterly', 'semestral']:
+                # For other periods, also filter by week
+                submissions = submissions.filter(week_number=int(week))
+                print(f"   After {period} filter (week {week}): {submissions.count()}")
+            
+            # Apply search
+            if search:
+                submissions = submissions.filter(
+                    Q(requirement__title__icontains=search) |
+                    Q(requirement__description__icontains=search) |
+                    Q(update_text__icontains=search)
+                )
+            
+            # Order by due date
+            submissions = submissions.order_by('due_date', '-created_at')
+
+            print(f"   Final count: {submissions.count()}")
+            if submissions.count() > 0:
+                for sub in submissions[:3]:
+                    print(f"      - {sub.requirement.title} (week_number={sub.week_number})")
+            
+            # Format data
+            submissions_data = []
+            for sub in submissions:
+                # Get attachments count
+                attachment_count = sub.attachments.count()
+                
+                # Calculate last update
+                last_update = 'Never'
+                if sub.updated_at:
+                    from django.utils import timezone
+                    diff = timezone.now() - sub.updated_at
+                    if diff.days > 0:
+                        last_update = f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+                    else:
+                        hours = diff.seconds // 3600
+                        if hours > 0:
+                            last_update = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                        else:
+                            minutes = (diff.seconds % 3600) // 60
+                            last_update = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                
+                submissions_data.append({
+                    'id': sub.id,
+                    'title': sub.requirement.title,
+                    'description': sub.requirement.description,
+                    'status': sub.status,
+                    'status_display': sub.get_status_display(),
+                    'due_date': sub.due_date.strftime('%B %d, %Y') if sub.due_date else 'N/A',
+                    'is_overdue': sub.is_overdue if hasattr(sub, 'is_overdue') else False,
+                    'last_update': last_update,
+                    'update_text': sub.update_text or '',
+                    'attachment_count': attachment_count
+                })
+            
+            print(f"   ✅ Found {len(submissions_data)} submissions (after filtering)")
+            
+            return JsonResponse({
+                'success': True,
+                'submissions': submissions_data,
+                'barangay_name': barangay.name,
+                'barangayId': barangay.id,  
+                'period': period,  
+                'week': int(week),  
+                'count': len(submissions_data)
+            })
+    
+        # ============================================
+        # DILG STAFF - Show all requirements (admin)
+        # ============================================
+        elif 'dilg' in user_profile.role.lower():
+            # Get filter parameters
+            barangay_id = request.GET.get('barangay_id')
+            status_filter = request.GET.get('status')
+            
+            # Base query - all submissions
+            submissions = RequirementSubmission.objects.select_related(
+                'requirement',
+                'barangay',
+                'submitted_by'
+            ).filter(
+                requirement__is_active=True
+            )
+            
+            # Apply filters
+            if barangay_id:
+                submissions = submissions.filter(barangay_id=barangay_id)
+            
+            if status_filter:
+                submissions = submissions.filter(status=status_filter)
+            
+            if period:
+                submissions = submissions.filter(requirement__period=period)
+                
+                # ✅ OPTION 1: Only filter by week for Weekly period (admin view)
+                if period == 'weekly':
+                    submissions = submissions.filter(week_number=int(week))
+                elif period == 'annually':
+                    submissions = submissions.filter(week_number=1)
+            
+            if search:
+                submissions = submissions.filter(
+                    Q(requirement__title__icontains=search) |
+                    Q(barangay__name__icontains=search) |
+                    Q(update_text__icontains=search)
+                )
+            
+            # Order by most recent
+            submissions = submissions.order_by('-submitted_at', '-created_at')
+            
+            # Format for admin view
+            submissions_data = []
+            for sub in submissions:
+                attachments = []
+                for attachment in sub.attachments.all():
+                    attachments.append({
+                        'id': attachment.id,
+                        'file_name': attachment.file.name.split('/')[-1],
+                        'file_url': attachment.file.url if attachment.file else '#',
+                        'file_size': round(attachment.file.size / 1024) if attachment.file else 0,
+                        'uploaded_at': attachment.uploaded_at.strftime('%B %d, %Y')
+                    })
+                
+                submissions_data.append({
+                    'id': sub.id,
+                    'title': sub.requirement.title,
+                    'barangay_name': sub.barangay.name,
+                    'status': sub.status,
+                    'status_display': sub.get_status_display(),
+                    'due_date': sub.due_date.strftime('%B %d, %Y') if sub.due_date else 'N/A',
+                    'submitted_at': sub.submitted_at.strftime('%B %d, %Y') if sub.submitted_at else 'Not submitted',
+                    'submitted_by': sub.submitted_by.get_full_name() if sub.submitted_by else 'Unknown',
+                    'period': sub.requirement.get_period_display(),
+                    'update_text': sub.update_text or '',
+                    'attachments': attachments,
+                    'is_overdue': sub.is_overdue if hasattr(sub, 'is_overdue') else False
+                })
+            
+            print(f"   ✅ Found {len(submissions_data)} submissions (admin view)")
+            
+            return JsonResponse({
+                'success': True,
+                'submissions': submissions_data,
+                'count': len(submissions_data)
             })
         
-        return JsonResponse({
-            'success': True,
-            'requirements': requirements_data
-        })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': f'Invalid role: {user_profile.role}'
+            }, status=403)
         
     except Exception as e:
+        print(f"❌ Error in api_requirements_list: {str(e)}")
         import traceback
-        print(f"=== GET REQUIREMENTS LIST ERROR ===")
-        print(f"Error: {str(e)}")
-        print(f"Traceback:\n{traceback.format_exc()}")
+        traceback.print_exc()
         
         return JsonResponse({
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+
+@login_required
+def debug_requirement_issue(request):
+    """
+    Debug endpoint to check requirement and notification setup
+    Access at: /api/debug-requirement-issue/
+    """
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        debug_info = {
+            'current_user': {
+                'username': request.user.username,
+                'role': request.user.userprofile.role if hasattr(request.user, 'userprofile') else 'No profile',
+                'barangay': request.user.userprofile.barangay.name if hasattr(request.user, 'userprofile') and request.user.userprofile.barangay else None,
+            },
+            'requirements': {
+                'total': Requirement.objects.count(),
+                'active': Requirement.objects.filter(is_active=True).count(),
+                'recent': []
+            },
+            'submissions': {
+                'total': RequirementSubmission.objects.count(),
+                'by_barangay': {}
+            },
+            'barangay_users': [],
+            'notifications': {
+                'total': Notification.objects.count(),
+                'recent_requirement_notifications': []
+            }
+        }
+        
+        # Get recent requirements
+        recent_reqs = Requirement.objects.order_by('-created_at')[:5]
+        for req in recent_reqs:
+            debug_info['requirements']['recent'].append({
+                'id': req.id,
+                'title': req.title,
+                'period': req.period,
+                'created_at': str(req.created_at),
+                'is_active': req.is_active
+            })
+        
+        # Count submissions by barangay
+        for barangay in Barangay.objects.all():
+            count = RequirementSubmission.objects.filter(barangay=barangay).count()
+            debug_info['submissions']['by_barangay'][barangay.name] = count
+        
+        # Get all barangay users
+        barangay_users = User.objects.filter(
+            userprofile__barangay__isnull=False
+        ).values('username', 'userprofile__role', 'userprofile__barangay__name', 'is_active')
+        
+        debug_info['barangay_users'] = list(barangay_users)
+        
+        # Get recent requirement notifications
+        recent_notifs = Notification.objects.filter(
+            notification_type='new_requirement'
+        ).order_by('-created_at')[:10]
+        
+        for notif in recent_notifs:
+            debug_info['notifications']['recent_requirement_notifications'].append({
+                'id': notif.id,
+                'user': notif.user.username,
+                'title': notif.title,
+                'created_at': str(notif.created_at),
+                'is_read': notif.is_read
+            })
+        
+        return JsonResponse(debug_info, json_dumps_params={'indent': 2})
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from .models import Requirement
+@login_required
+@require_http_methods(["GET"])
+def requirements_list_api(request):
+    """
+    DEBUG VERSION: Shows every step of what's happening
+    """
+    print(f"\n{'='*80}")
+    print(f"🔍 REQUIREMENTS_LIST_API DEBUG START")
+    print(f"{'='*80}")
+    
+    try:
+        # STEP 1: Check user authentication
+        print(f"\n📌 STEP 1: User Authentication")
+        print(f"   User: {request.user.username}")
+        print(f"   Is authenticated: {request.user.is_authenticated}")
+        print(f"   Is staff: {request.user.is_staff}")
+        
+        # STEP 2: Check user profile
+        print(f"\n📌 STEP 2: User Profile")
+        try:
+            user_profile = request.user.userprofile
+            print(f"   ✅ Profile found")
+            print(f"   Role: '{user_profile.role}'")
+            print(f"   Role (repr): {repr(user_profile.role)}")
+            print(f"   Barangay: {user_profile.barangay}")
+        except Exception as profile_error:
+            print(f"   ❌ Profile error: {str(profile_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'User profile not found'
+            }, status=403)
+        
+        # STEP 3: Check authorization
+        print(f"\n📌 STEP 3: Authorization Check")
+        if user_profile.role != 'dilg staff':
+            print(f"   ❌ UNAUTHORIZED")
+            print(f"   Expected: 'dilg staff'")
+            print(f"   Got: '{user_profile.role}'")
+            return JsonResponse({
+                'success': False,
+                'error': f'Unauthorized access. Role: {user_profile.role}'
+            }, status=403)
+        print(f"   ✅ Authorized (DILG Staff)")
+        
+        # STEP 4: Get filter parameters
+        print(f"\n📌 STEP 4: Request Parameters")
+        period = request.GET.get('period', '')
+        priority = request.GET.get('priority', '')
+        status = request.GET.get('status', 'active')
+        sort = request.GET.get('sort', '-created_at')
+        
+        print(f"   period: '{period}' (empty={not period})")
+        print(f"   priority: '{priority}' (empty={not priority})")
+        print(f"   status: '{status}'")
+        print(f"   sort: '{sort}'")
+        print(f"   Full query string: {request.GET.urlencode()}")
+        
+        # STEP 5: Import Requirement model
+        print(f"\n📌 STEP 5: Import Requirement Model")
+        try:
+            from .models import Requirement
+            print(f"   ✅ Requirement model imported")
+        except ImportError as import_error:
+            print(f"   ❌ Import error: {str(import_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Could not import Requirement model'
+            }, status=500)
+        
+        # STEP 6: Check database connection
+        print(f"\n📌 STEP 6: Database Query")
+        print(f"   Querying Requirement.objects.all()...")
+        
+        try:
+            # Get ALL requirements first (no filters)
+            all_requirements = Requirement.objects.all()
+            total_count = all_requirements.count()
+            print(f"   ✅ Total requirements in database: {total_count}")
+            
+            # Show each requirement
+            if total_count > 0:
+                print(f"\n   📋 ALL Requirements in Database:")
+                for req in all_requirements:
+                    print(f"      ID:{req.id:3d} | {req.title:40s} | {req.period:10s} | Active:{req.is_active} | Priority:{req.priority}")
+            else:
+                print(f"   ⚠️ NO REQUIREMENTS FOUND IN DATABASE!")
+                print(f"   This means the Requirement table is empty.")
+                
+        except Exception as db_error:
+            print(f"   ❌ Database error: {str(db_error)}")
+            import traceback
+            print(traceback.format_exc())
+            return JsonResponse({
+                'success': False,
+                'error': f'Database error: {str(db_error)}'
+            }, status=500)
+        
+        # STEP 7: Apply filters
+        print(f"\n📌 STEP 7: Applying Filters")
+        requirements = Requirement.objects.all()
+        print(f"   Starting with: {requirements.count()} requirements")
+        
+        # Status filter
+        if status == 'active':
+            requirements = requirements.filter(is_active=True)
+            print(f"   After is_active=True filter: {requirements.count()}")
+        elif status == 'archived':
+            requirements = requirements.filter(is_active=False)
+            print(f"   After is_active=False filter: {requirements.count()}")
+        else:
+            print(f"   No status filter applied (showing all)")
+        
+        # Period filter
+        if period:
+            requirements = requirements.filter(period=period)
+            print(f"   After period='{period}' filter: {requirements.count()}")
+        else:
+            print(f"   No period filter applied")
+        
+        # Priority filter
+        if priority:
+            requirements = requirements.filter(priority=priority)
+            print(f"   After priority='{priority}' filter: {requirements.count()}")
+        else:
+            print(f"   No priority filter applied")
+        
+        # Sorting
+        print(f"   Applying sort: {sort}")
+        requirements = requirements.order_by(sort)
+        
+        final_count = requirements.count()
+        print(f"   ✅ Final filtered count: {final_count}")
+        
+        # STEP 8: Build response
+        print(f"\n📌 STEP 8: Building Response")
+        requirements_data = []
+        
+        if final_count > 0:
+            print(f"   📋 Filtered Requirements:")
+            for req in requirements:
+                print(f"      ID:{req.id:3d} | {req.title:40s} | {req.period:10s}")
+                
+                requirements_data.append({
+                    'id': req.id,
+                    'title': req.title,
+                    'description': req.description,
+                    'period': req.period,
+                    'period_display': req.get_period_display(),
+                    'priority': req.priority,
+                    'due_date': req.due_date.strftime('%B %d, %Y') if req.due_date else 'N/A',
+                    'is_active': req.is_active,
+                    'created_by': req.created_by.username if req.created_by else 'System',
+                    'created_at': req.created_at.strftime('%B %d, %Y %I:%M %p'),
+                })
+        else:
+            print(f"   ⚠️ No requirements match the filters!")
+        
+        # STEP 9: Return response
+        print(f"\n📌 STEP 9: Returning Response")
+        response_data = {
+            'success': True,
+            'requirements': requirements_data,
+            'count': len(requirements_data)
+        }
+        print(f"   Response count: {len(requirements_data)}")
+        print(f"   Response size: ~{len(str(response_data))} bytes")
+        
+        print(f"\n{'='*80}")
+        print(f"✅ REQUIREMENTS_LIST_API DEBUG END - SUCCESS")
+        print(f"{'='*80}\n")
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"\n{'='*80}")
+        print(f"❌ REQUIREMENTS_LIST_API DEBUG END - ERROR")
+        print(f"{'='*80}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        
+        import traceback
+        print(f"\nFull traceback:")
+        print(traceback.format_exc())
+        print(f"{'='*80}\n")
+        
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }, status=500)
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def debug_requirements_count(request):
+    """
+    Simple debug endpoint to check database
+    Call this from: /api/debug/requirements/
+    """
+    try:
+        from .models import Requirement
+        
+        all_reqs = Requirement.objects.all()
+        active_reqs = Requirement.objects.filter(is_active=True)
+        archived_reqs = Requirement.objects.filter(is_active=False)
+        
+        requirements_list = []
+        for req in all_reqs:
+            requirements_list.append({
+                'id': req.id,
+                'title': req.title,
+                'period': req.period,
+                'priority': req.priority,
+                'is_active': req.is_active,
+                'due_date': str(req.due_date) if req.due_date else None,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'total_count': all_reqs.count(),
+            'active_count': active_reqs.count(),
+            'archived_count': archived_reqs.count(),
+            'requirements': requirements_list,
+            'message': 'This is what is in your database'
+        }, json_dumps_params={'indent': 2})
+        
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500, json_dumps_params={'indent': 2})
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def requirement_detail_api(request, requirement_id):
+    """
+    Get single requirement details for editing
+    URL: /api/admin/requirements/<id>/
+    """
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.role != 'dilg staff':
+            return JsonResponse({
+                'success': False,
+                'error': 'Unauthorized'
+            }, status=403)
+        
+        req = Requirement.objects.get(id=requirement_id)
+        
+        return JsonResponse({
+            'success': True,
+            'requirement': {
+                'id': req.id,
+                'title': req.title,
+                'description': req.description,
+                'period': req.period,
+                'due_date': req.due_date.strftime('%Y-%m-%d') if req.due_date else '',
+                'priority': req.priority,
+                'is_active': req.is_active,
+            }
+        })
+        
+    except Requirement.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Requirement not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
 
 @login_required
 @require_http_methods(["GET"])
@@ -5189,91 +5717,6 @@ from app.models import Requirement, Barangay, RequirementSubmission
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-# Define calculate_due_date function
-# def calculate_due_date(period, week_number, year):
-#     today = timezone.now().date()
-    
-#     if period == 'weekly':
-#         january_1 = datetime(year, 1, 1).date()
-#         days_to_add = (week_number - 1) * 7
-#         week_start = january_1 + timedelta(days=days_to_add - january_1.weekday())
-#         return week_start + timedelta(days=6)
-    
-#     elif period == 'monthly':
-#         current_month = today.month
-#         current_year = today.year
-#         if current_month == 12:
-#             next_month = datetime(current_year + 1, 1, 1)
-#         else:
-#             next_month = datetime(current_year, current_month + 1, 1)
-#         return (next_month - timedelta(days=1)).date()
-    
-#     elif period == 'quarterly':
-#         current_quarter = (today.month - 1) // 3 + 1
-#         quarter_end_month = current_quarter * 3
-#         if quarter_end_month == 12:
-#             next_month = datetime(today.year + 1, 1, 1)
-#         else:
-#             next_month = datetime(today.year, quarter_end_month + 1, 1)
-#         return (next_month - timedelta(days=1)).date()
-    
-#     elif period == 'semestral':
-#         if today.month <= 6:
-#             return datetime(today.year, 6, 30).date()
-#         else:
-#             return datetime(today.year, 12, 31).date()
-    
-#     elif period == 'annually':
-#         return datetime(today.year, 12, 31).date()
-    
-#     else:
-#         return today + timedelta(days=30)
-
-# # Now create submissions
-# print("🔧 Creating submissions for ALL barangays...")
-# print("=" * 70)
-
-# current_year = timezone.now().year
-# current_week = 46  # Current week number
-
-# total_created = 0
-# total_existing = 0
-
-# for barangay in Barangay.objects.all().order_by('name'):
-#     print(f"\n📍 {barangay.name}:")
-#     barangay_created = 0
-    
-#     for req in Requirement.objects.filter(is_active=True):
-#         # Determine week_number based on period
-#         week_num = current_week if req.period == 'weekly' else None
-        
-#         submission, created = RequirementSubmission.objects.get_or_create(
-#             requirement=req,
-#             barangay=barangay,
-#             week_number=week_num,
-#             year=current_year,
-#             defaults={
-#                 'due_date': calculate_due_date(req.period, current_week, current_year),
-#                 'status': 'pending'
-#             }
-#         )
-        
-#         if created:
-#             print(f"  ✅ {req.title} ({req.get_period_display()})")
-#             barangay_created += 1
-#             total_created += 1
-#         else:
-#             total_existing += 1
-    
-#     if barangay_created == 0:
-#         print(f"  ⏭️  All submissions already exist")
-
-# print("\n" + "=" * 70)
-# print(f"✅ DONE!")
-# print(f"   Created: {total_created} new submissions")
-# print(f"   Already existed: {total_existing}")
-# print(f"   Total barangays: {Barangay.objects.count()}")
-
 
 
 #--------Admin Views and APIs --------#
@@ -6199,107 +6642,112 @@ def api_create_requirement(request):
             description=description,
             period=period,
             priority=priority,
-            due_date=due_date,  # ✅ ADD THIS LINE (save to Requirement model)
+            due_date=due_date,
             created_by=request.user,
             is_active=True
         )
         
-        # Assign to specific barangays if provided, otherwise applies to all
+        # Get target barangays
         if barangay_ids:
             target_barangays = Barangay.objects.filter(id__in=barangay_ids)
             requirement.applicable_barangays.set(target_barangays)
         else:
             target_barangays = Barangay.objects.all()
         
-        # 🔥 AUTO-CREATE SUBMISSIONS FOR ALL BARANGAYS
+        # ============================================
+        # CREATE SUBMISSIONS
+        # ============================================
         current_year = timezone.now().year
         submissions_created = 0
         
         for barangay in target_barangays:
             if period == 'weekly':
-                # Create submissions for the next 4 weeks
                 for week_num in range(1, 5):
                     RequirementSubmission.objects.create(
                         requirement=requirement,
                         barangay=barangay,
                         week_number=week_num,
                         year=current_year,
-                        due_date=due_date,  # ✅ CHANGED: Use the due_date from frontend
+                        due_date=due_date,
                         status='pending'
                     )
                     submissions_created += 1
             else:
-                # For monthly, quarterly, semestral, annually - create one submission
+                # ✅ FIX: For all other periods, use week_number=1
                 RequirementSubmission.objects.create(
                     requirement=requirement,
                     barangay=barangay,
-                    week_number=None,
+                    week_number=1,  # ✅ IMPORTANT: Always 1 for non-weekly
                     year=current_year,
-                    due_date=due_date,  # ✅ CHANGED: Use the due_date from frontend
+                    due_date=due_date,
                     status='pending'
                 )
                 submissions_created += 1
         
-        print(f"✅ Created {submissions_created} submissions with due_date: {due_date}")
-
-        # Rest of the notification code stays the same...
+        print(f"✅ Created {submissions_created} submissions")
+        
+        # ============================================
+        # ✅ CREATE NOTIFICATIONS - FIXED VERSION
+        # ============================================
         notifications_sent = 0
         priority_emoji = {'normal': '📋', 'important': '⚠️', 'urgent': '🚨'}
-        priority_label = priority.upper()
         
+        print(f"\n🔔 Creating notifications...")
+        print(f"   Target barangays: {target_barangays.count()}")
+        
+        # ✅ Find barangay users with flexible role matching
         barangay_users = User.objects.filter(
-            userprofile__role='barangay official',
-            userprofile__barangay__in=target_barangays
-        )
+            userprofile__barangay__in=target_barangays,
+            userprofile__role__icontains='barangay',  # ✅ Flexible matching
+            is_active=True
+        ).distinct()
         
+        print(f"   Found {barangay_users.count()} barangay users")
+        
+        if barangay_users.count() == 0:
+            print(f"   ⚠️ WARNING: No barangay users found!")
+        
+        # Create notifications
         for user in barangay_users:
             try:
                 notification = Notification.objects.create(
                     user=user,
                     notification_type='new_requirement',
-                    title=f"{priority_emoji.get(priority, '📋')} New {priority_label} Requirement",
-                    message=f"A new {period} requirement has been added: {title}. Due date: {due_date.strftime('%B %d, %Y')}",
-                    is_read=False
+                    title=f"{priority_emoji.get(priority, '📋')} New {priority.upper()} Requirement",
+                    message=f"A new {period} requirement has been added: {title}. Due: {due_date.strftime('%B %d, %Y')}",
+                    is_read=False,
+                    created_at=timezone.now()
                 )
                 notifications_sent += 1
-            except Exception as notif_error:
-                print(f"❌ Failed to create notification: {notif_error}")
+                print(f"   ✓ Notified: {user.username}")
+            except Exception as e:
+                print(f"   ✗ Failed for {user.username}: {str(e)}")
         
-        try:
-            AuditLog.objects.create(
-                user=request.user,
-                action='CREATE',
-                content_object=requirement,
-                description=f"DILG Admin created new {priority} requirement: {title} with {submissions_created} submissions"
-            )
-        except:
-            pass
+        print(f"   ✅ Total notifications sent: {notifications_sent}\n")
         
+        # ============================================
+        # RETURN RESPONSE
+        # ============================================
         return JsonResponse({
             'success': True,
-            'message': f'Requirement created successfully! {submissions_created} submissions created and {notifications_sent} barangay officials notified.',
+            'message': f'Requirement created successfully!',
             'requirement': {
                 'id': requirement.id,
                 'title': requirement.title,
-                'description': requirement.description,
                 'period': requirement.period,
-                'priority': requirement.priority,
-                'due_date': due_date.strftime('%Y-%m-%d'),  # ✅ ADD THIS
-                'period_display': requirement.get_period_display(),
+                'due_date': due_date.strftime('%Y-%m-%d'),
                 'submissions_created': submissions_created,
                 'notifications_sent': notifications_sent,
+                'barangays_notified': target_barangays.count(),
             }
         })
         
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
         import traceback
-        print(f"=== CREATE REQUIREMENT ERROR ===")
-        print(f"Error: {str(e)}")
-        print(f"Traceback:\n{traceback.format_exc()}")
-        
+        print(f"❌ Error: {str(e)}")
+        print(traceback.format_exc())
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 
 @login_required
@@ -6438,113 +6886,6 @@ def api_all_requirements(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
-# @login_required
-# @require_http_methods(["GET"])
-# def api_barangay_requirements_list(request):
-#     """
-#     API endpoint for BARANGAY USERS to fetch their assigned requirements
-#     """
-#     try:
-#         # Check if user is barangay official
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'barangay official':
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': 'Unauthorized: Only barangay officials can access this'
-#             }, status=403)
-        
-#         # Get user's barangay
-#         barangay = user_profile.barangay
-#         if not barangay:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': 'No barangay assigned to this user'
-#             }, status=400)
-        
-#         # Get filter parameters
-#         period = request.GET.get('period', 'weekly')
-#         week = request.GET.get('week')
-#         search = request.GET.get('search', '').strip()
-        
-#         # Base query - get submissions for this barangay
-#         submissions = RequirementSubmission.objects.filter(
-#             barangay=barangay,
-#             requirement__period=period,
-#             requirement__is_active=True
-#         ).select_related('requirement', 'barangay')
-        
-#         # Filter by week if weekly period
-#         if period == 'weekly' and week:
-#             submissions = submissions.filter(week_number=int(week))
-        
-#         # Search filter
-#         if search:
-#             submissions = submissions.filter(
-#                 Q(requirement__title__icontains=search) |
-#                 Q(requirement__description__icontains=search) |
-#                 Q(update_text__icontains=search)
-#             )
-        
-#         # Order by due date
-#         submissions = submissions.order_by('due_date', '-created_at')
-        
-#         # Format submissions for JSON
-#         submissions_data = []
-#         for sub in submissions:
-#             # Get attachments
-#             attachments = []
-#             for attachment in sub.attachments.all():
-#                 attachments.append({
-#                     'id': attachment.id,
-#                     'file_name': attachment.file.name.split('/')[-1],
-#                     'file_url': attachment.file.url if attachment.file else '#',
-#                     'file_size': round(attachment.file.size / 1024) if attachment.file else 0,
-#                 })
-            
-#             # Calculate last update
-#             last_update = 'Never'
-#             if sub.updated_at:
-#                 diff = timezone.now() - sub.updated_at
-#                 if diff.days > 0:
-#                     last_update = f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
-#                 else:
-#                     hours = diff.seconds // 3600
-#                     if hours > 0:
-#                         last_update = f"{hours} hour{'s' if hours > 1 else ''} ago"
-#                     else:
-#                         minutes = (diff.seconds % 3600) // 60
-#                         last_update = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
-            
-#             submissions_data.append({
-#                 'id': sub.id,
-#                 'title': sub.requirement.title,
-#                 'description': sub.requirement.description,
-#                 'status': sub.status,
-#                 'status_display': sub.get_status_display(),
-#                 'due_date': sub.due_date.strftime('%B %d, %Y') if sub.due_date else 'N/A',
-#                 'last_update': last_update,
-#                 'is_overdue': sub.is_overdue if hasattr(sub, 'is_overdue') else False,
-#                 'update_text': sub.update_text or '',
-#                 'attachments': attachments
-#             })
-        
-#         return JsonResponse({
-#             'success': True,
-#             'submissions': submissions_data,
-#             'barangay_name': barangay.name,
-#             'count': len(submissions_data)
-#         })
-        
-#     except Exception as e:
-#         import traceback
-#         print(f"❌ Error in barangay_requirements_list: {str(e)}")
-#         print(traceback.format_exc())
-#         return JsonResponse({
-#             'success': False,
-#             'error': str(e)
-#         }, status=500)
-
-
 
 #-------------------ANNOUNCEMENTS AND NOTIFICATIONS------------
 @login_required
@@ -8176,6 +8517,1430 @@ def get_category_file_counts(request):
         }, status=500)
 
 
+#-----NEW DASHBOARD MERGE USERS TEMPLATES AND MIGRATION-----
+
+@login_required
+def barangay_dashboard(request):
+    """
+    Unified dashboard for Barangay Users
+    Shows: Eligibility, Requirements, Analytics
+    """
+    user_profile = request.user.userprofile
+    
+    # Access control
+    if user_profile.role != 'barangay user':
+        messages.error(request, '🚫 Access Denied')
+        return redirect('dashboard')
+    
+    # Get assigned barangay
+    assigned_barangay = user_profile.barangay
+    
+    # Get notification counts for sidebar
+    monitoring_count = CategorizedFile.objects.filter(
+        category__name__in=['weekly', 'monthly', 'quarterly', 'semestral', 'annually'],
+        is_archived=False
+    ).count()
+    
+    certification_count = CategorizedFile.objects.filter(
+        category__name__in=['appointive_certificates', 'elective_certificates', 'ids', 'signatures'],
+        is_archived=False
+    ).count()
+    
+    pending_count = User.objects.filter(
+        userprofile__is_approved=False
+    ).count()
+    
+    pending_applications_count = EligibilityRequest.objects.filter(
+        status='pending',
+        archived=False
+    ).count()
+    
+    # Get user's submissions
+    my_submissions = []
+    barangay_stats = {
+        'total_requirements': 0,
+        'completed': 0,
+        'pending': 0,
+        'overdue': 0,
+        'total_change': 0,
+        'completed_change': 0,
+        'pending_change': 0,
+        'overdue_change': 0,
+        'total_chart': [0] * 12,
+        'completed_chart': [0] * 12,
+        'pending_chart': [0] * 12,
+        'overdue_chart': [0] * 12,
+    }
+    
+    if assigned_barangay:
+        from datetime import timedelta
+        
+        # Current date calculations
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+        
+        # Get all submissions for this barangay
+        submissions = RequirementSubmission.objects.filter(barangay=assigned_barangay)
+        
+        # CURRENT WEEK STATS
+        current_total = submissions.count()
+        current_completed = submissions.filter(status='approved').count()
+        current_pending = submissions.filter(status='pending').count()
+        current_overdue = submissions.filter(
+            status__in=['pending', 'in_progress'],
+            due_date__lt=today
+        ).count()
+        
+        # LAST WEEK STATS (for comparison)
+        last_week_submissions = RequirementSubmission.objects.filter(
+            barangay=assigned_barangay,
+            created_at__date__lte=week_ago
+        )
+        
+        last_week_total = last_week_submissions.count()
+        last_week_completed = last_week_submissions.filter(status='approved').count()
+        last_week_pending = last_week_submissions.filter(status='pending').count()
+        last_week_overdue = last_week_submissions.filter(
+            status__in=['pending', 'in_progress'],
+            due_date__lt=week_ago
+        ).count()
+        
+        # CALCULATE PERCENTAGE CHANGES
+        def calc_percentage_change(current, previous):
+            if previous == 0:
+                return 100.0 if current > 0 else 0.0
+            change = ((current - previous) / previous) * 100
+            return round(change, 1)
+        
+        # GENERATE CHART DATA (last 12 days)
+        def get_chart_data(status_filter=None):
+            chart_data = []
+            for i in range(11, -1, -1):  # 12 days ago to today
+                day = today - timedelta(days=i)
+                
+                if status_filter == 'total':
+                    count = RequirementSubmission.objects.filter(
+                        barangay=assigned_barangay,
+                        created_at__date=day
+                    ).count()
+                elif status_filter == 'completed':
+                    count = RequirementSubmission.objects.filter(
+                        barangay=assigned_barangay,
+                        status='approved',
+                        updated_at__date=day
+                    ).count()
+                elif status_filter == 'pending':
+                    count = RequirementSubmission.objects.filter(
+                        barangay=assigned_barangay,
+                        status='pending',
+                        created_at__date=day
+                    ).count()
+                elif status_filter == 'overdue':
+                    count = RequirementSubmission.objects.filter(
+                        barangay=assigned_barangay,
+                        status__in=['pending', 'in_progress'],
+                        due_date__lt=day
+                    ).count()
+                else:
+                    count = 0
+                
+                chart_data.append(max(count, 1))  # Minimum 1 for visibility
+            
+            return chart_data
+        
+        # Get recent submissions for table
+        my_submissions = RequirementSubmission.objects.filter(
+            barangay=assigned_barangay
+        ).select_related('requirement').order_by('-due_date')[:5]
+        
+        # BUILD STATS DICTIONARY
+        barangay_stats = {
+            # Current counts
+            'total_requirements': current_total,
+            'completed': current_completed,
+            'pending': current_pending,
+            'overdue': current_overdue,
+            
+            # Percentage changes
+            'total_change': calc_percentage_change(current_total, last_week_total),
+            'completed_change': calc_percentage_change(current_completed, last_week_completed),
+            'pending_change': calc_percentage_change(current_pending, last_week_pending),
+            'overdue_change': calc_percentage_change(current_overdue, last_week_overdue),
+            
+            # Chart data (last 12 days)
+            'total_chart': get_chart_data('total'),
+            'completed_chart': get_chart_data('completed'),
+            'pending_chart': get_chart_data('pending'),
+            'overdue_chart': get_chart_data('overdue'),
+        }
+    
+    # Get all barangays for monitoring view
+    all_barangays = Barangay.objects.all().order_by('name')
+    
+    context = {
+        'user_profile': user_profile,
+        'assigned_barangay': assigned_barangay,
+        'all_barangays': all_barangays,
+        'my_submissions': my_submissions,
+        'barangay_stats': barangay_stats,
+        'monitoring_count': monitoring_count,
+        'certification_count': certification_count,
+        'pending_count': pending_count,
+        'pending_applications_count': pending_applications_count,
+    }
+    
+    return render(request, 'barangay_dashboard.html', context)
 
 
 
+
+
+def send_test_email(request):
+    """
+    Test endpoint to verify email configuration
+    Usage: /test-email/
+    """
+    try:
+        from django.http import JsonResponse
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        print(f"\n{'='*60}")
+        print(f"🧪 TESTING EMAIL CONFIGURATION")
+        print(f"{'='*60}")
+        print(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+        print(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        print(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        print(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+        print(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+        
+        test_email = "choimeramae@gmail.com"  # Your email
+        
+        print(f"\n📤 Sending test email to: {test_email}")
+        
+        send_mail(
+            subject="🧪 DILG Test Email - Configuration Working",
+            message="""This is a test email from the DILG Certification System.
+
+If you received this email, your email configuration is working correctly!
+
+Configuration Details:
+- SMTP Host: smtp.gmail.com
+- Port: 587
+- TLS: Enabled
+- From: choimeramae@gmail.com
+
+Test sent at: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}
+
+---
+DILG Lucena - Certification System
+This is an automated test message.
+""",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[test_email],
+            fail_silently=False,
+        )
+        
+        print(f"✅ Test email sent successfully!")
+        print(f"{'='*60}\n")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Test email sent to {test_email}',
+            'config': {
+                'host': settings.EMAIL_HOST,
+                'port': settings.EMAIL_PORT,
+                'user': settings.EMAIL_HOST_USER,
+                'from': settings.DEFAULT_FROM_EMAIL,
+            }
+        })
+        
+    except Exception as e:
+        print(f"\n{'='*60}")
+        print(f"❌ EMAIL TEST FAILED")
+        print(f"{'='*60}")
+        print(f"Error: {str(e)}")
+        print(traceback.format_exc())
+        print(f"{'='*60}\n")
+        
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
+    
+@login_required
+@require_http_methods(["GET"])
+def api_requirements_trend_data(request):
+    try:
+        from datetime import timedelta
+        from django.db.models import Count, Q
+        
+        # Get time interval from query params (default 30 days)
+        days = int(request.GET.get('days', 30))
+        
+        # Validate days parameter
+        if days not in [7, 30, 90]:
+            days = 30
+        
+        print(f"\n📊 REQUIREMENTS TREND DATA API")
+        print(f"   Days requested: {days}")
+        print(f"   User: {request.user.username}")
+        
+        # Calculate date range
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days-1)
+        
+        print(f"   Date range: {start_date} to {end_date}")
+        
+        # Initialize data arrays
+        labels = []
+        completed_data = []
+        pending_data = []
+        total_data = []
+
+        for i in range(days):
+            current_date = start_date + timedelta(days=i)
+            labels.append(current_date.strftime('%Y-%m-%d'))
+            completed_count = RequirementSubmission.objects.filter(
+                status='accomplished',  
+                created_at__date=current_date  
+            ).count()
+
+            pending_count = RequirementSubmission.objects.filter(
+                status__in=['pending', 'in_progress'],
+                created_at__date=current_date
+            ).count()
+
+            total_count = RequirementSubmission.objects.filter(
+                created_at__date=current_date
+            ).count()
+            
+            completed_data.append(completed_count)
+            pending_data.append(pending_count)
+            total_data.append(total_count)
+        
+        print(f"   ✓ Data points generated: {len(labels)}")
+        print(f"   ✓ Total submissions: {sum(total_data)}")
+        print(f"   ✓ Completed: {sum(completed_data)}")
+        print(f"   ✓ Pending: {sum(pending_data)}")
+        
+        return JsonResponse({
+            'success': True,
+            'labels': labels,
+            'completed': completed_data,
+            'pending': pending_data,
+            'total': total_data,
+            'period': f'{days} days'
+        })
+        
+    except Exception as e:
+        print(f"❌ Error in api_requirements_trend_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+    
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
+from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def api_eligibility_analytics(request):
+    """
+    FIXED: API endpoint for eligibility certifications radar chart data
+    Prevents duplicate counting by using aggregation
+    """
+    try:
+        logger.info("📊 ELIGIBILITY ANALYTICS API (FIXED)")
+        logger.info(f"   User: {request.user.username}")
+        
+        # Get barangay
+        barangay = None
+        
+        try:
+            if hasattr(request.user, 'userprofile'):
+                barangay = request.user.userprofile.barangay
+                logger.info(f"   Found barangay via userprofile: {barangay}")
+        except Exception as e:
+            logger.warning(f"   UserProfile method failed: {str(e)}")
+        
+        if not barangay:
+            logger.warning("   No barangay found - returning empty data")
+            return JsonResponse({
+                'success': True,
+                'labels': ['Total'],
+                'appointive': [0],
+                'elective_completed': [0],
+                'elective_incomplete': [0],
+                'totals': {
+                    'appointive': 0,
+                    'elective_completed': 0,
+                    'elective_incomplete': 0,
+                    'grand_total': 0
+                }
+            })
+        
+        barangay_name = barangay.name
+        logger.info(f"   ✓ Barangay name: {barangay_name}")
+        
+        from app.models import EligibilityRequest
+        
+        # ============================================
+        # FIX: Use single aggregated query per type
+        # ============================================
+        
+        # Get base queryset for this barangay
+        base_qs = EligibilityRequest.objects.filter(barangay=barangay_name)
+        
+        logger.info(f"   📊 Base queryset count: {base_qs.count()}")
+        
+        # ========== APPOINTIVE - Single Query ==========
+        appointive_qs = base_qs.filter(position_type='appointive')
+        appointive_total = appointive_qs.count()
+        
+        logger.info(f"   📌 APPOINTIVE:")
+        logger.info(f"      Total: {appointive_total}")
+        logger.info(f"      IDs: {list(appointive_qs.values_list('id', flat=True))}")
+        
+        # ========== ELECTIVE COMPLETED - Single Query ==========
+        elective_completed_qs = base_qs.filter(
+            position_type='elective',
+            completed_term='yes'
+        )
+        elective_completed_total = elective_completed_qs.count()
+        
+        logger.info(f"   📌 ELECTIVE - COMPLETED:")
+        logger.info(f"      Total: {elective_completed_total}")
+        logger.info(f"      IDs: {list(elective_completed_qs.values_list('id', flat=True))}")
+        
+        # ========== ELECTIVE INCOMPLETE - Single Query ==========
+        elective_incomplete_qs = base_qs.filter(
+            position_type='elective',
+            completed_term='no'
+        )
+        elective_incomplete_total = elective_incomplete_qs.count()
+        
+        logger.info(f"   📌 ELECTIVE - INCOMPLETE:")
+        logger.info(f"      Total: {elective_incomplete_total}")
+        logger.info(f"      IDs: {list(elective_incomplete_qs.values_list('id', flat=True))}")
+        
+        # ========== VERIFY NO OVERLAP ==========
+        grand_total = appointive_total + elective_completed_total + elective_incomplete_total
+        
+        logger.info(f"\n   🔍 VERIFICATION:")
+        logger.info(f"      Appointive: {appointive_total}")
+        logger.info(f"      Elective Completed: {elective_completed_total}")
+        logger.info(f"      Elective Incomplete: {elective_incomplete_total}")
+        logger.info(f"      Sum: {grand_total}")
+        logger.info(f"      Base Total: {base_qs.count()}")
+        
+        if grand_total != base_qs.count():
+            logger.warning(f"   ⚠️ MISMATCH: Sum ({grand_total}) != Base ({base_qs.count()})")
+        else:
+            logger.info(f"   ✅ COUNTS MATCH")
+        
+        # ========== SIMPLIFIED RESPONSE ==========
+        # Just return totals (not breaking down by status)
+        labels = ['Total']
+        
+        return JsonResponse({
+            'success': True,
+            'labels': labels,
+            'appointive': [appointive_total],
+            'elective_completed': [elective_completed_total],
+            'elective_incomplete': [elective_incomplete_total],
+            'totals': {
+                'appointive': appointive_total,
+                'elective_completed': elective_completed_total,
+                'elective_incomplete': elective_incomplete_total,
+                'grand_total': grand_total
+            },
+            'debug': {
+                'barangay': barangay_name,
+                'base_count': base_qs.count(),
+                'appointive_ids': list(appointive_qs.values_list('id', flat=True)),
+                'elective_completed_ids': list(elective_completed_qs.values_list('id', flat=True)),
+                'elective_incomplete_ids': list(elective_incomplete_qs.values_list('id', flat=True)),
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error in eligibility analytics API: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        return JsonResponse({
+            'success': True,
+            'labels': ['Total'],
+            'appointive': [0],
+            'elective_completed': [0],
+            'elective_incomplete': [0],
+            'totals': {
+                'appointive': 0,
+                'elective_completed': 0,
+                'elective_incomplete': 0,
+                'grand_total': 0
+            }
+        })
+
+@login_required
+def debug_eligibility_data(request):
+    """
+    Debug endpoint to check for duplicate data
+    Access at: /api/debug-eligibility/
+    """
+    try:
+        from app.models import EligibilityRequest
+        
+        barangay = request.user.userprofile.barangay
+        if not barangay:
+            return JsonResponse({'error': 'No barangay assigned'})
+        
+        # Get all records
+        all_records = EligibilityRequest.objects.filter(
+            barangay=barangay.name
+        ).values('id', 'first_name', 'last_name', 'position_type', 'completed_term', 'status')
+        
+        # Group by type
+        appointive = []
+        elective_completed = []
+        elective_incomplete = []
+        
+        for record in all_records:
+            if record['position_type'] == 'appointive':
+                appointive.append(record)
+            elif record['position_type'] == 'elective':
+                if record['completed_term'] == 'yes':
+                    elective_completed.append(record)
+                elif record['completed_term'] == 'no':
+                    elective_incomplete.append(record)
+        
+        return JsonResponse({
+            'barangay': barangay.name,
+            'total_records': len(all_records),
+            'appointive': {
+                'count': len(appointive),
+                'records': appointive
+            },
+            'elective_completed': {
+                'count': len(elective_completed),
+                'records': elective_completed
+            },
+            'elective_incomplete': {
+                'count': len(elective_incomplete),
+                'records': elective_incomplete
+            },
+            'sum_check': len(appointive) + len(elective_completed) + len(elective_incomplete),
+            'matches_total': (len(appointive) + len(elective_completed) + len(elective_incomplete)) == len(all_records)
+        })
+        
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
+
+@login_required
+def debug_user_barangay(request):
+    """Temporary debug endpoint"""
+    info = {
+        'username': request.user.username,
+        'has_userprofile': hasattr(request.user, 'userprofile'),
+        'has_barangay': hasattr(request.user, 'barangay'),
+        'has_assigned_barangay': hasattr(request.user, 'assigned_barangay'),
+        'user_attrs': dir(request.user),
+    }
+    
+    if hasattr(request.user, 'userprofile'):
+        info['userprofile_barangay'] = str(getattr(request.user.userprofile, 'assigned_barangay', 'None'))
+    
+    return JsonResponse(info, safe=False)
+
+
+# CORRECTED VIEW - Add this to your views.py
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from app.models import EligibilityRequest
+
+@login_required
+def eligibility_certifications_chart_data(request):
+    """
+    API endpoint for Eligibility Certifications Analytics radar chart
+    Returns counts of Appointive, Elective-Completed, and Elective-Incomplete
+    
+    HANDLES ALL VARIATIONS of completed_term field:
+    - "Yes", "yes"
+    - "Yes - Full term served"
+    - "Yes - Full term successfully completed"
+    - "No", "no"
+    - "No - Incomplete term"
+    - "No - Term not completed"
+    """
+    try:
+        user = request.user
+        
+        # Base queryset (adjust if you need barangay filtering)
+        base_queryset = EligibilityRequest.objects.all()
+        
+        print(f"📊 ELIGIBILITY CERTIFICATIONS ANALYTICS")
+        print(f"   User: {user.username}")
+        print(f"   Total requests: {base_queryset.count()}")
+        
+        # Count Appointive (approved)
+        appointive_count = base_queryset.filter(
+            position_type='appointive',
+            status='approved'
+        ).count()
+        
+        # Count Elective - Completed
+        # Use __icontains to match "Yes" in any variation
+        elective_completed_count = base_queryset.filter(
+            position_type='elective',
+            status='approved',
+            completed_term__icontains='Yes'  # Matches: "Yes", "Yes - Full term...", etc.
+        ).count()
+        
+        # Count Elective - Incomplete
+        # Matches pending status OR any "No" variation
+        elective_incomplete_count = base_queryset.filter(
+            position_type='elective'
+        ).filter(
+            Q(status='pending') | 
+            Q(status='processing') |
+            Q(completed_term__icontains='No')  # Matches: "No", "No - Incomplete...", etc.
+        ).count()
+        
+        print(f"   Appointive: {appointive_count}")
+        print(f"   Elective - Completed: {elective_completed_count}")
+        print(f"   Elective - Incomplete: {elective_incomplete_count}")
+        
+        return JsonResponse({
+            'success': True,
+            'appointive': appointive_count,
+            'elective_completed': elective_completed_count,
+            'elective_incomplete': elective_incomplete_count,
+            'total': appointive_count + elective_completed_count + elective_incomplete_count
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ ELIGIBILITY CHART ERROR:")
+        print(error_details)
+        
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+# EXPECTED RESULTS:
+# ==================
+# Appointive: 531
+# Elective - Completed: 570 (138 + 386 + 41 + 5)
+# Elective - Incomplete: 82 (21 pending + 21 processing + 59 + 15 + 3 "No" variations)
+# (Numbers will be slightly different based on your exact data)
+
+from django.http import JsonResponse
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
+from datetime import datetime, timedelta
+@login_required
+def requirements_radar_chart_data(request):
+    """
+    API endpoint for radar chart data showing requirements by type over months
+    """
+    try:
+        # Get user's barangay through UserProfile
+        user = request.user
+        
+        if not hasattr(user, 'userprofile'):
+            return JsonResponse({
+                'success': False,
+                'error': 'No user profile found'
+            })
+        
+        barangay = user.userprofile.barangay
+        
+        if not barangay:
+            return JsonResponse({
+                'success': False,
+                'error': 'No barangay assigned to this user'
+            })
+        
+        print(f"📊 RADAR CHART API")
+        print(f"   User: {user.username}")
+        print(f"   Barangay: {barangay.name}")
+        
+        # Use timezone-aware datetime
+        current_date = timezone.now()
+        
+        # Initialize data structures
+        labels = []
+        period_data = {
+            'weekly': [],
+            'monthly': [],
+            'quarterly': [],
+            'semestral': [],
+            'annually': []
+        }
+        
+        # Calculate data for last 8 months
+        for month_offset in range(-7, 1):  # -7 to 0 = 8 months
+            # Calculate target month and year
+            target_month = current_date.month + month_offset
+            target_year = current_date.year
+            
+            # Handle year wrapping
+            while target_month <= 0:
+                target_month += 12
+                target_year -= 1
+            while target_month > 12:
+                target_month -= 12
+                target_year += 1
+            
+            # Get month boundaries
+            month_start = datetime(target_year, target_month, 1, 0, 0, 0)
+            
+            if target_month == 12:
+                next_month = 1
+                next_year = target_year + 1
+            else:
+                next_month = target_month + 1
+                next_year = target_year
+            
+            month_end = datetime(next_year, next_month, 1, 0, 0, 0)
+            
+            # Make timezone aware
+            month_start = timezone.make_aware(month_start)
+            month_end = timezone.make_aware(month_end)
+            
+            # Add month label
+            month_label = month_start.strftime('%b')
+            labels.append(month_label)
+            
+            # ✅ FIX: Count submissions by SUBMITTED_AT date, not requirement created_at
+            for period in period_data.keys():
+                count = RequirementSubmission.objects.filter(
+                    barangay=barangay,
+                    requirement__period=period,
+                    submitted_at__gte=month_start,  # ← Use submitted_at
+                    submitted_at__lt=month_end       # ← Not requirement.created_at
+                ).count()
+                period_data[period].append(count)
+        
+        # Calculate total submissions
+        total_submissions = RequirementSubmission.objects.filter(
+            barangay=barangay
+        ).count()
+        
+        # Debug output
+        print(f"   Months: {labels}")
+        print(f"   Total submissions: {total_submissions}")
+        print(f"   Weekly: {period_data['weekly']}")
+        print(f"   Monthly: {period_data['monthly']}")
+        print(f"   Quarterly: {period_data['quarterly']}")
+        print(f"   Semestral: {period_data['semestral']}")
+        print(f"   Annually: {period_data['annually']}")
+        
+        # Create response
+        response = JsonResponse({
+            'success': True,
+            'labels': labels,
+            'weekly': period_data['weekly'],
+            'monthly': period_data['monthly'],
+            'quarterly': period_data['quarterly'],
+            'semestral': period_data['semestral'],
+            'annually': period_data['annually']
+        })
+        
+        # Add no-cache headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ RADAR CHART ERROR:")
+        print(error_details)
+        
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def list_officials(request):
+    """Get all officials for the logged-in secretary"""
+    try:
+        officials = BarangayOfficial.objects.filter(secretary=request.user)
+        
+        officials_data = []
+        for official in officials:
+            officials_data.append({
+                'id': official.id,
+                'first_name': official.first_name,
+                'middle_name': official.middle_name or '',
+                'last_name': official.last_name,
+                'suffix': official.suffix or '',
+                'full_name': official.get_full_name(),
+                'display_name': official.get_display_name(),
+                'position': official.position,
+                'position_type': official.position_type,
+                'term_start': official.term_start.strftime('%Y-%m-%d'),
+                'term_end': official.term_end.strftime('%Y-%m-%d'),
+                'years_served': str(official.years_served) if official.years_served else '0',
+                'term_status': official.term_status,
+                'email': official.email or '',
+                'phone': official.phone or '',
+                'notes': official.notes or '',
+                'is_term_active': official.is_term_active,
+                'days_remaining': official.days_remaining,
+                'created_at': official.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'officials': officials_data,
+            'total': len(officials_data)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def create_official(request):
+    """Create a new official"""
+    try:
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        required_fields = ['first_name', 'last_name', 'position', 'term_start', 'term_end']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }, status=400)
+        
+        official = BarangayOfficial.objects.create(
+            secretary=request.user,
+            first_name=data.get('first_name'),
+            middle_name=data.get('middle_name', ''),
+            last_name=data.get('last_name'),
+            suffix=data.get('suffix', ''),
+            position=data.get('position'),
+            position_type=data.get('position_type', 'elective'),
+            term_start=datetime.strptime(data.get('term_start'), '%Y-%m-%d').date(),
+            term_end=datetime.strptime(data.get('term_end'), '%Y-%m-%d').date(),
+            term_status=data.get('term_status', 'ongoing'),
+            email=data.get('email', ''),
+            phone=data.get('phone', ''),
+            notes=data.get('notes', '')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Official created successfully',
+            'official': {
+                'id': official.id,
+                'full_name': official.get_full_name(),
+                'position': official.position
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except ValueError as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid date format: {str(e)}'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_official(request, official_id):
+    """Update an existing official"""
+    try:
+        official = BarangayOfficial.objects.get(id=official_id, secretary=request.user)
+        data = json.loads(request.body)
+        
+        # Update fields
+        official.first_name = data.get('first_name', official.first_name)
+        official.middle_name = data.get('middle_name', official.middle_name)
+        official.last_name = data.get('last_name', official.last_name)
+        official.suffix = data.get('suffix', official.suffix)
+        official.position = data.get('position', official.position)
+        official.position_type = data.get('position_type', official.position_type)
+        
+        # Update dates if provided
+        if data.get('term_start'):
+            official.term_start = datetime.strptime(data.get('term_start'), '%Y-%m-%d').date()
+        if data.get('term_end'):
+            official.term_end = datetime.strptime(data.get('term_end'), '%Y-%m-%d').date()
+        
+        official.term_status = data.get('term_status', official.term_status)
+        official.email = data.get('email', official.email)
+        official.phone = data.get('phone', official.phone)
+        official.notes = data.get('notes', official.notes)
+        
+        official.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Official updated successfully',
+            'official': {
+                'id': official.id,
+                'full_name': official.get_full_name()
+            }
+        })
+    except BarangayOfficial.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Official not found'
+        }, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_official(request, official_id):
+    """Delete an official"""
+    try:
+        official = BarangayOfficial.objects.get(id=official_id, secretary=request.user)
+        official_name = official.get_full_name()
+        official.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Official {official_name} deleted successfully'
+        })
+    except BarangayOfficial.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Official not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_official(request, official_id):
+    """Get a single official's details"""
+    try:
+        official = BarangayOfficial.objects.get(id=official_id, secretary=request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'official': {
+                'id': official.id,
+                'first_name': official.first_name,
+                'middle_name': official.middle_name or '',
+                'last_name': official.last_name,
+                'suffix': official.suffix or '',
+                'full_name': official.get_full_name(),
+                'display_name': official.get_display_name(),
+                'position': official.position,
+                'position_type': official.position_type,
+                'term_start': official.term_start.strftime('%Y-%m-%d'),
+                'term_end': official.term_end.strftime('%Y-%m-%d'),
+                'years_served': str(official.years_served) if official.years_served else '0',
+                'term_status': official.term_status,
+                'email': official.email or '',
+                'phone': official.phone or '',
+                'notes': official.notes or '',
+                'is_term_active': official.is_term_active,
+                'days_remaining': official.days_remaining,
+            }
+        })
+    except BarangayOfficial.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Official not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_create_officials(request):
+    """Bulk create officials from CSV data"""
+    try:
+        data = json.loads(request.body)
+        officials_data = data.get('officials', [])
+        
+        if not officials_data:
+            return JsonResponse({
+                'success': False,
+                'error': 'No officials data provided'
+            }, status=400)
+        
+        created_count = 0
+        errors = []
+        
+        for idx, official_data in enumerate(officials_data):
+            try:
+                # Validate required fields
+                required = ['first_name', 'last_name', 'position', 'term_start', 'term_end']
+                missing = [f for f in required if not official_data.get(f)]
+                if missing:
+                    errors.append(f"Row {idx + 1}: Missing fields: {', '.join(missing)}")
+                    continue
+                
+                BarangayOfficial.objects.create(
+                    secretary=request.user,
+                    first_name=official_data.get('first_name'),
+                    middle_name=official_data.get('middle_name', ''),
+                    last_name=official_data.get('last_name'),
+                    suffix=official_data.get('suffix', ''),
+                    position=official_data.get('position'),
+                    position_type=official_data.get('position_type', 'elective'),
+                    term_start=datetime.strptime(official_data.get('term_start'), '%Y-%m-%d').date(),
+                    term_end=datetime.strptime(official_data.get('term_end'), '%Y-%m-%d').date(),
+                    term_status=official_data.get('term_status', 'ongoing'),
+                    email=official_data.get('email', ''),
+                    phone=official_data.get('phone', ''),
+                    notes=official_data.get('notes', '')
+                )
+                created_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx + 1}: {str(e)}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully created {created_count} official(s)',
+            'created_count': created_count,
+            'total_rows': len(officials_data),
+            'errors': errors
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+# Add this to your views.py
+
+@login_required
+@require_http_methods(["GET"])
+def generate_official_certificate(request, official_id):
+    """Generate eligibility certificate for an official"""
+    try:
+        official = BarangayOfficial.objects.get(id=official_id, secretary=request.user)
+        
+        # Return official data formatted for eligibility form
+        certificate_data = {
+            'success': True,
+            'official': {
+                'id': official.id,
+                'last_name': official.last_name,
+                'first_name': official.first_name,
+                'middle_initial': official.middle_name[:1] if official.middle_name else '',
+                'position': official.position,
+                'position_type': official.position_type,
+                'term_start': official.term_start.strftime('%Y-%m-%d'),
+                'term_end': official.term_end.strftime('%Y-%m-%d'),
+                'years_served': str(official.years_served) if official.years_served else '0.0',
+                'email': official.email or '',
+            }
+        }
+        
+        return JsonResponse(certificate_data)
+        
+    except BarangayOfficial.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Official not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+
+@login_required
+def update_profiles(request):
+    """
+    Update user profile information via modal
+    """
+    if request.method == 'POST':
+        try:
+            user = request.user
+            profile = user.userprofile
+            
+            # Update user fields
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email:
+                user.email = email
+            
+            user.save()
+            
+            # Update profile preferences (checkboxes)
+            profile.email_notifications = 'email_notifications' in request.POST
+            profile.deadline_reminders = 'deadline_reminders' in request.POST
+            profile.announcements = 'announcements' in request.POST
+            profile.compact_view = 'compact_view' in request.POST
+            profile.save()
+            
+            messages.success(request, '✅ Profile updated successfully!')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error updating profile: {str(e)}')
+    
+    # Redirect back to the page they came from
+    return redirect(request.META.get('HTTP_REFERER', 'barangay_dashboard'))
+
+@login_required
+@require_http_methods(["POST"])
+def change_passwords(request):
+    try:
+
+        current_password = request.POST.get('currentPassword', '')
+        new_password = request.POST.get('newPassword', '')
+        confirm_password = request.POST.get('confirmPassword', '')
+        
+        print(f"🔐 Password Change Request")
+        print(f"   User: {request.user.username}")
+        print(f"   Current password provided: {'Yes' if current_password else 'No'}")
+        print(f"   New password length: {len(new_password)}")
+        print(f"   Confirm password length: {len(confirm_password)}")
+
+        if not all([current_password, new_password, confirm_password]):
+            return JsonResponse({
+                'success': False,
+                'message': 'All fields are required'
+            }, status=400)
+        
+        if new_password != confirm_password:
+            return JsonResponse({
+                'success': False,
+                'message': 'New passwords do not match'
+            }, status=400)
+        
+
+        if len(new_password) < 8:
+            return JsonResponse({
+                'success': False,
+                'message': 'Password must be at least 8 characters long'
+            }, status=400)
+        
+
+        user = request.user
+        if not user.check_password(current_password):
+            print(f"   ❌ Current password is incorrect")
+            return JsonResponse({
+                'success': False,
+                'message': 'Current password is incorrect'
+            }, status=400)
+        
+        print(f"    Current password verified")
+        user.set_password(new_password)
+        user.save()      
+        print(f"    New password saved to database")
+        update_session_auth_hash(request, user)
+        
+        print(f"    Session updated - user remains logged in")
+        print(f" Password changed successfully for user: {user.username}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Password changed successfully'
+        })
+        
+    except Exception as e:
+        print(f" Error changing password: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while changing password'
+        }, status=500)
+
+
+@login_required
+def profile_stats(request):
+    """
+    Get profile statistics (AJAX endpoint for modal)
+    """
+    user = request.user
+    profile = user.userprofile
+    
+    stats = {}
+    
+    # Barangay User Stats
+    if profile.role == 'barangay user' and profile.barangay:
+        total_submissions = RequirementSubmission.objects.filter(
+            barangay=profile.barangay
+        ).count()
+        
+        completed_submissions = RequirementSubmission.objects.filter(
+            barangay=profile.barangay,
+            status='accomplished'
+        ).count()
+        
+        pending_submissions = RequirementSubmission.objects.filter(
+            barangay=profile.barangay,
+            status='pending'
+        ).count()
+        
+        eligibility_requests_count = EligibilityRequest.objects.filter(
+            barangay=profile.barangay.name
+        ).count()
+        
+        stats = {
+            'total_submissions': total_submissions,
+            'completed_submissions': completed_submissions,
+            'pending_submissions': pending_submissions,
+            'eligibility_requests': eligibility_requests_count,
+            'login_count': profile.login_count,
+            'approval_status': 'Approved' if profile.is_approved else 'Pending',
+        }
+    
+    # DILG Staff Stats
+    elif profile.role == 'dilg staff':
+        total_barangays_count = Barangay.objects.count()
+        total_requirements_count = RequirementSubmission.objects.count()
+        
+        pending_approvals_count = EligibilityRequest.objects.filter(
+            status='pending'
+        ).count()
+        
+        approved_this_month_count = EligibilityRequest.objects.filter(
+            status='approved',
+            date_processed__month=timezone.now().month
+        ).count()
+        
+        stats = {
+            'total_barangays': total_barangays_count,
+            'total_requirements': total_requirements_count,
+            'pending_approvals': pending_approvals_count,
+            'approved_this_month': approved_this_month_count,
+            'login_count': profile.login_count,
+        }
+    
+    # Default stats for other roles
+    else:
+        stats = {
+            'login_count': profile.login_count,
+            'approval_status': 'Approved' if profile.is_approved else 'Pending',
+            'member_since': user.date_joined.year,
+        }
+    
+    return JsonResponse({'success': True, 'stats': stats})
+
+@login_required
+def terms_conditions(request):
+    """
+    Display the Terms and Conditions page
+    """
+    context = {
+        'user': request.user,
+        'assigned_barangay': getattr(request.user.userprofile, 'barangay', None) if hasattr(request.user, 'userprofile') else None,
+    }
+    return render(request, 'terms_conditions.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def accept_terms(request):
+    """
+    API endpoint to record user acceptance of terms and conditions
+    """
+    try:
+        data = json.loads(request.body)
+        
+        # Get or create user profile
+        user_profile = request.user.userprofile
+        
+        # Update terms acceptance
+        user_profile.terms_accepted = True
+        user_profile.terms_accepted_date = timezone.now()
+        user_profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Terms and Conditions accepted successfully',
+            'accepted_date': user_profile.terms_accepted_date.isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+def check_terms_acceptance(request):
+    """
+    Check if user has accepted terms and conditions
+    """
+    try:
+        user_profile = request.user.userprofile
+        
+        return JsonResponse({
+            'accepted': user_profile.terms_accepted,
+            'date': user_profile.terms_accepted_date.isoformat() if user_profile.terms_accepted_date else None
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'accepted': False,
+            'error': str(e)
+        }, status=400)
+    
+
+# ===== API ENDPOINT 1: GET NOTIFICATIONS =====
+
+@login_required
+@require_http_methods(["GET"])
+def api_notifications(request):
+    """Get all notifications for current user"""
+    try:
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+        unread_count = notifications.filter(is_read=False).count()
+        
+        notification_list = []
+        for notif in notifications[:50]:  # Last 50 notifications
+            notification_list.append({
+                'id': notif.id,
+                'title': notif.title,
+                'message': notif.message,
+                'type': notif.notification_type,
+                'is_read': notif.is_read,
+                'created_at': notif.created_at.isoformat(),
+                'time_ago': notif.time_ago(),
+                'target_url': get_notification_url(notif),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'notifications': notification_list,
+            'unread_count': unread_count,
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+    
+# ===== API ENDPOINT 2: MARK AS READ =====
+@login_required
+@require_http_methods(["POST"])
+def api_notification_mark_read(request, notification_id):
+    """Mark single notification as read"""
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+        
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+        
+        return JsonResponse({
+            'success': True,
+            'unread_count': unread_count,
+        })
+    
+    except Notification.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Notification not found'
+        }, status=404)
+    
+
+    
+# ===== API ENDPOINT 3: MARK ALL AS READ =====
+@login_required
+@require_http_methods(["POST"])
+def api_notifications_mark_all_read(request):
+    """Mark all notifications as read"""
+    try:
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'All notifications marked as read'
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+        
+    
+# ===== HELPER FUNCTION =====
+def get_notification_url(notification):
+    """Get target URL based on notification type"""
+    if notification.submission:
+        return f'/requirements/'  # Or specific submission URL
+    elif notification.announcement:
+        return f'/announcements/'
+    elif notification.barangay:
+        return f'/dashboard/'
+    return '#'

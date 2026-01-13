@@ -1,0 +1,2249 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'CSS/barangay_dashboard.css' %}">
+    <!-- Chart.js v4.4.0 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Date adapter for time scale -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <p class="menu-label">MENU</p>
+                <nav>
+                    <a href="#" class="menu-item active" data-page="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="eligibility">
+                        <i class="fas fa-certificate"></i>
+                        <span>Eligibility</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="requirements">
+                        <i class="fas fa-tasks"></i>
+                        <span>Requirements</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="officials-profile">
+                        <i class="fa-regular fa-address-card"></i>
+                        <span>Barangay Officials Profile</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="terms">
+                        <i class="fas fa-file-contract"></i>
+                        <span>Terms & Conditions</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Profile Section in Sidebar -->
+            <div class="sidebar-profile">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-details">
+                        <p class="profile-name">{{ user.get_full_name|default:user.username }}</p>
+                        {% if assigned_barangay %}
+                        <p class="profile-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ assigned_barangay.name }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <button class="profile-menu-toggle" onclick="toggleSidebarProfileMenu()">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+                
+                <div class="sidebar-profile-dropdown" id="sidebarProfileDropdown">
+                    <a href="#" class="dropdown-item" onclick="openProfileModal(); return false;">
+                        <i class="fas fa-user"></i>Profile
+                    </a>
+                    <div class="sidebar-dropdown-divider"></div>
+                    <a href="#" class="sidebar-dropdown-item" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="page-title-container">
+                    <h1 class="page-title">Dashboard Analytics</h1>
+                    <p class="page-subtitle">
+                        <i class="fas fa-clock"></i>
+                        Last updated: {% now "M d, Y" %}
+                        <button class="refresh-btn" onclick="refreshData()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboard-page" class="page-content active">
+                <!-- Stats Cards Row -->
+                <div class="stats-grid-modern">
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <span class="stat-label">Total Requirements</span>
+                        </div>
+                        <div class="stat-value-container">
+                            <h2 class="stat-value">{{ barangay_stats.total_requirements|default:"0" }}</h2>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+{{ barangay_stats.total_change|default:"0" }}%</span>
+                                <span class="stat-change-period">vs last Month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                        <div class="stat-value-container">
+                            <h2 class="stat-value">{{ barangay_stats.completed|default:"0" }}</h2>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+{{ barangay_stats.completed_change|default:"0" }}%</span>
+                                <span class="stat-change-period">vs last Month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                        <div class="stat-value-container">
+                            <h2 class="stat-value">{{ barangay_stats.pending|default:"0" }}</h2>
+                            <div class="stat-change {% if barangay_stats.pending_change < 0 %}negative{% else %}positive{% endif %}">
+                                <i class="fas fa-arrow-{% if barangay_stats.pending_change < 0 %}down{% else %}up{% endif %}"></i>
+                                <span>{{ barangay_stats.pending_change|default:"0" }}%</span>
+                                <span class="stat-change-period">vs last Month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                        <div class="stat-value-container">
+                            <h2 class="stat-value">{{ barangay_stats.overdue|default:"0" }}</h2>
+                            <div class="stat-change {% if barangay_stats.overdue_change > 0 %}negative{% else %}positive{% endif %}">
+                                <i class="fas fa-arrow-{% if barangay_stats.overdue_change > 0 %}up{% else %}down{% endif %}"></i>
+                                <span>{{ barangay_stats.overdue_change|default:"0" }}%</span>
+                                <span class="stat-change-period">vs last Month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <span class="stat-label">Completion Rate</span>
+                        </div>
+                        <div class="stat-value-container">
+                            <h2 class="stat-value">{{ barangay_stats.completion_rate|default:"0" }}%</h2>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+{{ barangay_stats.completion_rate_change|default:"0" }}%</span>
+                                <span class="stat-change-period">vs last Month</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="content-grid-modern">
+                    <!-- Large Chart Panel - Requirements Over Time -->
+                    <div class="panel-modern panel-chart-large">
+                        <div class="panel-header-modern">
+                            <h3>
+                                <i class="fas fa-chart-area"></i>
+                                Requirements Completion Trend
+                            </h3>
+                            <div class="panel-controls">
+                                <span class="chart-legend">
+                                    <span class="legend-dot completed"></span>
+                                    Completed
+                                </span>
+                                <span class="chart-legend">
+                                    <span class="legend-dot pending"></span>
+                                    Pending
+                                </span>
+                                <select class="time-interval-select" id="timeIntervalSelect">
+                                    <option value="7">Last 7 Days</option>
+                                    <option value="30" selected>Last 30 Days</option>
+                                    <option value="90">Last 90 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="requirementsTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                   <!-- Requirements by Status - POLAR AREA CHART -->
+<div class="panel-modern panel-radar-chart">
+    <div class="panel-header-modern">
+        <h3>
+            <i class="fas fa-certificate"></i>
+            Eligibility Certifications Analytics
+        </h3>
+        <button class="more-options-btn" onclick="updateEligibilityRadarChart()">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="radar-chart-container">
+        <canvas id="eligibilityRadarChart"></canvas>
+    </div>
+    <div class="radar-legend">
+        <div class="radar-legend-item">
+            <span class="legend-dot" style="background-color: rgba(59, 130, 246, 0.8);"></span>
+            <span class="legend-label">Appointive</span>
+            <span class="legend-value" id="appointive-total">0</span>
+        </div>
+        <div class="radar-legend-item">
+            <span class="legend-dot" style="background-color: rgba(16, 185, 129, 0.8);"></span>
+            <span class="legend-label">Elective - Completed</span>
+            <span class="legend-value" id="elective-completed-total">0</span>
+        </div>
+        <div class="radar-legend-item">
+            <span class="legend-dot" style="background-color: rgba(239, 68, 68, 0.8);"></span>
+            <span class="legend-label">Elective - Incomplete</span>
+            <span class="legend-value" id="elective-incomplete-total">0</span>
+        </div>
+    </div>
+</div>
+                    <!-- Pie Chart - Requirements by Type -->
+                    <div class="panel-modern panel-pie-chart">
+                        <div class="panel-header-modern">
+                            <h3>
+                                <i class="fas fa-chart-pie"></i>
+                                Requirements by Type
+                            </h3>
+                            <button class="more-options-btn">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="pie-chart-container">
+                            <canvas id="requirementTypeChart"></canvas>
+                            <div class="pie-center-label">
+                                <div class="pie-total">{{ barangay_stats.total_requirements|default:"0" }}</div>
+                                <div class="pie-label">Total</div>
+                            </div>
+                        </div>
+                        <div class="pie-legend">
+                            {% for req_type in requirement_types %}
+                            <div class="pie-legend-item">
+                                <span class="legend-label">{{ req_type.name }}</span>
+                                <span class="legend-value">{{ req_type.count }}</span>
+                            </div>
+                            {% empty %}
+                            <div class="pie-legend-item">
+                                <span class="legend-label">Document A</span>
+                                <span class="legend-value">45</span>
+                            </div>
+                            <div class="pie-legend-item">
+                                <span class="legend-label">Document B</span>
+                                <span class="legend-value">25</span>
+                            </div>
+                            <div class="pie-legend-item">
+                                <span class="legend-label">Certificate</span>
+                                <span class="legend-value">20</span>
+                            </div>
+                            <div class="pie-legend-item">
+                                <span class="legend-label">Others</span>
+                                <span class="legend-value">10</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eligibility Page -->
+            <div id="eligibility-page" class="page-content">
+                <div class="eligibility-form-container">
+                    <!-- Breadcrumb -->
+                    <nav class="breadcrumb" id="elig-breadcrumb-nav" style="display: none;">
+                        <span id="elig-step1-breadcrumb" class="active">Personal Info</span>
+                        <span class="separator">›</span>
+                        <span id="elig-step2-breadcrumb">Position Details</span>
+                        <span class="separator">›</span>
+                        <span id="elig-step3-breadcrumb">Certifier</span>
+                        <span class="separator">›</span>
+                        <span id="elig-step4-breadcrumb">Valid ID</span>
+                        <span class="separator">›</span>
+                        <span id="elig-step5-breadcrumb">Signature</span>
+                    </nav>
+
+                    <!-- Form Container -->
+                    <div class="elig-form-card">
+                        <div class="elig-logo-title">
+                            <img src="{% static 'Pictures/logo2.png' %}" alt="DILG Logo" class="elig-logo">
+                            <h1>Eligibility Certification</h1>
+                        </div>
+                        
+                        <!-- Introduction Page -->
+                        <div id="elig-intro" class="elig-step active">
+                            <p>This certification verifies your eligibility to hold a position in the government service. Please select the type of position you are applying for.</p>
+                            <h3>Requirements:</h3>
+                            <ul>
+                                <li>Valid Government-issued ID</li>
+                                <li>Complete personal information</li>
+                                <li>Position details</li>
+                                <li>Electronic signature</li>
+                            </ul>
+                            <div style="text-align: center; margin-top: 32px;">
+                                <button type="button" class="elig-next-btn" onclick="showEligSelectionPage()">Get Started →</button>
+                            </div>
+                        </div>
+
+                        <!-- Selection Page -->
+                        <div id="elig-selection" class="elig-step">
+                            <h2 class="elig-section-title">Select Position Type</h2>
+                            <p>Choose whether you are applying for an appointive or elective position</p>
+                            <div class="elig-radio-group">
+                                <div class="elig-radio-option" onclick="selectEligPositionType('appointive')">
+                                    <div>
+                                        <h3>Appointive Position</h3>
+                                        <p>For positions filled through appointment by an authorized official</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="elig-radio-option" onclick="selectEligPositionType('elective')">
+                                    <div>
+                                        <h3>Elective Position</h3>
+                                        <p>For positions filled through electoral process by the people</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="elig-btn-row">
+                                <button type="button" class="elig-btn-back" onclick="showEligIntroPage()">← Back</button>
+                                <div></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Personal Information -->
+                        <div id="elig-step1" class="elig-step">
+                            <h2 class="elig-section-title">Personal Information</h2>
+                            <form id="elig-form-step1">
+                                <label for="elig-last_name">Last Name</label>
+                                <input type="text" id="elig-last_name" name="last_name" required>
+
+                                <label for="elig-first_name">First Name</label>
+                                <input type="text" id="elig-first_name" name="first_name" required>
+
+                                <label for="elig-middle_initial">Middle Initial</label>
+                                <input type="text" id="elig-middle_initial" name="middle_initial">
+
+                                <label for="elig-barangay">Barangay</label>
+                                <select id="elig-barangay" name="barangay" required>
+                                    <option value="" disabled selected>Select barangay...</option>
+                                    <option value="Barangay I">Barangay I</option>
+                                    <option value="Barangay II">Barangay II</option>
+                                    <option value="Barangay III">Barangay III</option>
+                                    <option value="Barangay IV">Barangay IV</option>
+                                    <option value="Barangay V">Barangay V</option>
+                                    <option value="Barangay VI">Barangay VI</option>
+                                    <option value="Barangay VII">Barangay VII</option>
+                                    <option value="Barangay VIII">Barangay VIII</option>
+                                    <option value="Barangay IX">Barangay IX</option>
+                                    <option value="Barangay X">Barangay X</option>
+                                    <option value="Barangay XI">Barangay XI</option>
+                                    <option value="Barra">Barra</option>
+                                    <option value="Bocohan">Bocohan</option>
+                                    <option value="Cotta">Cotta</option>
+                                    <option value="Dalahican">Dalahican</option>
+                                    <option value="Domoit">Domoit</option>
+                                    <option value="Gulang-Gulang">Gulang-Gulang</option>
+                                    <option value="Ibabang Dupay">Ibabang Dupay</option>
+                                    <option value="Ibabang Iyam">Ibabang Iyam</option>
+                                    <option value="Ibabang Talim">Ibabang Talim</option>
+                                    <option value="Ilayang Dupay">Ilayang Dupay</option>
+                                    <option value="Ilayang Iyam">Ilayang Iyam</option>
+                                    <option value="Ilayang Talim">Ilayang Talim</option>
+                                    <option value="Isabang">Isabang</option>
+                                    <option value="Market View">Market View</option>
+                                    <option value="Mayao Castillo">Mayao Castillo</option>
+                                    <option value="Mayao Crossing">Mayao Crossing</option>
+                                    <option value="Mayao Kanluran">Mayao Kanluran</option>
+                                    <option value="Mayao Parada">Mayao Parada</option>
+                                    <option value="Mayao Silangan">Mayao Silangan</option>
+                                    <option value="Ransohan">Ransohan</option>
+                                    <option value="Salinas">Salinas</option>
+                                    <option value="Talao-Talao">Talao-Talao</option>
+                                </select>
+                                <small>Select the barangay where you served/are serving</small>
+
+                                <label for="elig-email">Email Address <span style="color: red;">*</span></label>
+                                <input type="email" id="elig-email" name="email" placeholder="your-email@gmail.com" required>
+                                <small>You will receive status updates at this email address</small>
+
+                                <div class="elig-btn-row">
+                                    <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                    <button type="button" id="elig-step1-next" class="elig-next-btn" onclick="eligNextStep()" disabled>Next →</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Step 2: Position Details -->
+                        <div id="elig-step2" class="elig-step">
+                            <!-- Appointive Fields -->
+                            <div id="elig-appointive-fields" style="display: none;">
+                                <h2 class="elig-section-title">Appointive Position Details</h2>
+                                <form id="elig-form-step2-appointive">
+                                    <label for="elig-appointing_authority">Appointing Authority (Name)</label>
+                                    <input type="text" id="elig-appointing_authority" name="appointing_authority" placeholder="Name of the appointing official" required>
+
+                                    <label for="elig-appointment_from">Date of Appointment: From</label>
+                                    <input type="date" id="elig-appointment_from" name="appointment_from" required>
+
+                                    <label for="elig-appointment_to">Date of Appointment: To</label>
+                                    <input type="date" id="elig-appointment_to" name="appointment_to" required>
+
+                                    <label for="elig-years_in_service">Number of Years in Service</label>
+                                    <input type="text" id="elig-years_in_service" name="years_in_service" placeholder="Auto-calculated from dates" readonly style="background: #f3f4f6;">
+                                    <small>This will be automatically calculated from your appointment dates</small>
+
+                                    <label for="elig-appointing_punong_barangay">Name of Appointing Punong Barangay</label>
+                                    <input type="text" id="elig-appointing_punong_barangay" name="appointing_punong_barangay" placeholder="Full name of Punong Barangay" required>
+
+                                    <label for="elig-pb_date_elected">Date Elected (Punong Barangay)</label>
+                                    <input type="date" id="elig-pb_date_elected" name="pb_date_elected" required>
+
+                                    <label for="elig-pb_years_service">No. of Years in Service (Punong Barangay)</label>
+                                    <input type="text" id="elig-pb_years_service" name="pb_years_service" placeholder="Auto-calculated" readonly style="background: #f3f4f6;">
+                                    <small>Automatically calculated from date elected to present</small>
+
+                                    <div class="elig-btn-row">
+                                        <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                        <button type="button" id="elig-step2-appointive-next" class="elig-next-btn" onclick="eligNextStep()" disabled>Next →</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Elective Fields -->
+                            <div id="elig-elective-fields" style="display: none;">
+                                <h2 class="elig-section-title">Elective Position Details</h2>
+                                <form id="elig-form-step2-elective">
+                                    <label for="elig-position_held">Position Held</label>
+                                    <select id="elig-position_held" name="position_held" required>
+                                        <option value="" disabled selected>Select position...</option>
+                                        <option value="Punong Barangay">Punong Barangay</option>
+                                        <option value="Sanguniang Barangay Member">Sanguniang Barangay Member</option>
+                                        <option value="Brgy Secretary">Brgy Secretary</option>
+                                        <option value="Brgy Treasurer">Brgy Treasurer</option>
+                                    </select>
+                                    
+                                    <label for="elig-election_from">Date of Election: From</label>
+                                    <input type="date" id="elig-election_from" name="election_from" required>
+
+                                    <label for="elig-election_to">Date of Election: To</label>
+                                    <input type="date" id="elig-election_to" name="election_to" required>
+
+                                    <label for="elig-term_office">Term of Office (Inclusive Dates)</label>
+                                    <input type="text" id="elig-term_office" name="term_office" placeholder="Auto-filled from election dates" readonly style="background: #f3f4f6;">
+                                    <small>This will be automatically calculated from your election dates</small>
+
+                                    <label>Completed Term of Office?</label>
+                                    <div class="elig-radio-group" style="margin-bottom: 20px;">
+                                        <div class="elig-radio-option">
+                                            <input type="radio" id="elig-term_yes" name="completed_term" value="yes" required>
+                                            <label for="elig-term_yes" style="display: inline; margin: 0; cursor: pointer;">Yes</label>
+                                        </div>
+                                        <div class="elig-radio-option">
+                                            <input type="radio" id="elig-term_no" name="completed_term" value="no">
+                                            <label for="elig-term_no" style="display: inline; margin: 0; cursor: pointer;">No</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="elig-incomplete-reason" style="display: none;">
+                                        <label for="elig-incomplete_reason_text">Reason for Incomplete Term</label>
+                                        <input type="text" id="elig-incomplete_reason_text" name="incomplete_reason_text" placeholder="Enter reason">
+                                    </div>
+
+                                    <div class="elig-btn-row">
+                                        <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                        <button type="button" id="elig-step2-elective-next" class="elig-next-btn" onclick="eligNextStep()" disabled>Next →</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Certifier Selection -->
+                        <div id="elig-step3" class="elig-step">
+                            <h2 class="elig-section-title">Select Certifying Official</h2>
+                            <p>Choose the official who will certify your eligibility</p>
+                            <form id="elig-form-step3">
+                                <div class="elig-radio-group">
+                                    <div class="elig-radio-option">
+                                        <input type="radio" id="elig-certifier-barangay" name="certifier" value="punong_barangay" required>
+                                        <label for="elig-certifier-barangay" style="display: inline; margin: 0;">Punong Barangay</label>
+                                    </div>
+                                    <div class="elig-radio-option">
+                                        <input type="radio" id="elig-certifier-municipality" name="certifier" value="dilg_municipality">
+                                        <label for="elig-certifier-municipality" style="display: inline; margin: 0;">DILG - Municipality</label>
+                                    </div>
+                                    <div class="elig-radio-option">
+                                        <input type="radio" id="elig-certifier-provincial" name="certifier" value="dilg_provincial">
+                                        <label for="elig-certifier-provincial" style="display: inline; margin: 0;">DILG - Provincial</label>
+                                    </div>
+                                    <div class="elig-radio-option">
+                                        <input type="radio" id="elig-certifier-regional" name="certifier" value="dilg_regional">
+                                        <label for="elig-certifier-regional" style="display: inline; margin: 0;">DILG - Regional</label>
+                                    </div>
+                                </div>
+
+                                <div class="elig-btn-row">
+                                    <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                    <button type="button" id="elig-step3-next" class="elig-next-btn" onclick="eligNextStep()" disabled>Next →</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Step 4: Valid ID Upload -->
+                        <div id="elig-step4" class="elig-step">
+                            <h2 class="elig-section-title">Upload Your Valid ID</h2>
+                            <p>Please upload clear photos of both sides of your government-issued ID</p>
+                            <form id="elig-form-step4">
+                                <label for="elig-idFront">Front Page of ID</label>
+                                <input type="file" id="elig-idFront" name="idFront" accept="image/*" required>
+                                <div id="elig-frontPreview" style="margin-bottom: 20px;"></div>
+
+                                <label for="elig-idBack">Back Page of ID</label>
+                                <input type="file" id="elig-idBack" name="idBack" accept="image/*" required>
+                                <div id="elig-backPreview" style="margin-bottom: 20px;"></div>
+
+                                <div class="elig-btn-row">
+                                    <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                    <button type="button" id="elig-step4-next" class="elig-next-btn" onclick="eligNextStep()" disabled>Next →</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Step 5: Signature -->
+                        <div id="elig-step5" class="elig-step">
+                            <h2 class="elig-section-title">Draw Your Signature</h2>
+                            
+                            <div class="elig-signature-wrapper">
+                                <div class="elig-signature-status" id="elig-signature-status-box">
+                                    <span class="elig-status-dot" id="elig-statusDot"></span>
+                                    <span id="elig-statusText">No signature drawn</span>
+                                </div>
+
+                                <div class="elig-signature-info">
+                                    <div class="info-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="info-text">
+                                        <p>Draw your signature in the box below. You can use your mouse, trackpad, or touch screen.</p>
+                                    </div>
+                                </div>
+
+                                <div class="elig-signature-container">
+                                    <div class="elig-signature-pad">
+                                        <div class="elig-canvas-wrapper" id="elig-canvasWrapper">
+                                            <canvas id="elig-signature-canvas" width="580" height="220"></canvas>
+                                            <div class="elig-canvas-placeholder" id="elig-placeholder">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                                </svg>
+                                                <div>Click or tap to start signing</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="elig-signature-controls">
+                                        <button type="button" onclick="eligClearSignature()">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            <span>Clear</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="elig-btn-row">
+                                <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                <button type="button" id="elig-step5-next" class="elig-next-btn" onclick="eligSubmitForm()" disabled>Submit Application</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 6: Preview -->
+                        <div id="elig-step6" class="elig-step">
+                            <h2 class="elig-section-title">Review Your Application</h2>
+                            <p>Please ensure that each detail is correct before proceeding</p>
+                            <div class="preview-section">
+                                <div class="preview-item">
+                                    <div class="preview-label">Full Name:</div>
+                                    <div class="preview-value" id="elig-preview-name"></div>
+                                </div>
+                                
+                                <div class="preview-item">
+                                    <div class="preview-label">Email:</div>
+                                    <div class="preview-value" id="elig-preview-email"></div>
+                                </div>
+                                
+                                <div class="preview-item">
+                                    <div class="preview-label">Position Type:</div>
+                                    <div class="preview-value" id="elig-preview-position-type"></div>
+                                </div>
+
+                                <div id="elig-preview-appointive" style="display: none;">
+                                    <div class="preview-item">
+                                        <div class="preview-label">Appointing Authority:</div>
+                                        <div class="preview-value" id="elig-preview-appointing-authority"></div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <div class="preview-label">Appointment Period:</div>
+                                        <div class="preview-value" id="elig-preview-appointment-period"></div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <div class="preview-label">Years in Service:</div>
+                                        <div class="preview-value" id="elig-preview-years-service"></div>
+                                    </div>
+                                </div>
+
+                                <div id="elig-preview-elective" style="display: none;">
+                                    <div class="preview-item">
+                                        <div class="preview-label">Position Held:</div>
+                                        <div class="preview-value" id="elig-preview-position-held"></div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <div class="preview-label">Election Period:</div>
+                                        <div class="preview-value" id="elig-preview-election-period"></div>
+                                    </div>
+                                    <div class="preview-item">
+                                        <div class="preview-label">Term Completed:</div>
+                                        <div class="preview-value" id="elig-preview-term-completed"></div>
+                                    </div>
+                                </div>
+
+                                <div class="preview-item">
+                                    <div class="preview-label">Barangay:</div>
+                                    <div class="preview-value" id="elig-preview-barangay"></div>
+                                </div>
+
+                                <div class="preview-item">
+                                    <div class="preview-label">Certifier:</div>
+                                    <div class="preview-value" id="elig-preview-certifier"></div>
+                                </div>
+                                
+                                <div class="preview-item">
+                                    <div class="preview-label">ID Documents:</div>
+                                    <div class="preview-value">Front and Back ID uploaded</div>
+                                </div>
+
+                                <div class="preview-item">
+                                    <div class="preview-label">Signature:</div>
+                                    <div class="preview-value">Signature captured</div>
+                                </div>
+                            </div>
+
+                            <div class="elig-btn-row">
+                                <button type="button" class="elig-btn-back" onclick="eligPrevStep()">← Back</button>
+                                <button type="button" class="elig-next-btn" onclick="eligFinalSubmit()">Submit Application</button>
+                            </div>
+                        </div>
+
+                        <!-- Success Message -->
+                        <div id="elig-success" class="elig-step">
+                            <div class="elig-success-message">
+                                <div class="elig-success-icon">✓</div>
+                                <h2>Application Submitted Successfully!</h2>
+                                <p>Your eligibility certification request has been received and is currently under review.</p>
+                                
+                                <div style="margin: 30px 0; padding: 20px; background: #dbeafe; border-left: 4px solid #2563eb; border-radius: 8px;">
+                                    <div style="display: flex; align-items: start; gap: 12px;">
+                                        <i class="fas fa-info-circle" style="color: #2563eb; font-size: 24px; margin-top: 2px;"></i>
+                                        <div style="text-align: left;">
+                                            <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 16px;">Next Steps</h3>
+                                            <p style="margin: 0; color: #1e3a8a; line-height: 1.6;">
+                                                You will receive an email confirmation shortly. Once your certificate is processed and approved, 
+                                                please visit the <strong>DILG Lucena Office</strong> to pick up your official signed certificate.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" id="elig-view-certificate-btn" onclick="eligShowCertificate()" class="elig-next-btn" style="margin-bottom: 16px;">
+                                    <i class="fas fa-eye"></i> Preview Certificate
+                                </button>
+                                <button type="button" onclick="eligRestartProcess()" class="elig-next-btn">Start New Application</button>
+                            </div>
+                        </div>
+
+                        <!-- Certificate (Appointive) -->
+                        <div id="elig-certificate-appointive" class="elig-step">
+                            <div class="certificate-preview">
+                                <div class="certificate-content-full" style="background: white; padding: 40px; border: 3px solid #1e40af;">
+                                    <!-- Header -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                        <div style="width: 80px;">
+                                            <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" style="width: 60px;">
+                                        </div>
+                                        <div style="flex: 1; text-align: center;">
+                                            <p style="font-size: 13px; margin: 4px 0;">Republic of the Philippines</p>
+                                            <h3 style="font-size: 16px; font-weight: 700; color: #1e40af; margin: 8px 0;">DEPARTMENT OF THE INTERIOR AND<br>LOCAL GOVERNMENT</h3>
+                                            <p style="font-size: 13px; margin: 4px 0;">REGION IV-A CALABARZON</p>
+                                            <p style="font-size: 13px; margin: 4px 0;">CITY OF LUCENA</p>
+                                        </div>
+                                        <div style="width: 80px; text-align: right;">
+                                            <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" style="width: 60px;">
+                                        </div>
+                                    </div>
+
+                                    <div style="text-align: right; margin-bottom: 20px;">
+                                        <p style="font-size: 11px; font-style: italic;">CSC-ERPO BOE Form 1(b). April 2012</p>
+                                    </div>
+
+                                    <hr style="border: 1px solid #000; margin: 20px 0;">
+                                    
+                                    <div style="margin: 30px 0; text-align: center;">
+                                        <h2 style="font-size: 32px; font-weight: 700; color: #1e40af; margin-bottom: 12px; letter-spacing: 2px;">CERTIFICATION</h2>
+                                        <p style="font-size: 16px; margin: 8px 0;">on Services Rendered in the Barangay*</p>
+                                        <p style="font-size: 14px; font-style: italic; margin: 4px 0;">(Appointive Official)</p>
+                                    </div>
+
+                                    <hr style="border: 1px solid #000; margin: 20px 0;">
+                                    
+                                    <div style="margin: 30px 0; text-align: justify;">
+                                        <p style="font-size: 14px; line-height: 1.8;">This is to certify that <strong style="text-transform: uppercase;" id="cert-app-full-name"></strong> has rendered services in Barangay <strong id="cert-app-barangay"></strong>, with the following details:</p>
+                                    </div>
+                                    
+                                    <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 2px solid #1e40af;">
+                                        <thead>
+                                            <tr style="background: #1e40af; color: white;">
+                                                <th rowspan="2" style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Position Held</th>
+                                                <th rowspan="2" style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Date of Appointment</th>
+                                                <th colspan="2" style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Inclusive Dates of Years Served</th>
+                                                <th rowspan="2" style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">No. of Years Served</th>
+                                                <th colspan="3" style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Appointing Punong Barangay</th>
+                                            </tr>
+                                            <tr style="background: #1e40af; color: white;">
+                                                <th style="padding: 8px; text-align: center; font-size: 10px; border: 1px solid #1e40af;">From</th>
+                                                <th style="padding: 8px; text-align: center; font-size: 10px; border: 1px solid #1e40af;">To</th>
+                                                <th style="padding: 8px; text-align: center; font-size: 10px; border: 1px solid #1e40af;">Name</th>
+                                                <th style="padding: 8px; text-align: center; font-size: 10px; border: 1px solid #1e40af;">Date Elected</th>
+                                                <th style="padding: 8px; text-align: center; font-size: 10px; border: 1px solid #1e40af;">Term of Office (Years)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="background: white;">
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;">Barangay Secretary</td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-appointment-date"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-date-from"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-date-to"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-years-served"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-pb-name"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-pb-date"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-app-pb-years"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    
+                                    <div style="margin: 30px 0; text-align: justify;">
+                                        <p style="font-size: 13px; line-height: 1.8;">This Certification is issued in support of the evaluation/processing of the application of <strong style="text-transform: uppercase;" id="cert-app-full-name-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160, in accordance with CSC Resolution No. 13 series of 2012.</p>
+                                    </div>
+
+                                    <div style="margin-top: 40px;">
+                                        <p style="font-size: 14px;">Lucena City, Quezon, <span id="cert-app-date"></span>.</p>
+                                    </div>
+
+                                    <div style="margin-top: 80px; text-align: right;">
+                                        <div style="border-bottom: 2px solid #000; width: 300px; margin-left: auto; margin-bottom: 8px;"></div>
+                                        <p style="font-size: 14px; font-weight: 700; margin: 4px 0;">LEANDRO SIPOY GIGANTOCA, CESE</p>
+                                        <p style="font-size: 13px; margin: 4px 0;">OIC-HUC Director, Lucena City</p>
+                                    </div>
+
+                                    <div style="margin-top: 30px; padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                                        <p style="font-size: 12px; margin: 0; color: #92400e;">
+                                            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                                            <strong>Note:</strong> This is a preview only. The official certificate with signature will be available for pickup at the DILG Lucena Office.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="certificate-actions" style="margin-top: 30px; text-align: center;">
+                                    <button type="button" onclick="eligBackToSuccess()" class="elig-btn-back">
+                                        ← Back to Success
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Certificate (Elective) -->
+                        <div id="elig-certificate-elective" class="elig-step">
+                            <div class="certificate-preview">
+                                <div class="certificate-content-full" style="background: white; padding: 40px; border: 3px solid #1e40af;">
+                                    <!-- Header -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                        <div style="width: 80px;">
+                                            <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" style="width: 60px;">
+                                        </div>
+                                        <div style="flex: 1; text-align: center;">
+                                            <p style="font-size: 13px; margin: 4px 0;">Republic of the Philippines</p>
+                                            <h3 style="font-size: 16px; font-weight: 700; color: #1e40af; margin: 8px 0;">DEPARTMENT OF THE INTERIOR AND<br>LOCAL GOVERNMENT</h3>
+                                            <p style="font-size: 13px; margin: 4px 0;">REGION IV-A CALABARZON</p>
+                                            <p style="font-size: 13px; margin: 4px 0;">CITY OF LUCENA</p>
+                                        </div>
+                                        <div style="width: 80px; text-align: right;">
+                                            <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" style="width: 60px;">
+                                        </div>
+                                    </div>
+
+                                    <div style="text-align: right; margin-bottom: 20px;">
+                                        <p style="font-size: 11px; font-style: italic;">CSC-ERPO BOE Form 1(a) (Revised, June 2017)</p>
+                                    </div>
+
+                                    <hr style="border: 1px solid #000; margin: 20px 0;">
+                                    
+                                    <div style="margin: 30px 0; text-align: center;">
+                                        <h2 style="font-size: 32px; font-weight: 700; color: #1e40af; margin-bottom: 12px; letter-spacing: 2px;">CERTIFICATION</h2>
+                                        <p style="font-size: 16px; margin: 8px 0;">on Services Rendered in the Barangay*</p>
+                                        <p style="font-size: 14px; font-style: italic; margin: 4px 0;">(Elective Official)</p>
+                                    </div>
+
+                                    <hr style="border: 1px solid #000; margin: 20px 0;">
+                                    
+                                    <div style="margin: 30px 0; text-align: justify;">
+                                        <p style="font-size: 14px; line-height: 1.8;">This is to certify that <strong style="text-transform: uppercase;" id="cert-elec-name-full"></strong> has rendered services in Barangay <strong id="cert-elec-brgy-name"></strong>, with the following details:</p>
+                                    </div>
+                                    
+                                    <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 2px solid #1e40af;">
+                                        <thead>
+                                            <tr style="background: #1e40af; color: white;">
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Position Held</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Date of Election<br>(mm/dd/yyyy)</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">Term of Office<br>(no. of years)</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">From<br>(mm/dd/yyyy)</th>
+                                                <th style="padding: 12px; text-align: center; font-size: 11px; border: 1px solid #1e40af;">To<br>(mm/dd/yyyy)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="background: white;">
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-elec-pos"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-elec-election-date"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-elec-term-years"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-elec-from"></td>
+                                                <td style="padding: 12px; text-align: center; border: 1px solid #1e40af;" id="cert-elec-to"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div style="margin: 30px 0;">
+                                        <p style="font-size: 14px; font-weight: 600; margin-bottom: 15px;">Completed Term of Office? <span style="font-weight: 400; font-style: italic;">(Please check (√) appropriate box)</span></p>
+                                        <div style="display: flex; gap: 40px; margin-left: 20px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <span style="display: inline-block; width: 20px; height: 20px; border: 2px solid #000;" id="cert-elec-check-yes"></span>
+                                                <span style="font-size: 14px;">YES</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <span style="display: inline-block; width: 20px; height: 20px; border: 2px solid #000;" id="cert-elec-check-no"></span>
+                                                <span style="font-size: 14px;">NO, Specify total number of days not served</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin: 20px 0 30px 20px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="display: inline-block; width: 20px; height: 20px; border: 2px solid #000;" id="cert-elec-check-succession"></span>
+                                            <span style="font-size: 14px;">Assumed under rule on succession.</span>
+                                        </div>
+                                    </div>
+
+                                    <div id="cert-elec-reason-box" style="display: none; margin: 20px 0; padding: 15px; background: #f3f4f6; border-left: 4px solid #1e40af;">
+                                        <p style="font-size: 13px; margin-bottom: 8px;"><strong>Reason for Incomplete Term:</strong></p>
+                                        <p id="cert-elec-reason-detail" style="font-size: 13px; color: #4b5563;"></p>
+                                    </div>
+                                    
+                                    <div style="margin: 30px 0; text-align: justify;">
+                                        <p style="font-size: 13px; line-height: 1.8;">This Certification is issued in support of the evaluation/processing of the application of <strong style="text-transform: uppercase;" id="cert-elec-name-full-2"></strong> for the grant of Barangay Official Eligibility pursuant to Republic Act No. 7160, in accordance with CSC Resolution No. 1200865 dated June 14, 2012 and CSC Resolution No. 1601257 dated November 21, 2016.</p>
+                                    </div>
+
+                                    <div style="margin-top: 40px;">
+                                        <p style="font-size: 14px;">Lucena City, Quezon, <span id="cert-elec-current-date"></span>.</p>
+                                    </div>
+
+                                    <div style="margin-top: 80px; text-align: right;">
+                                        <div style="border-bottom: 2px solid #000; width: 300px; margin-left: auto; margin-bottom: 8px;"></div>
+                                        <p style="font-size: 14px; font-weight: 700; margin: 4px 0;">LEANDRO SIPOY GIGANTOCA, CESE</p>
+                                        <p style="font-size: 13px; margin: 4px 0;">OIC-HUC Director, Lucena City</p>
+                                    </div>
+
+                                    <div style="margin-top: 30px; padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                                        <p style="font-size: 12px; margin: 0; color: #92400e;">
+                                            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                                            <strong>Note:</strong> This is a preview only. The official certificate with signature will be available for pickup at the DILG Lucena Office.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="certificate-actions" style="margin-top: 30px; text-align: center;">
+                                    <button type="button" onclick="eligBackToSuccess()" class="elig-btn-back">
+                                        ← Back to Success
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="requirements-page" class="page-content">
+            <!-- Welcome Screen -->
+            <div id="requirements-welcome" class="welcome-screen">
+                <div class="welcome-content">
+                    <i class="fas fa-tasks welcome-icon"></i>
+                    <h1>Requirements Monitoring</h1>
+                    <p>Track and submit your barangay requirements</p>
+                    <p class="welcome-barangay">
+                        {% if assigned_barangay %}
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ assigned_barangay.name }}
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No barangay assigned
+                        {% endif %}
+                    </p>
+                    {% if assigned_barangay %}
+                    <button class="btn btn-primary" id="getStartedBtn">
+                        <i class="fas fa-arrow-right"></i>
+                        Get Started
+                    </button>
+                    {% else %}
+                    <p class="text-danger">Please contact DILG Admin to assign a barangay to your account.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Main Monitoring Interface -->
+            <div id="requirements-monitoring" class="monitoring-interface" style="display: none;">
+                <div class="monitoring-header">
+                    <div class="header-left">
+                        <button class="btn-back" id="backToWelcome">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div class="header-info">
+                            <h1>Requirements Monitoring</h1>
+                            <p class="barangay-name">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ assigned_barangay.name|default:"No Barangay" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-icon" id="refreshBtn" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-period="weekly">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>Weekly</span>
+                    </button>
+                    <button class="filter-tab" data-period="monthly">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Monthly</span>
+                    </button>
+                    <button class="filter-tab" data-period="quarterly">
+                        <i class="fas fa-calendar"></i>
+                        <span>Quarterly</span>
+                    </button>
+                    <button class="filter-tab" data-period="semestral">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Semestral</span>
+                    </button>
+                    <button class="filter-tab" data-period="annually">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Annually</span>
+                    </button>
+                </div>
+
+                <!-- Week Selector (for weekly view) -->
+                <div class="week-selector" id="weekSelector">
+                    <button class="btn-week" id="prevWeek">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="current-week">Week <span id="currentWeekNum">1</span></span>
+                    <button class="btn-week" id="nextWeek">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search requirements...">
+                    </div>
+                </div>
+
+                <!-- Requirements List -->
+                <div class="requirements-list" id="requirementsList">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading requirements...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View -->
+            <div id="requirements-detail" class="detail-view" style="display: none;">
+                <div class="detail-header">
+                    <button class="btn-back" id="backToList">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to List
+                    </button>
+                    <h2 id="detailTitle">Requirement Details</h2>
+                </div>
+
+                <div class="detail-content">
+                    <div class="detail-info">
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span id="detailStatus" class="status-badge">Pending</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Due Date:</span>
+                            <span id="detailDueDate">--</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Description:</span>
+                            <p id="detailDescription">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Update Section -->
+                    <div class="update-section">
+                        <h3>Progress Update</h3>
+                        <textarea id="updateText" placeholder="Enter your progress update..." rows="4"></textarea>
+                        <button class="btn btn-primary" id="saveUpdateBtn">
+                            <i class="fas fa-save"></i>
+                            Save Update
+                        </button>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div class="upload-section">
+                        <h3>Attachments</h3>
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag and drop files here or click to browse</p>
+                            <input type="file" id="fileInput" multiple hidden>
+                            <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-paperclip"></i>
+                                Choose Files
+                            </button>
+                        </div>
+                        <div class="file-list" id="fileList"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit to Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+<div id="officials-profile-page" class="page-content">
+    <!-- Page Title is handled by JavaScript in top-bar -->
+    
+    <div class="officials-profile-container">
+        <!-- Action Bar -->
+        <div class="officials-action-bar">
+            <div class="search-filter-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="officialsSearchInput" placeholder="Search officials by name or position...">
+                </div>
+                <select id="positionFilter" class="filter-dropdown">
+                    <option value="">All Positions</option>
+                    <option value="Punong Barangay">Punong Barangay</option>
+                    <option value="Barangay Kagawad">Barangay Kagawad</option>
+                    <option value="Barangay Secretary">Barangay Secretary</option>
+                    <option value="Barangay Treasurer">Barangay Treasurer</option>
+                    <option value="SK Chairperson">SK Chairperson</option>
+                </select>
+            </div>
+            <div class="action-buttons-group">
+                <button class="btn btn-primary" onclick="openAddOfficialModal()">
+                    <i class="fas fa-plus"></i> Add Official
+                </button>
+                <button class="btn btn-secondary" onclick="openBulkUploadModal()">
+                    <i class="fas fa-upload"></i> Bulk Upload
+                </button>
+            </div>
+        </div>
+
+        <!-- Officials Grid -->
+        <div class="officials-grid" id="officialsGrid">
+            <!-- Officials cards will be dynamically loaded here -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading officials...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state-officials" id="emptyStateOfficials" style="display: none;">
+            <i class="fas fa-user-friends" style="font-size: 64px; color: #d1d5db; margin-bottom: 20px;"></i>
+            <h3>No Officials Found</h3>
+            <p>You haven't added any barangay officials yet.</p>
+            <p class="text-small">Click "Add Official" to get started or use "Bulk Upload" to import multiple officials at once.</p>
+            <button class="btn btn-primary" onclick="openAddOfficialModal()" style="margin-top: 20px;">
+                <i class="fas fa-plus"></i> Add Your First Official
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ADD/EDIT OFFICIAL MODAL ===== -->
+<div id="officialModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add Barangay Official</h3>
+            <button class="modal-close-btn" onclick="closeOfficialModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="officialForm" class="modal-form">
+            <input type="hidden" id="officialId" name="official_id">
+            
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="fas fa-user"></i> Personal Information</h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name <span class="required">*</span></label>
+                        <input type="text" id="firstName" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="middleName">Middle Name</label>
+                        <input type="text" id="middleName" name="middle_name">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lastName">Last Name <span class="required">*</span></label>
+                        <input type="text" id="lastName" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="suffix">Suffix</label>
+                        <input type="text" id="suffix" name="suffix" placeholder="e.g., Jr., Sr., III">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position Information Section -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="fas fa-briefcase"></i> Position Information</h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="position">Position <span class="required">*</span></label>
+                        <select id="position" name="position" required>
+                            <option value="">Select Position</option>
+                            <option value="Punong Barangay">Punong Barangay</option>
+                            <option value="Barangay Kagawad">Barangay Kagawad</option>
+                            <option value="Barangay Secretary">Barangay Secretary</option>
+                            <option value="Barangay Treasurer">Barangay Treasurer</option>
+                            <option value="SK Chairperson">SK Chairperson</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="positionType">Position Type <span class="required">*</span></label>
+                        <select id="positionType" name="position_type" required>
+                            <option value="">Select Type</option>
+                            <option value="elective">Elective</option>
+                            <option value="appointive">Appointive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Term Information Section -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="fas fa-calendar"></i> Term Information</h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="termStart">Term Start Date <span class="required">*</span></label>
+                        <input type="date" id="termStart" name="term_start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="termEnd">Term End Date <span class="required">*</span></label>
+                        <input type="date" id="termEnd" name="term_end" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Term Status</label>
+                    <div class="radio-group-inline">
+                        <label class="radio-label">
+                            <input type="radio" name="term_status" value="ongoing" checked>
+                            <span>Ongoing</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="term_status" value="completed">
+                            <span>Completed</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="fas fa-envelope"></i> Contact Information</h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Notes Section -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="fas fa-sticky-note"></i> Additional Notes</h4>
+                
+                <div class="form-group">
+                    <label for="notes">Notes (Optional)</label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="Any additional information..."></textarea>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeOfficialModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Official
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== BULK UPLOAD MODAL ===== -->
+<div id="bulkUploadModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Bulk Upload Officials</h3>
+            <button class="modal-close-btn" onclick="closeBulkUploadModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="upload-instructions">
+                <h4><i class="fas fa-info-circle"></i> Instructions</h4>
+                <ol>
+                    <li>Download the CSV template file</li>
+                    <li>Fill in your officials' information</li>
+                    <li>Upload the completed CSV file</li>
+                </ol>
+                <button class="btn btn-secondary" onclick="downloadTemplate()">
+                    <i class="fas fa-download"></i> Download CSV Template
+                </button>
+            </div>
+
+            <div class="upload-area-bulk" id="bulkUploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag and drop your CSV file here</p>
+                <p class="text-small">or click to browse</p>
+                <input type="file" id="bulkFileInput" accept=".csv" hidden onchange="handleBulkFileSelect(event)">
+                <button class="btn btn-primary" onclick="document.getElementById('bulkFileInput').click()">
+                    Choose File
+                </button>
+            </div>
+
+            <div id="uploadPreview" style="display: none; margin-top: 20px;">
+                <h4>Preview</h4>
+                <div id="previewContent" class="preview-table-container"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeBulkUploadModal()">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="confirmUploadBtn" onclick="confirmBulkUpload()" disabled>
+                <i class="fas fa-upload"></i> Upload Officials
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VIEW OFFICIAL DETAILS MODAL ===== -->
+<div id="viewOfficialModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Official Details</h3>
+            <button class="modal-close-btn" onclick="closeViewOfficialModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body" id="viewOfficialContent">
+            <!-- Official details will be dynamically loaded here -->
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeViewOfficialModal()">
+                Close
+            </button>
+            <button type="button" class="btn btn-primary" onclick="generateCertificateForOfficial()">
+                <i class="fas fa-certificate"></i> Generate Certificate
+            </button>
+        </div>
+    </div>
+</div>
+
+
+    
+    <!-- ===== TERMS & CONDITIONS PAGE ===== -->
+    
+    <div id="terms-page" class="page-content">
+         <h1 class="page-title">Terms and Conditions</h1>
+        <div class="terms-conditions-container">
+            
+            <div class="terms-header-banner">
+                <div class="terms-logo-section">
+                    <img src="{% static 'Pictures/logo1.png' %}" alt="DILG Logo" class="logo">
+                </div>
+                <div class="terms-header-text">
+                    <h1>TERMS AND CONDITIONS</h1>
+                    <p class="terms-subtitle">SMARTFILEX - Web-Based Application for Online Issuance of Eligibility Certification for Barangay Officials and Record Management</p>
+                    <p class="terms-subtitle">Department of the Interior and Local Government</p>
+                    <p class="terms-subtitle">Lucena City, Philippines</p>
+                    <p class="terms-update-date">Last Updated: January 9, 2026</p>
+                </div>
+            </div>
+
+            <div class="terms-content-wrapper">
+                <!-- Table of Contents -->
+                
+                <!-- Section 1: Introduction -->
+                <div class="terms-section" id="terms-section1">
+                    <h2><span class="terms-section-number">1</span> INTRODUCTION AND ACCEPTANCE OF TERMS</h2>
+                    <p>Welcome to SMARTFILEX, a web-based application system developed for the Department of the Interior and Local Government (DILG) Lucena City Office. By accessing or using this system, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+                    
+                    <h3>1.1 Purpose of the System</h3>
+                    <p>SMARTFILEX is designed to modernize and simplify the process of issuing eligibility certifications for Barangay Officials, enhance record management capabilities, and improve operational efficiency within the DILG Lucena City Office through digital transformation.</p>
+                    
+                    <h3>1.2 Acceptance and Agreement</h3>
+                    <p>By creating an account, logging in, uploading documents, or otherwise using any feature of SMARTFILEX, you represent and warrant that:</p>
+                    <ul>
+                        <li>You are at least 18 years of age and possess the legal capacity to enter into these Terms.</li>
+                        <li>You are authorized to use this system on behalf of your Barangay or government office.</li>
+                        <li>All information you provide is accurate, current, and complete.</li>
+                    </ul>
+                    
+                    <h3>1.3 Scope of Service</h3>
+                    <div class="terms-warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Important Notice</h4>
+                        <p>This system is exclusively designed for government officials and employees associated with DILG Lucena City Office and authorized Barangay personnel in Lucena City. Unauthorized access or use is strictly prohibited.</p>
+                    </div>
+                </div>
+
+                <!-- Section 2: Changes to Terms -->
+                <div class="terms-section" id="terms-section2">
+                    <h2><span class="terms-section-number">2</span> CHANGES TO TERMS</h2>
+                    <p>DILG Lucena City Office reserves the right to modify, update, or revise these Terms and Conditions at any time to reflect changes in system functionality, legal requirements, or operational needs. All changes will become effective immediately upon posting within the system. Your continued use of SMARTFILEX after any modifications constitutes your acceptance of the revised Terms. Users will be notified of significant changes through system notifications or email announcements.</p>
+                </div>
+
+                <!-- Section 3: User Accounts -->
+                <div class="terms-section" id="terms-section3">
+                    <h2><span class="terms-section-number">3</span> USER ACCOUNTS AND ACCESS</h2>
+                    
+                    <h3>3.1 Account Registration</h3>
+                    <p>SMARTFILEX provides two distinct user types, each with specific access privileges:</p>
+                    <ul>
+                        <li><strong>DILG Administrator (Super Admin):</strong> Full system control, user management, approval of certification requests, and oversight capabilities.</li>
+                        <li><strong>Barangay User:</strong> Manages barangay activities, submits reports and certification requests for Barangay Officials, monitors barangay-level tasks, and benefits from the simplified certification process.</li>
+                    </ul>
+                    
+                    <h3>3.2 Account Security and Credentials</h3>
+                    <div class="terms-highlight-box">
+                        <h4><i class="fas fa-shield-alt"></i> Security Requirements</h4>
+                        <p>DILG Lucena City Office will provide login credentials to authorized users. Users are responsible for maintaining the confidentiality and security of their assigned credentials. You agree to:</p>
+                    </div>
+                    <ul>
+                        <li>Use only the password provided by DILG Lucena City Office and not change it.</li>
+                        <li>Keep your assigned credentials confidential and secure.</li>
+                        <li>Not share your account credentials with any unauthorized person.</li>
+                        <li>Immediately notify DILG Lucena City Office of any unauthorized access or security breach.</li>
+                        <li>Accept full responsibility for all activities conducted under your account.</li>
+                    </ul>
+                    
+                    <h3>3.3 Account Termination and Suspension</h3>
+                    <p>DILG Lucena City Office reserves the right to suspend or terminate user accounts at any time for violations of these Terms, suspicious activity, prolonged inactivity, or at the discretion of system administrators. Users may request account deactivation by contacting the DILG Administrator.</p>
+                </div>
+
+                <!-- Section 4: Permitted Use -->
+                <div class="terms-section" id="terms-section4">
+                    <h2><span class="terms-section-number">4</span> PERMITTED USE AND USER RESPONSIBILITIES</h2>
+                    
+                    <h3>4.1 Lawful Use Only</h3>
+                    <p>SMARTFILEX must be used exclusively for its intended governmental purposes. You agree to:</p>
+                    <ul>
+                        <li>Use the system only for official government business related to eligibility certification and record management.</li>
+                        <li>Comply with all applicable Philippine laws, regulations, and government policies.</li>
+                        <li>Not use the system for any personal, commercial, or unauthorized purposes.</li>
+                    </ul>
+                    
+                    <h3>4.2 Prohibited Activities</h3>
+                    <div class="terms-warning-box">
+                        <h4><i class="fas fa-ban"></i> Strictly Prohibited</h4>
+                        <p>The following activities are strictly prohibited:</p>
+                    </div>
+                    <ul>
+                        <li>Uploading false, misleading, fraudulent, or inaccurate information.</li>
+                        <li>Attempting to gain unauthorized access to system areas, accounts, or data.</li>
+                        <li>Introducing viruses, malware, or any malicious code that could harm the system.</li>
+                        <li>Reverse engineering, decompiling, or attempting to extract source code from the system.</li>
+                        <li>Interfering with system operations, servers, or network infrastructure.</li>
+                        <li>Using automated tools, bots, or scripts to access or manipulate system functions.</li>
+                        <li>Sharing, distributing, or disclosing confidential system information without authorization.</li>
+                    </ul>
+                    
+                    <h3>4.3 Data Accuracy and Document Upload Responsibilities</h3>
+                    <p>Users who upload documents, personal information, or digital signatures to SMARTFILEX are responsible for:</p>
+                    <ul>
+                        <li>Ensuring all submitted information is accurate, complete, and up-to-date.</li>
+                        <li>Verifying the authenticity and validity of all uploaded documents.</li>
+                        <li>Submitting only documents that are relevant to the certification or record management process.</li>
+                        <li>Understanding that submission of false documents may result in legal consequences under Philippine law.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 5: Data Privacy -->
+                <div class="terms-section" id="terms-section5">
+                    <h2><span class="terms-section-number">5</span> DATA PRIVACY AND PROTECTION</h2>
+                    
+                    <h3>5.1 Compliance with Data Privacy Act of 2012</h3>
+                    <div class="terms-info-box">
+                        <h4><i class="fas fa-lock"></i> Privacy Commitment</h4>
+                        <p>DILG Lucena City Office is committed to protecting your personal data in accordance with Republic Act No. 10173, also known as the Data Privacy Act of 2012, and all relevant implementing rules and regulations issued by the National Privacy Commission (NPC).</p>
+                    </div>
+                    
+                    <h3>5.2 Collection and Use of Personal Information</h3>
+                    <p>SMARTFILEX collects and processes the following categories of personal information:</p>
+                    <ul>
+                        <li><strong>Identification Information:</strong> Full name, date of birth, government-issued ID numbers, contact details, and official position.</li>
+                        <li><strong>Professional Information:</strong> Employment history, eligibility status, certification records, and barangay assignments.</li>
+                        <li><strong>Digital Signatures and Uploaded Documents:</strong> Scanned copies of official documents, electronic signatures, and supporting files.</li>
+                        <li><strong>System Usage Data:</strong> Login timestamps, IP addresses, activity logs, and system interaction records.</li>
+                    </ul>
+                    <p>This information is collected solely for the purposes of processing eligibility certifications, maintaining accurate government records, monitoring compliance with civil service requirements, and improving system functionality.</p>
+                    
+                    <h3>5.3 Data Storage and Security</h3>
+                    <p>DILG Lucena City Office implements appropriate technical and organizational security measures to protect personal data against unauthorized access, loss, destruction, or alteration. These measures include:</p>
+                    <ul>
+                        <li>Encrypted data transmission and storage protocols.</li>
+                        <li>Role-based access controls limiting data visibility to authorized personnel only.</li>
+                        <li>Regular security audits and vulnerability assessments.</li>
+                        <li>Secure backup and disaster recovery procedures.</li>
+                    </ul>
+                </div>
+
+                <!-- Continue with remaining sections... -->
+                <div class="terms-section" id="terms-section13">
+                    <h2><span class="terms-section-number">13</span> CONTACT INFORMATION</h2>
+                    <div class="terms-contact-section">
+                        <h3><i class="fas fa-envelope"></i> Get in Touch</h3>
+                        <p>If you have any questions, concerns, or requests regarding these Terms and Conditions or the operation of SMARTFILEX, please contact us:</p>
+                        <div class="terms-contact-info">
+                            <div class="terms-contact-item">
+                                <i class="fas fa-building"></i>
+                                <div>
+                                    <strong>Department of the Interior and Local Government</strong><br>
+                                    DILG Lucena City Office<br>
+                                    3rd Floor, Lucena City Government Complex<br>
+                                    Barangay Mayao Kanluran, Lucena City<br>
+                                    Quezon Province, Philippines
+                                </div>
+                            </div>
+                            <div class="terms-contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <div><strong>Email:</strong> dilg4a.lucenacity@gmail.com</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Section -->
+                <div class="terms-section" id="terms-section14">
+                    <h2><span class="terms-section-number">14</span> ACKNOWLEDGMENT AND ACCEPTANCE</h2>
+                    <div class="terms-highlight-box">
+                        <h4><i class="fas fa-check-circle"></i> Final Agreement</h4>
+                        <p>By accessing, registering for, or using SMARTFILEX, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions in their entirety. If you do not agree with any part of these Terms, you must immediately discontinue use of the system and refrain from accessing it in the future.</p>
+                    </div>
+                    <p><em>These Terms and Conditions are effective as of January 9, 2026, and will remain in effect until modified or replaced by DILG Lucena City Office.</em></p>
+                </div>
+
+                <div class="terms-last-updated">
+                    <p><strong>Last Updated:</strong> January 9, 2026</p>
+                    <p style="margin-top: 8px;">--- End of Terms and Conditions ---</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    </main>
+        
+    
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal-overlay alert-overlay">
+        <div class="modal-content alert-modal">
+            <div class="modal-header">
+                <div class="modal-icon" id="alertIcon"></div>
+                <h3 class="modal-title" id="alertTitle"></h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-message" id="alertMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn modal-btn-primary" onclick="closeAlertModal()">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script> 
+        window.barangayData = {
+            id: {{ assigned_barangay.id|default:'null' }},
+            name: '{{ assigned_barangay.name|default:"" }}',
+            hasBarangay: {% if assigned_barangay %}true{% else %}false{% endif %}
+        };
+        
+        window.chartData = {
+            total: {{ barangay_stats.total_chart|safe }},
+            completed: {{ barangay_stats.completed_chart|safe }},
+            pending: {{ barangay_stats.pending_chart|safe }},
+            overdue: {{ barangay_stats.overdue_chart|safe }}
+        };
+        // Sidebar Profile Toggle Function - Load this first
+        function toggleSidebarProfileMenu() {
+            const dropdown = document.getElementById('sidebarProfileDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('sidebarProfileDropdown');
+                const toggle = document.querySelector('.profile-menu-toggle');
+                
+                if (dropdown && toggle) {
+                    // Check if click is outside both dropdown and toggle button
+                    if (!dropdown.contains(event.target) && !toggle.contains(event.target)) {
+                        dropdown.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+    <script src="{% static 'js/barangay_dashboard.js' %}"></script>
+    <div id="profileModal" class="modal-overlay">
+    <div class="modal-container profile-modal-custom">
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <div class="modal-title-section">
+                <i class="fas fa-user"></i>
+                <h3>My Profile</h3>
+            </div>
+            <button class="modal-close-btn" onclick="closeProfileModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body profile-modal-body">
+            <!-- Profile Header Card -->
+            <div class="profile-header-banner">
+                <div class="profile-avatar-circle">
+                    {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                </div>
+                <div class="profile-user-info">
+                    <h3>{{ user.get_full_name|default:user.username }}</h3>
+                    <div class="profile-role-display">
+                        <span class="position-badge {% if user.userprofile.role == 'barangay user' %}elective{% else %}appointive{% endif %}">
+                            {{ user.userprofile.get_role_display }}
+                        </span>
+                    </div>
+                    {% if user.userprofile.barangay %}
+                    <p class="profile-barangay-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ user.userprofile.barangay.name }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="profile-tabs-container">
+                <button class="profile-tab-button active" data-tab="info" onclick="switchProfileTab(event, 'info')">
+                    <i class="fas fa-id-card"></i>
+                    Personal Info
+                </button>
+                <button class="profile-tab-button" data-tab="security" onclick="switchProfileTab(event, 'security')">
+                    <i class="fas fa-lock"></i>
+                    Security
+                </button>
+                <button class="profile-tab-button" data-tab="preferences" onclick="switchProfileTab(event, 'preferences')">
+                    <i class="fas fa-cog"></i>
+                    Preferences
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            
+            <!-- Personal Info Tab -->
+            <div id="infoTab" class="profile-tab-panel active">
+                <form method="POST" action="{% url 'update_profile' %}" class="modal-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-user-edit"></i>
+                            Basic Information
+                        </h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="first_name">First Name <span class="required">*</span></label>
+                                <input type="text" id="first_name" name="first_name" 
+                                       value="{{ user.first_name }}" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="last_name">Last Name <span class="required">*</span></label>
+                                <input type="text" id="last_name" name="last_name" 
+                                       value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" 
+                                   value="{{ user.email }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Account Details
+                        </h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" value="{{ user.username }}" disabled>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Role</label>
+                                <input type="text" value="{{ user.userprofile.get_role_display }}" disabled>
+                            </div>
+                        </div>
+                        
+                        {% if user.userprofile.barangay %}
+                        <div class="form-group">
+                            <label>Assigned Barangay</label>
+                            <input type="text" value="{{ user.userprofile.barangay.name }}" disabled>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="securityTab" class="profile-tab-panel">
+                <form method="POST" action="{% url 'change_password' %}" class="modal-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-key"></i>
+                            Change Password
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="old_password">Current Password <span class="required">*</span></label>
+                            <input type="password" id="old_password" name="old_password" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new_password1">New Password <span class="required">*</span></label>
+                            <input type="password" id="new_password1" name="new_password1" required>
+                            <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
+                                Must be at least 8 characters
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new_password2">Confirm New Password <span class="required">*</span></label>
+                            <input type="password" id="new_password2" name="new_password2" required>
+                        </div>
+                        
+                        <div class="password-requirements-box">
+                            <p style="margin: 0 0 12px 0; font-weight: 600; color: #374151;">Password Requirements:</p>
+                            <ul style="margin: 0; padding-left: 20px; color: #6b7280; font-size: 13px;">
+                                <li>At least 8 characters long</li>
+                                <li>Cannot be too similar to your username</li>
+                                <li>Cannot be entirely numeric</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-chart-line"></i>
+                            Account Information
+                        </h4>
+                        
+                        <div class="account-stats-grid">
+                            <div class="account-stat-card">
+                                <div class="stat-icon-wrapper" style="background: #dbeafe; color: #1e40af;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <p class="stat-label-text">Member Since</p>
+                                    <p class="stat-value-text">{{ user.date_joined|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="account-stat-card">
+                                <div class="stat-icon-wrapper" style="background: #d1fae5; color: #065f46;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <p class="stat-label-text">Account Status</p>
+                                    <p class="stat-value-text">
+                                        {% if user.userprofile.is_approved %}
+                                        <span class="status-badge ongoing">Approved</span>
+                                        {% else %}
+                                        <span class="status-badge status-pending">Pending</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="account-stat-card">
+                                <div class="stat-icon-wrapper" style="background: #fef3c7; color: #92400e;">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <p class="stat-label-text">Total Logins</p>
+                                    <p class="stat-value-text">{{ user.userprofile.login_count }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="account-stat-card">
+                                <div class="stat-icon-wrapper" style="background: #e0e7ff; color: #3730a3;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <p class="stat-label-text">Last Login</p>
+                                    <p class="stat-value-text">{{ user.last_login|date:"M d, g:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-lock"></i>
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preferences Tab -->
+            <div id="preferencesTab" class="profile-tab-panel">
+                <form method="POST" action="{% url 'update_profile' %}" class="modal-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-bell"></i>
+                            Notification Settings
+                        </h4>
+                        
+                        <div class="preference-toggle-item">
+                            <div class="preference-info-section">
+                                <div class="preference-icon-box">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="preference-text">
+                                    <p class="preference-title">Email Notifications</p>
+                                    <p class="preference-description">Receive email notifications for important updates</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch-custom">
+                                <input type="checkbox" name="email_notifications" 
+                                       {% if user.userprofile.email_notifications %}checked{% endif %}>
+                                <span class="toggle-slider-custom"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="preference-toggle-item">
+                            <div class="preference-info-section">
+                                <div class="preference-icon-box">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="preference-text">
+                                    <p class="preference-title">Deadline Reminders</p>
+                                    <p class="preference-description">Get reminders before requirement deadlines</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch-custom">
+                                <input type="checkbox" name="deadline_reminders" 
+                                       {% if user.userprofile.deadline_reminders %}checked{% endif %}>
+                                <span class="toggle-slider-custom"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="preference-toggle-item">
+                            <div class="preference-info-section">
+                                <div class="preference-icon-box">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <div class="preference-text">
+                                    <p class="preference-title">Announcements</p>
+                                    <p class="preference-description">Receive system announcements and updates</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch-custom">
+                                <input type="checkbox" name="announcements" 
+                                       {% if user.userprofile.announcements %}checked{% endif %}>
+                                <span class="toggle-slider-custom"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-desktop"></i>
+                            Display Settings
+                        </h4>
+                        
+                        <div class="preference-toggle-item">
+                            <div class="preference-info-section">
+                                <div class="preference-icon-box">
+                                    <i class="fas fa-compress-alt"></i>
+                                </div>
+                                <div class="preference-text">
+                                    <p class="preference-title">Compact View</p>
+                                    <p class="preference-description">Show more items with reduced spacing</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch-custom">
+                                <input type="checkbox" name="compact_view" 
+                                       {% if user.userprofile.compact_view %}checked{% endif %}>
+                                <span class="toggle-slider-custom"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+/* Profile Modal Custom Styles - Matching Your CSS */
+
+/* Profile Header Banner */
+.profile-header-banner {
+    background: var(--gradient-blue);
+    padding: 32px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.profile-user-info {
+    flex: 1;
+    color: white;
+}
+
+.profile-user-info h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: white;
+}
+
+.profile-role-display {
+    margin-bottom: 8px;
+}
+
+.profile-barangay-info {
+    font-size: 14px;
+    margin: 0;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-barangay-info i {
+    font-size: 12px;
+}
+
+/* Profile Tabs */
+.profile-tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.profile-tab-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.profile-tab-button:hover {
+    color: #48484e;
+    background: #f9fafb;
+}
+
+.profile-tab-button.active {
+    color: #48484e;
+    border-bottom-color: #48484e;
+}
+
+.profile-tab-button i {
+    font-size: 14px;
+}
+
+/* Tab Panels */
+.profile-tab-panel {
+    display: none;
+}
+
+.profile-tab-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Modal Title Section */
+.modal-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-title-section i {
+    font-size: 20px;
+    color: #48484e;
+}
+
+/* Password Requirements Box */
+.password-requirements-box {
+    background: #f9fafb;
+    border-left: 4px solid #48484e;
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* Account Stats Grid */
+.account-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.account-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon-wrapper i {
+    font-size: 18px;
+}
+
+.stat-details {
+    flex: 1;
+}
+
+.stat-label-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 4px 0;
+    font-weight: 500;
+}
+
+.stat-value-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Preference Toggle Items */
+.preference-toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 12px;
+}
+
+.preference-info-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex: 1;
+}
+
+.preference-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #48484e;
+    flex-shrink: 0;
+}
+
+.preference-icon-box i {
+    font-size: 16px;
+}
+
+.preference-text {
+    flex: 1;
+}
+
+.preference-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.preference-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Toggle Switch Custom */
+.toggle-switch-custom {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle-switch-custom input {
+    display: none;
+}
+
+.toggle-slider-custom {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #d1d5db;
+    border-radius: 26px;
+    transition: all 0.3s;
+}
+
+.toggle-slider-custom::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.toggle-switch-custom input:checked + .toggle-slider-custom {
+    background: #48484e;
+}
+
+.toggle-switch-custom input:checked + .toggle-slider-custom::before {
+    transform: translateX(22px);
+}
+
+/* Profile Modal Custom Container */
+.profile-modal-custom {
+    max-width: 800px;
+}
+
+.profile-modal-body {
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-header-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .account-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-tabs-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .profile-tab-button {
+        white-space: nowrap;
+        font-size: 13px;
+    }
+}
+</style>
+
+</body>
+</html>
