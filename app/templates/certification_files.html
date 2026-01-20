@@ -18,8 +18,8 @@
   --border-color: #dee2e6;
   --shadow: 0 2px 4px rgba(0,0,0,0.1);
   --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
-  --accent-primary: #1abc9c;
-  --accent-hover: #16a085;
+  --accent-primary: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
+  --accent-hover: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
   --success: #28a745;
   --success-hover: #218838;
   --warning: #ffc107;
@@ -35,7 +35,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   color: var(--text-primary);
-  background: #f5f1e8;
+  background: #FAF9F6;
   overflow-x: hidden;
 }
 
@@ -43,7 +43,7 @@ body {
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  background: #f5f1e8;
+  background: #FAF9F6;
   color: #0b1a50;
 }
 
@@ -109,12 +109,12 @@ body {
 
 .nav-menu a:hover {
   background: rgba(26, 188, 156, 0.1);
-  color: #1abc9c;
+  color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
   transform: translateX(4px);
 }
 
 .nav-menu a.active {
-  background: #1abc9c;
+  background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
   color: white;
   font-weight: 600;
 }
@@ -135,7 +135,7 @@ body {
   flex: 1;
   margin-left: 260px;
   padding: 32px 40px;
-  background: #f5f1e8;
+  background: #FAF9F6;
   color: #0b1a50;
   min-height: 100vh;
 }
@@ -158,7 +158,7 @@ body {
 
     .back-button {
       padding: 10px 20px;
-      background: var(--accent-primary);
+      background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       color: white;
       border: none;
       border-radius: 6px;
@@ -218,7 +218,7 @@ body {
     }
 
     .upload-button {
-      background: var(--accent-primary);
+      background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       color: white;
     }
 
@@ -246,7 +246,7 @@ body {
 
     .search-bar:focus {
       outline: none;
-      border-color: var(--accent-primary);
+      border-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
@@ -287,14 +287,14 @@ body {
     .profile-card:hover {
       transform: translateY(-8px);
       box-shadow: var(--shadow-hover);
-      border-left-color: var(--accent-primary);
+      border-left-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
     }
 
 
     .folder-icon {
       font-size: 4rem;
       margin-bottom: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #0b1a50 100%);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -321,7 +321,7 @@ body {
       padding: 10px 16px;
       border: none;
       border-radius: 6px;
-      background: var(--accent-primary);
+      background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       color: white;
       cursor: pointer;
       font-size: 0.875rem;
@@ -470,7 +470,7 @@ body {
 
     .toolbar-search input:focus {
       outline: none;
-      border-color: var(--accent-primary);
+      border-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
@@ -532,7 +532,7 @@ body {
     }
 
     .file-card {
-      background: var(--bg-primary);
+      background: #FAF9F6;
       border-radius: 8px;
       padding: 20px;
       text-align: center;
@@ -543,7 +543,7 @@ body {
     }
 
     .file-card:hover {
-      border-color: var(--accent-primary);
+      border-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       transform: translateY(-5px);
       box-shadow: var(--shadow-hover);
       
@@ -624,7 +624,7 @@ body {
     .loading-spinner i {
       font-size: 48px;
       animation: spin 1s linear infinite;
-      color: var(--accent-primary);
+      color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
     }
 
     @keyframes spin {
@@ -669,7 +669,7 @@ body {
     }
 
     .upload-content {
-      background: var(--bg-primary);
+      background: #FAF9F6;
       border-radius: 12px;
       padding: 30px;
       max-width: 500px;
@@ -696,7 +696,7 @@ body {
     }
 
     .upload-area:hover {
-      border-color: var(--accent-primary);
+      border-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       background: var(--bg-tertiary);
     }
 
@@ -738,7 +738,7 @@ body {
     .form-group input:focus,
     .form-group select:focus {
       outline: none;
-      border-color: var(--accent-primary);
+      border-color: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
@@ -759,7 +759,7 @@ body {
     }
 
     .btn-upload {
-      background: var(--accent-primary);
+      background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
       color: white;
     }
 

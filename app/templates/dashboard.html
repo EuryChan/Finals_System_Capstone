@@ -24,7 +24,15 @@
       --success-hover: #218838;
       --warning: #ffc107;
       --danger: #dc3545;
+
+      /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
     }
+    
 
     * {
       margin: 0;
@@ -33,9 +41,9 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #FAF9F6;
       color: var(--text-primary);
-      background: var(--bg-primary);
       overflow-x: hidden;
     }
 
@@ -46,7 +54,7 @@
 
     /* Sidebar - Light Theme */
     .sidebar {
-      width: 220px;
+      width: 280px;
       background: #FAF9F6;
       border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
       box-shadow: var(--shadow-xl);
@@ -72,9 +80,8 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px 40px;
-      background: #f5f1e8;
+      background: #FAF9F6;
       color: #0b1a50;
-
       min-height: 100vh;
     }
 
@@ -825,8 +832,8 @@
             {
               label: 'Elective',
               data: data.elective.map((val, idx) => ({ x: idx + 1, y: val })),
-              backgroundColor: '#007bff',
-              borderColor: '#007bff',
+              backgroundColor: '#0F1419',
+              borderColor: '#0F1419',
               pointRadius: 6,
               pointHoverRadius: 9,
               pointStyle: 'circle'
@@ -834,8 +841,8 @@
             {
               label: 'Appointive',
               data: data.appointive.map((val, idx) => ({ x: idx + 1, y: val })),
-              backgroundColor: '#000075',
-              borderColor: '#000075',
+              backgroundColor: '#6B7684',
+              borderColor: '#6B7684',
               pointRadius: 6,
               pointHoverRadius: 9,
               pointStyle: 'circle'
@@ -926,8 +933,8 @@
       if (barangaysChart) barangaysChart.destroy();
 
       const colors = [
-        '#000075', '#0000A3', '#0000D1', '#0000FF', '#2E2EFF',
-        '#00008B', '#4169E1', '#1E90FF', '#4682B4', '#87CEFA'
+        '#F7F8F9', '#E8EAED', '#CFD4DB', '#B0B8C1', '#8B95A2',
+'#6B7684', '#4E5969', '#343E4E', '#1F2937', '#0F1419'
       ];
       barangaysChart = new Chart(ctx, {
         type: 'bar',

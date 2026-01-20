@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root {
-      --bg-primary: #f5f1e8;  
+      --bg-primary: #FAF9F6;
       --bg-secondary: #ffffff;
       --bg-tertiary: #e9ecef;
       --text-primary: #212529;
@@ -18,12 +18,20 @@
       --border-color: #dee2e6;
       --shadow: 0 2px 4px rgba(0,0,0,0.1);
       --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
-      --accent-primary: #1abc9c;
-      --accent-hover: #16a085;
+      --accent-primary: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
+      --accent-hover: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       --success: #28a745;
       --success-hover: #218838;
       --warning: #ffc107;
       --danger: #dc3545;
+
+      
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
     }
 
     * {
@@ -35,7 +43,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       color: #ecf0f1;
-      background: #f5f1e8;
+      background: #FAF9F6;
       overflow-x: hidden;
     }
 
@@ -46,9 +54,9 @@
 
     /* Sidebar */
     .sidebar {
-      width: 220px;
-      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      width: 280px;
       background: #FAF9F6;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
       box-shadow: var(--shadow-xl);
       display: flex;
       flex-direction: column;
@@ -60,7 +68,7 @@
       padding: var(--spacing-lg);
       animation: slideInLeft 0.5s ease-out;
       padding-bottom: 80px;
-    }
+  }
 
     .sidebar .logo {
       width: 140px;
@@ -90,7 +98,7 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px 40px;
-      background: #f5f1e8;
+      background: #FAF9F6;
       color: #0b1a50;
       min-height: 100vh;
     }
@@ -212,7 +220,7 @@
     }
 
     .settings-section {
-      background: var(--bg-primary);
+      background: #FAF9F6;
       border-radius: 12px;
       padding: 28px;
       box-shadow: var(--shadow);
@@ -255,7 +263,7 @@
 
     /* Profile Card */
     .profile-card {
-      background: linear-gradient(135deg, #007bff 0%, #0b1a50 100%);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       border-radius: 12px;
       padding: 32px;
       color: white;
@@ -604,7 +612,8 @@
       top: 24px;
       right: 24px;
       padding: 16px 24px;
-      background: var(--bg-primary);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    
       border-radius: 8px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       transform: translateX(400px);

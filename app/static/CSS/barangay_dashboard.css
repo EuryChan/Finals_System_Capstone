@@ -81,20 +81,64 @@ body {
 
 /* ===== Sidebar Styles ===== */
 .sidebar {
-    width: 280px;
-    background: #FAF9F6;
-    border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
-    box-shadow: var(--shadow-xl);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 100;
-    padding: var(--spacing-lg);
-    animation: slideInLeft 0.5s ease-out;
-    padding-bottom: 80px;
+      width: 280px;
+      background: #FAF9F6;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 100;
+      padding: var(--spacing-lg);
+      animation: slideInLeft 0.5s ease-out;
+      padding-bottom: 80px;
+}
+
+.menu-title {
+    padding: 16px 24px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.nav-menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+
+.nav-menu li {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 10px;
+    text-align: center;
+    margin: 5px 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-menu a:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.nav-menu a.active {
+    background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
+    color: white;
+}
+
+.nav-menu li a {
+    text-decoration: none;
+    color: #1d1d1d;
+    display: block;
+    padding: 10px;
+    border-radius: 10px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .sidebar-profile {
@@ -269,40 +313,8 @@ body {
     filter: drop-shadow(0 2px 8px rgba(79, 70, 229, 0.2));
 }
 
-.sidebar-menu {
-    flex: 1;
-}
 
-.menu-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--gray-500);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--spacing-sm);
-    padding: 0 var(--spacing-md);
-}
 
-.sidebar-menu nav {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--gray-600);
-    text-decoration: none;
-    border-radius: var(--radius-lg);
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
-}
 
 .menu-item i {
     font-size: 1rem;
@@ -4484,7 +4496,7 @@ body {
     align-items: center;
     padding: 20px 24px;
     border-bottom: 1px solid #e9ecef;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
     border-radius: 12px 12px 0 0;
 }
 
@@ -4568,8 +4580,8 @@ body {
 }
 
 .notification-tab.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+    color: #4B5563;
+    border-bottom-color: #4B5563;
     font-weight: 600;
 }
 
@@ -4634,7 +4646,7 @@ body {
     left: 8px;
     width: 8px;
     height: 8px;
-    background-color: #667eea;
+    background-color: #374151;
     border-radius: 50%;
     animation: dotPulse 2s infinite;
 }
@@ -4682,12 +4694,12 @@ body {
 
 .icon-primary {
     background-color: #ede7f6;
-    color: #673ab7;
+    color: #374151;
 }
 
 .icon-announcement {
     background-color: #f3e5ff;
-    color: #9333ea;
+    color: #374151;
 }
 
 /* Notification Content */
@@ -4751,7 +4763,7 @@ body {
 
 .notification-mark-read:hover {
     background-color: #e5e7eb;
-    color: #667eea;
+    color: #374151;
 }
 
 /* Empty State */
@@ -4784,7 +4796,7 @@ body {
 .notification-loading i {
     font-size: 36px;
     margin-bottom: 16px;
-    color: #667eea;
+    color: #374151;
 }
 
 .notification-loading p {
@@ -4823,7 +4835,7 @@ body {
 .notification-btn-text {
     background: none;
     border: none;
-    color: #667eea;
+    color: #374151;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -4861,7 +4873,7 @@ body {
 }
 
 .notification-toast.info {
-    background-color: #3b82f6;
+    background-color: #374151;
 }
 
 @keyframes toastSlideIn {

@@ -24,6 +24,12 @@
             --danger: #dc3545;
             
             --gradient-end: #0b1a50;
+
+             /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -33,9 +39,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: var(--text-primary);
-            background: var(--bg-secondary);
+            background: #FAF9F6;
             overflow-x: hidden;
         }
 
@@ -47,21 +53,21 @@
 
         /* Sidebar */
         .sidebar {
-            width: 220px;
-            background: #FAF9F6;
-            border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
-            box-shadow: var(--shadow-xl);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 100;
-            padding: var(--spacing-lg);
-            animation: slideInLeft 0.5s ease-out;
-            padding-bottom: 80px;
-        }
+    width: 280px;
+    background: #FAF9F6;
+    border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    padding: var(--spacing-lg);
+    animation: slideInLeft 0.5s ease-out;
+    padding-bottom: 80px;
+}
         
 
         .sidebar .logo {
@@ -108,7 +114,7 @@
         }
 
         .nav-menu a.active {
-            background: var(--gradient-end);
+            background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
             color: white;
         }
 
@@ -130,7 +136,7 @@
             flex: 1;
             margin-left: 260px;
             padding: 32px 40px;
-            background: #f5f1e8;
+            background: #FAF9F6;
             min-height: 100vh;
         }
 
@@ -171,7 +177,7 @@
 
         /* Section Cards */
         .section-card {
-            background: var(--bg-primary);
+            background: #f9f9f9;
             border-radius: 12px;
             padding: 28px;
             box-shadow: var(--shadow);
@@ -281,7 +287,7 @@
             align-items: center;
             gap: 6px;
             padding: 4px 12px;
-            background: var(--accent-primary);
+            background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
             color: white;
             border-radius: 16px;
             font-size: 0.75rem;
@@ -344,14 +350,14 @@
         }
 
         .btn-view {
-            background: var(--accent-primary);
+            background: linear-gradient(135deg, #5f5f61 0%, #353536 100%);
             color: white;
             padding: 8px 16px;
             font-size: 0.875rem;
         }
 
         .btn-view:hover {
-            background: var(--accent-hover);
+            background:linear-gradient(135deg, #5f5f61 0%, #353536 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
         }
