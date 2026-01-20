@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="{% static 'CSS/dashboard.css' %}">
   <style>
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fa;
+      --bg-primary: #f5f1e8;
+      --bg-secondary: #ffffff;
       --bg-tertiary: #e9ecef;
       --text-primary: #212529;
       --text-secondary: #6c757d;
@@ -18,8 +18,8 @@
       --border-color: #dee2e6;
       --shadow: 0 2px 4px rgba(0,0,0,0.1);
       --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
-      --accent-primary: #007bff;
-      --accent-hover: #0056b3;
+      --accent-primary: #1abc9c;
+      --accent-hover: #16a085;
       --success: #28a745;
       --success-hover: #218838;
       --warning: #ffc107;
@@ -35,7 +35,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       color: var(--text-primary);
-      background: var(--bg-secondary);
+      background: #f5f1e8;
       overflow-x: hidden;
     }
 
@@ -47,17 +47,20 @@
 
     /* Sidebar Styling */
     .sidebar {
-      width: 260px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-      color: #0b1a50;
-      border-right: 1px solid var(--border-color);
+      width: 220px;
+      background: #FAF9F6;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
       position: fixed;
       left: 0;
       top: 0;
-      height: 100vh;
-      overflow-y: auto;
+      bottom: 0;
       z-index: 100;
-      box-shadow: var(--shadow);
+      padding: var(--spacing-lg);
+      animation: slideInLeft 0.5s ease-out;
+      padding-bottom: 80px;
     }
 
     .sidebar .logo {
@@ -79,6 +82,7 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-align: center;
     }
 
     
@@ -87,7 +91,7 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px 40px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+      background: #f5f1e8;
       color: #0b1a50;
 
       min-height: 100vh;
@@ -417,11 +421,12 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 24px;
-      margin-bottom: 32px;
+      margin-top: 32px;
     }
 
+
     .profile-card {
-      background: var(--bg-primary);
+      background: white;
       border-radius: 12px;
       padding: 28px;
       box-shadow: var(--shadow);
@@ -449,6 +454,7 @@
     .profile-card:hover {
       transform: translateY(-8px);
       box-shadow: var(--shadow-hover);
+      border-left-color: var(--accent-primary);
     }
 
     .profile-card:hover::before {
@@ -456,15 +462,12 @@
     }
 
     .folder-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #667eea 0%, #0b1a50 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-size: 4rem;
       margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      background: linear-gradient(135deg, #667eea 0%, #0b1a50 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       transition: transform 0.3s ease;
     }
 

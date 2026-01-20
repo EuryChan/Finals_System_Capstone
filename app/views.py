@@ -36,6 +36,7 @@ from datetime import timedelta
 import traceback
 from PIL import Image
 import pytesseract, PyPDF2
+from app.tasks import send_email_task 
 
 
 
@@ -64,8 +65,7 @@ def get_client_ip(request):
 
 
 def landing_page(request):
-    return render(request, 'landing.html')
-
+    return render(request, 'landing.html')    
 
 def logout_view(request):
     if request.user.is_authenticated:
@@ -992,6 +992,9 @@ def signup_page(request):
         role = request.POST.get('role')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
+        contact_number = request.POST.get('contact_number')
+        barangay = request.POST.get('barangay')
+        city = request.POST.get('city')
         
         # Print what we received
         print(f"Username: {username}")
@@ -999,10 +1002,13 @@ def signup_page(request):
         print(f"Role: {role}")
         print(f"Password1: {'***' if password1 else None}")
         print(f"Password2: {'***' if password2 else None}")
-        print(f"All fields filled: {all([username, email, role, password1, password2])}")
+        print(f"Contact Number: {contact_number}")
+        print(f"Barangay: {barangay}")
+        print(f"City: {city}")
+        print(f"All fields filled: {all([username, email, role, password1, password2, contact_number, barangay, city])}")
         print("=" * 50)
 
-        if not all([username, email, role, password1, password2]):
+        if not all([username, email, role, password1, password2, contact_number, barangay, city]):
             print("❌ FAILED: Missing fields")
             messages.error(request, 'Please fill in all fields.')
             return render(request, 'signup_page.html')
@@ -1031,24 +1037,29 @@ def signup_page(request):
                 messages.error(request, error)
             return render(request, 'signup_page.html')
 
-        # Create the user
+        # Create the user (set is_active to False for admin approval)
         print("🚀 Creating user...")
         user = User.objects.create_user(username=username, email=email, password=password1)
+        user.is_active = False  # User must be approved by admin
+        user.save()
         print(f"✅ User created: {user.id}")
 
-        # Create or get profile with normalized role (strip spaces)
+        # Create or get profile with all fields
         UserProfile.objects.get_or_create(
             user=user, 
             defaults={
                 'role': role.strip(),
-                'is_approved': False
+                'is_approved': False,
+                'contact_number': contact_number,
+                'barangay': barangay,
+                'city': city
             }
         )
-        print("✅ Profile created")
+        print("✅ Profile created with additional info")
 
-        messages.success(request, 'Account created successfully. Please log in.')
-        print("✅ Redirecting to login...")
-        return redirect('login_page')
+        messages.success(request, 'Your account has been created and is waiting for admin verification.')
+        print("✅ Redirecting to pending approval page...")
+        return redirect('signup_pending')  # Change this from 'login_page' to 'signup_pending'
 
     return render(request, 'signup_page.html')
 
@@ -1056,6 +1067,9 @@ def signup_page(request):
 def signup_pending(request):
     """Show 'waiting for approval' message after signup"""
     return render(request, 'signup_pending.html')
+
+def signup_message(request):
+    return render(request, 'signup_message.html')
 
 
 @login_required
@@ -9793,6 +9807,19 @@ def profile_stats(request):
     return JsonResponse({'success': True, 'stats': stats})
 
 @login_required
+def get_sidebar_counts(request):
+    """
+    Get notification counts for sidebar red dots
+    Reusable across all views
+    """
+    return {
+        'pending_applications_count': EligibilityRequest.objects.filter(status='pending').count(),
+        'pending_count': UserProfile.objects.filter(is_approved=False).count(),
+        'monitoring_count': RequirementSubmission.objects.filter(status__in=['pending', 'in_progress']).count(),
+        'certification_count': EligibilityRequest.objects.filter(status='approved').count(),
+    }
+
+
 def terms_conditions(request):
     """
     Display the Terms and Conditions page
@@ -9800,9 +9827,13 @@ def terms_conditions(request):
     context = {
         'user': request.user,
         'assigned_barangay': getattr(request.user.userprofile, 'barangay', None) if hasattr(request.user, 'userprofile') else None,
+        'terms_notification': True,
     }
+    
+    # Add sidebar counts - PASS request here
+    context.update(get_sidebar_counts(request))
+    
     return render(request, 'terms_conditions.html', context)
-
 
 @login_required
 @require_http_methods(["POST"])

@@ -47,18 +47,20 @@
 
     /* Sidebar Styling */
     .sidebar {
-      width: 260px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-      color: #0b1a50;
-      border-right: 1px solid var(--border-color);
+      width: 220px;
+      background: #FAF9F6;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
       position: fixed;
       left: 0;
       top: 0;
-      height: 100vh;
-      overflow-y: auto;
+      bottom: 0;
       z-index: 100;
-      box-shadow: var(--shadow);
-      transition: transform 0.3s ease;
+      padding: var(--spacing-lg);
+      animation: slideInLeft 0.5s ease-out;
+      padding-bottom: 80px;
     }
 
     .sidebar .logo {
@@ -111,14 +113,15 @@
       transition: all 0.2s ease;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #0b1a50;
+      background: transparent;
+      border: 1px solid transparent;
+}
     }
 
     .barangay-list li:hover {
-      background: rgba(255, 255, 255, 0.25);
-      color: #ffffff;
+      background: rgba(26, 188, 156, 0.1);
+      color: #1abc9c; 
       border-color: rgba(255, 255, 255, 0.3);
       transform: translateX(4px);
     }
@@ -179,7 +182,7 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px 40px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+      background: #f5f1e8;
       color: #0b1a50;
       min-height: 100vh;
       transition: margin-left 0.3s ease;

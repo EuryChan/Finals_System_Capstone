@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fa;
+      --bg-primary: #f5f1e8;
+      --bg-secondary: #ffffff;
       --bg-tertiary: #e9ecef;
       --text-primary: #212529;
       --text-secondary: #6c757d;
@@ -18,8 +18,8 @@
       --border-color: #dee2e6;
       --shadow: 0 2px 4px rgba(0,0,0,0.1);
       --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
-      --accent-primary: #007bff;
-      --accent-hover: #0056b3;
+      --accent-primary: #1abc9c;
+      --accent-hover: #16a085;
       --success: #28a745;
       --success-hover: #218838;
       --warning: #ffc107;
@@ -35,7 +35,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       color: var(--text-primary);
-      background: var(--bg-secondary);
+      background: #f5f1e8;
       overflow-x: hidden;
     }
 
@@ -46,16 +46,20 @@
 
     /* Sidebar Styling */
     .sidebar {
-      width: 260px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-      color: #0b1a50;
-      border-right: 1px solid var(--border-color);
+      width: 220px;
+      background: #FAF9F6;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
       position: fixed;
       left: 0;
       top: 0;
-      height: 100vh;
-      overflow-y: auto;
+      bottom: 0;
       z-index: 100;
+      padding: var(--spacing-lg);
+      animation: slideInLeft 0.5s ease-out;
+      padding-bottom: 80px;
     }
 
     .sidebar .logo {
@@ -71,6 +75,7 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-align: center;
     }
 
 
@@ -79,7 +84,7 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+      background: #f5f1e8;
       color: #0b1a50;
       min-height: 100vh;
     }
@@ -222,7 +227,7 @@
     }
 
     .view-toggle-btn.active {
-      background: var(--accent-primary);
+      background: #1abc9c;
       color: white;
     }
 
@@ -712,28 +717,39 @@
       }
     }
     /* Red notification dot */
-.red-dot {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: #dc3545;
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
+    .red-dot {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
 
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: translateY(-50%) scale(1.2);
-  }
-}
+    @keyframes pulse-dot {
+      0%, 100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: translateY(-50%) scale(1.2);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
 /* Mobile Menu Toggle Button */
 .mobile-menu-toggle {
   display: none;

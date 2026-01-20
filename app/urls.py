@@ -15,6 +15,7 @@ urlpatterns = [
     path('user-approvals/', views.pending_users, name='pending_users'),
     path('user-approvals/approve/<int:user_id>/', views.approve_user, name='approve_user'),
     path('user-approvals/reject/<int:user_id>/', views.reject_user, name='reject_user'),
+    path('signup/message/', views.signup_message, name='signup_message'),  # For users
 
     # ============================================
     # BARANGAY OFFICIAL - SUBMISSION PAGES

@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fa;
+      --bg-primary: #f5f1e8;  
+      --bg-secondary: #ffffff;
       --bg-tertiary: #e9ecef;
       --text-primary: #212529;
       --text-secondary: #6c757d;
@@ -18,8 +18,8 @@
       --border-color: #dee2e6;
       --shadow: 0 2px 4px rgba(0,0,0,0.1);
       --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
-      --accent-primary: #007bff;
-      --accent-hover: #0056b3;
+      --accent-primary: #1abc9c;
+      --accent-hover: #16a085;
       --success: #28a745;
       --success-hover: #218838;
       --warning: #ffc107;
@@ -34,8 +34,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      color: var(--text-primary);
-      background: var(--bg-secondary);
+      color: #ecf0f1;
+      background: #f5f1e8;
       overflow-x: hidden;
     }
 
@@ -46,17 +46,20 @@
 
     /* Sidebar */
     .sidebar {
-      width: 260px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
-      color: #0b1a50;
-      border-right: 1px solid var(--border-color);
+      width: 220px;
+      border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+      background: #FAF9F6;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
       position: fixed;
       left: 0;
       top: 0;
-      height: 100vh;
-      overflow-y: auto;
+      bottom: 0;
       z-index: 100;
-      box-shadow: var(--shadow);
+      padding: var(--spacing-lg);
+      animation: slideInLeft 0.5s ease-out;
+      padding-bottom: 80px;
     }
 
     .sidebar .logo {
@@ -78,6 +81,7 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-align: center;
     }
 
   
@@ -86,7 +90,7 @@
       flex: 1;
       margin-left: 260px;
       padding: 32px 40px;
-      background: linear-gradient(to bottom, #f5f6fa, #0b1a50);
+      background: #f5f1e8;
       color: #0b1a50;
       min-height: 100vh;
     }
@@ -512,6 +516,13 @@
       display: flex;
       gap: 12px;
       margin-top: 24px;
+    }
+
+    .logout-button {
+      position: absolute;
+      top: 45px;        /* Same height as "Back to Dashboard" */
+      right: 250px;     /* Left side ng "Back to Dashboard" - adjust kung kailangan */
+      z-index: 10;
     }
 
     /* Stats Grid */
@@ -974,6 +985,11 @@
                 </div>
               </div>
 
+              <button type="button" class="btn btn-secondary logout-button" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+              </button>
+
               <div class="btn-group">
                 <button type="submit" class="btn btn-primary">
                   <i class="fas fa-save"></i>
@@ -983,10 +999,7 @@
                   <i class="fas fa-undo"></i>
                   Reset
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="handleLogout()">
-                  <i class="fas fa-sign-out-alt"></i>
-                  Logout
-                </button>
+                
               </div>
             </form>
           </div>

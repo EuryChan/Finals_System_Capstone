@@ -79,3 +79,54 @@ def check_upcoming_requirements():
                 notifications_created += 1
     
     return notifications_created
+
+def send_email_task(eligibility_request, status, rejection_reason=None):
+    """Send email notification to applicant"""
+    from django.core.mail import send_mail
+    from django.conf import settings
+    
+    subject = f'Application Status Update - {status.capitalize()}'
+    
+    if status == 'approved':
+        message = f"""
+Dear {eligibility_request.full_name},
+
+Your eligibility request has been APPROVED.
+
+Request ID: {eligibility_request.id}
+Status: Approved
+
+Thank you for your application.
+
+Best regards,
+DILG Team
+        """
+    elif status == 'rejected':
+        message = f"""
+Dear {eligibility_request.full_name},
+
+Your eligibility request has been REJECTED.
+
+Request ID: {eligibility_request.id}
+Status: Rejected
+Reason: {rejection_reason or 'Not specified'}
+
+Thank you for your application.
+
+Best regards,
+DILG Team
+        """
+    else:
+        return
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[eligibility_request.email],
+            fail_silently=False,
+        )
+        print(f"✅ Email sent to {eligibility_request.email}")
+    except Exception as e:
+        print(f"❌ Email failed: {str(e)}")
